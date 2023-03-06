@@ -6,10 +6,14 @@ struct WakaTime: App {
     @Environment(\.openWindow) private var openWindow
     
     @StateObject private var settings = SettingsModel()
+    
+    var watcher = Watcher()
 
     init() {
         registerAsLoginItem()
         downloadCLI()
+        requestA11yPermission()
+        setupCarbon()
     }
 
     var body: some Scene {
@@ -35,6 +39,21 @@ struct WakaTime: App {
             try SMAppService.mainApp.register()
         } catch let error {
             print(error)
+        }
+    }
+    
+    private func requestA11yPermission() {
+        let prompt = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
+        let options: NSDictionary = [prompt: true]
+        let appHasPermission = AXIsProcessTrustedWithOptions(options)
+        if appHasPermission {
+            print("has a11y permission")
+        }
+    }
+    
+    private func setupCarbon() {
+        if let app = NSWorkspace.shared.frontmostApplication {
+            print(app.bundleIdentifier)
         }
     }
     
