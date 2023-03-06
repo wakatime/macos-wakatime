@@ -6,8 +6,11 @@ struct WakaTime: App {
     @Environment(\.openWindow) private var openWindow
     
     @StateObject private var settings = SettingsModel()
+    @State private var lastFile: String = ""
+    @State private var lastTime: TimeInterval = 0
     
-    var watcher = Watcher()
+    let watcher = Watcher()
+    let version = Bundle.main.infoDictionary!["CFBundleShortVersionString"] as! String
 
     init() {
         registerAsLoginItem()
@@ -53,7 +56,7 @@ struct WakaTime: App {
     
     private func setupCarbon() {
         if let app = NSWorkspace.shared.frontmostApplication {
-            print(app.bundleIdentifier)
+            print(app.bundleIdentifier!)
         }
     }
     
@@ -143,46 +146,25 @@ struct WakaTime: App {
     private func quit() {
         NSApp.terminate(self)
     }
-}
-
-struct SettingsView: View {
-    @Environment(\.dismiss) private var dismiss
     
-    @Binding var apiKey: String
-    
-    var body: some View {
-        GeometryReader { geometry in
-            VStack {
-                Text("WakaTime API Key:")
-                TextField("apikey", text: $apiKey)
-                List {
-                    HStack {
-                        Button("Save") {
-                            ConfigFile.setSetting(section: "settings", key: "api_key", val: $apiKey.wrappedValue)
-                            dismiss()
-                        }
-                        Button("Cancel") {
-                            dismiss()
-                        }
-                    }
-                }
-            }
-        }
-        .task {
-            for window in NSApplication.shared.windows {
-                guard window.identifier?.rawValue == "settings" else { continue }
-                window.standardWindowButton(.zoomButton)?.isEnabled = false
-                window.standardWindowButton(.closeButton)?.isEnabled = false
-                window.standardWindowButton(.miniaturizeButton)?.isEnabled = false
-                window.standardWindowButton(.zoomButton)?.isHidden = true
-                window.standardWindowButton(.closeButton)?.isHidden = true
-                window.standardWindowButton(.miniaturizeButton)?.isHidden = true
-                window.setFrame(NSRect(x: window.frame.origin.x, y: window.frame.origin.y, width: 400, height: 140), display: true)
-            }
-        }
+    private func shouldSendHeartbeat(file: String?, time: TimeInterval, isWrite: Bool) -> Bool {
+        guard let file = file else { return false }
+        return isWrite || file != lastFile || lastTime + 120 < time
     }
-}
 
-class SettingsModel : ObservableObject {
-    @Published var apiKey = ""
+    public func documentChanged(file: String?, isWrite: Bool = false) {
+        let time = NSDate().timeIntervalSince1970
+        guard shouldSendHeartbeat(file: file, time: time, isWrite: isWrite) else { return }
+        
+        lastFile = file!
+        lastTime = time
+        
+        let cli = NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli"])
+        let process = Process()
+        process.launchPath = cli
+        process.arguments = ["--entity", file!, "--plugin", "xcode/unknown xcode-wakatime/" + version]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        process.launch()
+    }
 }
