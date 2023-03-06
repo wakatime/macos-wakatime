@@ -162,7 +162,11 @@ struct WakaTime: App {
         let cli = NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli"])
         let process = Process()
         process.launchPath = cli
-        process.arguments = ["--entity", file!, "--plugin", "xcode/unknown xcode-wakatime/" + version]
+        var args = ["--entity", file!, "--plugin", "xcode/unknown xcode-wakatime/" + version]
+        if isWrite {
+            args.append("--write")
+        }
+        process.arguments = args
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
         process.launch()
