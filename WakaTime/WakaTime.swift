@@ -32,9 +32,8 @@ struct WakaTime: App {
     }
 
     private func registerAsLoginItem() {
-        if (SMAppService.mainApp.status != .notFound) {
-            return
-        }
+        guard SMAppService.mainApp.status == .notFound else { return }
+        
         do {
             try SMAppService.mainApp.register()
         } catch let error {
