@@ -9,21 +9,18 @@ struct WakaTime: App {
 
     init() {
         registerAsLoginItem()
+        downloadCLI()
     }
 
     var body: some Scene {
         MenuBarExtra("WakaTime", image:"WakaTime") {
-
             Button("Dashboard") { self.dashboard() }
-            
             Button("Settings") {
                 openWindow(id: "settings")
                 NSApp.activate(ignoringOtherApps: true)
                 settings.apiKey = ConfigFile.getSetting(section: "settings", key: "api_key")
             }
-
             Divider()
-
             Button("Quit") { self.quit() }
         }
         Window("Settings", id:"settings") {
@@ -39,6 +36,85 @@ struct WakaTime: App {
         } catch let error {
             print(error)
         }
+    }
+    
+    private func downloadCLI() {
+        let dir = NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime"])
+        if !FileManager.default.fileExists(atPath: dir) {
+            do {
+                try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true, attributes: nil)
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
+    
+        let url = "https://github.com/wakatime/wakatime-cli/releases/latest/download/wakatime-cli-darwin-\(architecture()).zip"
+        let zipFile = NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli.zip"])
+        let cli = NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli"])
+        let cliReal = NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli-darwin-\(architecture())"])
+        if FileManager.default.fileExists(atPath: zipFile) {
+            do {
+                try FileManager.default.removeItem(atPath: zipFile)
+            } catch {
+                print(error.localizedDescription)
+                return
+            }
+        }
+        
+        URLSession.shared.downloadTask(with: URLRequest(url: URL(string: url)!)) { u, r, e in
+            guard let fileURL = u else { return }
+            do {
+                // download wakatime-cli.zip
+                try FileManager.default.moveItem(at: fileURL, to: URL(fileURLWithPath: zipFile))
+                
+                if FileManager.default.fileExists(atPath: cliReal) {
+                    do {
+                        try FileManager.default.removeItem(atPath: cliReal)
+                    } catch {
+                        print(error.localizedDescription)
+                        return
+                    }
+                }
+                
+                // unzip wakatime-cli.zip
+                let process = Process()
+                process.launchPath = "/usr/bin/unzip"
+                process.arguments = [zipFile, "-d", dir]
+                process.standardOutput = FileHandle.nullDevice
+                process.standardError = FileHandle.nullDevice
+                process.launch()
+                process.waitUntilExit()
+                
+                // cleanup wakatime-cli.zip
+                try! FileManager.default.removeItem(atPath: zipFile)
+                
+                // create ~/.wakatime/wakatime-cli symlink
+                do {
+                    try FileManager.default.removeItem(atPath: cli)
+                } catch { }
+                try! FileManager.default.createSymbolicLink(atPath: cli, withDestinationPath: cliReal)
+                
+            } catch {
+                print(error.localizedDescription)
+            }
+        }.resume()
+    }
+    
+    private func architecture() -> String {
+        var systeminfo = utsname()
+        uname(&systeminfo)
+        let machine = withUnsafeBytes(of: &systeminfo.machine) {bufPtr->String in
+            let data = Data(bufPtr)
+            if let lastIndex = data.lastIndex(where: {$0 != 0}) {
+                return String(data: data[0...lastIndex], encoding: .isoLatin1)!
+            } else {
+                return String(data: data, encoding: .isoLatin1)!
+            }
+        }
+        if machine == "x86_64" {
+            return "amd64"
+        }
+        return "arm64"
     }
     
     private func dashboard() {
