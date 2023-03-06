@@ -1,0 +1,25 @@
+name: WakaTime
+
+options:
+  bundleIdPrefix: wakatime
+  createIntermediateGroups: true
+
+packages:
+  WakaTime:
+    path: .
+
+targets:
+  WakaTime:
+    type: application
+    platform: macOS
+    deploymentTarget: 13.0
+    sources: [WakaTime]
+    settings:
+      CURRENT_PROJECT_VERSION: 2
+      MARKETING_VERSION: 0.1.1
+      INFOPLIST_FILE: WakaTime/WakaTime-Info.plist
+      GENERATE_INFOPLIST_FILE: YES
+      CODE_SIGN_STYLE: Automatic
+      DEVELOPMENT_TEAM: ${SV_DEVELOPMENT_TEAM}
+      ENABLE_HARDENED_RUNTIME: YES
+      DEAD_CODE_STRIPPING: YES
