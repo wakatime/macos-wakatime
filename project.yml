@@ -1,7 +1,7 @@
 name: WakaTime
 
 options:
-  bundleIdPrefix: wakatime
+  bundleIdPrefix: xcode-wakatime
   createIntermediateGroups: true
 
 packages:

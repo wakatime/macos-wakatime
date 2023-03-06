@@ -13,7 +13,7 @@ struct WakaTime: App {
         registerAsLoginItem()
         downloadCLI()
         requestA11yPermission()
-        setupCarbon()
+        // setupCarbon()
     }
 
     var body: some Scene {
@@ -47,7 +47,7 @@ struct WakaTime: App {
         let options: NSDictionary = [prompt: true]
         let appHasPermission = AXIsProcessTrustedWithOptions(options)
         if appHasPermission {
-            print("has a11y permission")
+            // print("has a11y permission")
         }
     }
     
