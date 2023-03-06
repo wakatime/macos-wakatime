@@ -21,4 +21,5 @@ If you’re prompted to enter your API Key, you can find that [here](https://wak
 ## Uninstall
 
 To uninstall, move `WakaTime.app` into your mac Trash.
+
 If you don’t use any other WakaTime plugins, run `rm -r ~/.wakatime*`.
