@@ -1,5 +1,7 @@
 # xcode-wakatime
 
+Mac system tray app for automatic time tracking and metrics generated from your Xcode activity.
+
 ## Install
 
 Download the [latest release](https://github.com/wakatime/xcode-wakatime/releases).
