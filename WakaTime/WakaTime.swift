@@ -18,6 +18,7 @@ struct WakaTime: App {
         downloadCLI()
         requestA11yPermission()
         // setupCarbon()
+        watcher.changeHandler = documentChanged
     }
 
     var body: some Scene {
