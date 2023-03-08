@@ -13,6 +13,7 @@ struct WakaTime: App {
     let version = Bundle.main.infoDictionary!["CFBundleShortVersionString"] as! String
 
     init() {
+        checkApiKey()
         registerAsLoginItem()
         downloadCLI()
         requestA11yPermission()
@@ -32,6 +33,14 @@ struct WakaTime: App {
         }
         Window("Settings", id:"settings") {
             SettingsView(apiKey: $settings.apiKey)
+        }
+    }
+    
+    private func checkApiKey() {
+        settings.apiKey = ConfigFile.getSetting(section: "settings", key: "api_key")
+        if settings.apiKey == "" {
+            openWindow(id: "settings")
+            NSApp.activate(ignoringOtherApps: true)
         }
     }
 
