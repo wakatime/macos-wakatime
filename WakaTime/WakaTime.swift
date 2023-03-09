@@ -17,7 +17,6 @@ struct WakaTime: App {
         registerAsLoginItem()
         downloadCLI()
         requestA11yPermission()
-        // setupCarbon()
         watcher.changeHandler = documentChanged
     }
 
@@ -38,11 +37,13 @@ struct WakaTime: App {
     }
     
     private func checkApiKey() {
+        /*
         settings.apiKey = ConfigFile.getSetting(section: "settings", key: "api_key")
         if settings.apiKey == "" {
             openWindow(id: "settings")
-            NSApp.activate(ignoringOtherApps: true)
+            NSApp?.activate(ignoringOtherApps: true)
         }
+        */
     }
 
     private func registerAsLoginItem() {
@@ -61,12 +62,6 @@ struct WakaTime: App {
         let appHasPermission = AXIsProcessTrustedWithOptions(options)
         if appHasPermission {
             // print("has a11y permission")
-        }
-    }
-    
-    private func setupCarbon() {
-        if let app = NSWorkspace.shared.frontmostApplication {
-            print(app.bundleIdentifier!)
         }
     }
     

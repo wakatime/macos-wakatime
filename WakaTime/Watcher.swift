@@ -16,6 +16,9 @@ class Watcher: NSObject {
     override init() {
         super.init()
         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(appChanged), name: NSWorkspace.didActivateApplicationNotification, object: nil)
+        if let app = NSWorkspace.shared.frontmostApplication {
+            handleAppChanged(app)
+        }
     }
     
     deinit {
@@ -25,15 +28,18 @@ class Watcher: NSObject {
     
     @objc private func appChanged(_ notification: Notification) {
         guard let newApp = notification.userInfo?["NSWorkspaceApplicationKey"] as? NSRunningApplication else { NSLog("Get new app failed"); return }
-        if newApp != activeApp {
-            NSLog("App changed from \(activeApp?.localizedName ?? "nil") to \(newApp.localizedName ?? "nil")")
-            if let newAppID = newApp.bundleIdentifier, Watcher.appIDsToWatch.contains(newAppID) {
-                changeHandler?(nil, false)
-                watch(app: newApp)
+        handleAppChanged(newApp)
+    }
+    
+    private func handleAppChanged(_ app: NSRunningApplication) {
+        if app != activeApp {
+            NSLog("App changed from \(activeApp?.localizedName ?? "nil") to \(app.localizedName ?? "nil")")
+            if let newAppID = app.bundleIdentifier, Watcher.appIDsToWatch.contains(newAppID) {
+                watch(app: app)
             } else if let oldApp = activeApp {
                 unwatch(app: oldApp)
             }
-            activeApp = newApp
+            activeApp = app
         }
     }
     
@@ -80,9 +86,12 @@ class Watcher: NSObject {
 fileprivate func observerCallback(_ observer: AXObserver, _ element: AXUIElement, _ notification: CFString, _ refcon: UnsafeMutableRawPointer?) {
     if let window = element.getValue(for: kAXWindowAttribute) {
         guard CFGetTypeID(element) == AXUIElementGetTypeID() else { return }
-        if let path = (window as! AXUIElement).getValue(for: kAXDocumentAttribute) as? String {
+        if var path = (window as! AXUIElement).getValue(for: kAXDocumentAttribute) as? String {
             guard let refcon else { return }
             let this = Unmanaged<Watcher>.fromOpaque(refcon).takeUnretainedValue()
+            if path.hasPrefix("file://") {
+                path = path.dropFirst(7).description
+            }
             this.documentChanged(path)
         }
     }
