@@ -8,7 +8,7 @@ class Watcher: NSObject {
     
     public var xcodeVersion: String? = nil
     public var changeHandler: ((_ path: String, _ isWrite: Bool) -> Void)?
-    public private(set) var activeApp: NSRunningApplication? = nil
+    private(set) var activeApp: NSRunningApplication? = nil
     private var observer: AXObserver?
     private var observingElement: AXUIElement?
     private var fileMonitor: FileMonitor?

@@ -13,20 +13,18 @@ struct WakaTime: App {
     let version = Bundle.main.infoDictionary!["CFBundleShortVersionString"] as! String
 
     init() {
-        checkApiKey()
         registerAsLoginItem()
         downloadCLI()
         requestA11yPermission()
         watcher.changeHandler = documentChanged
+        checkForApiKey()
     }
 
     var body: some Scene {
         MenuBarExtra("WakaTime", image:"WakaTime") {
             Button("Dashboard") { self.dashboard() }
             Button("Settings") {
-                openWindow(id: "settings")
-                NSApp.activate(ignoringOtherApps: true)
-                settings.apiKey = ConfigFile.getSetting(section: "settings", key: "api_key")
+                promptForApiKey()
             }
             Divider()
             Button("Quit") { self.quit() }
@@ -36,14 +34,17 @@ struct WakaTime: App {
         }
     }
     
-    private func checkApiKey() {
-        /*
-        settings.apiKey = ConfigFile.getSetting(section: "settings", key: "api_key")
-        if settings.apiKey == "" {
-            openWindow(id: "settings")
-            NSApp?.activate(ignoringOtherApps: true)
+    private func checkForApiKey() {
+        let apiKey = ConfigFile.getSetting(section: "settings", key: "api_key")
+        if apiKey == "" {
+            promptForApiKey()
         }
-        */
+    }
+    
+    private func promptForApiKey() {
+        openWindow(id: "settings")
+        NSApp.activate(ignoringOtherApps: true)
+        settings.apiKey = ConfigFile.getSetting(section: "settings", key: "api_key")
     }
 
     private func registerAsLoginItem() {
