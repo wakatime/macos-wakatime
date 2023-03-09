@@ -6,7 +6,8 @@ class Watcher: NSObject {
     private static let appIDsToWatch = ["com.apple.dt.Xcode"]
     private static let axNotificationName = kAXFocusedUIElementChangedNotification as CFString
     
-    public var changeHandler: ((_ path: String?, _ isWrite: Bool) -> Void)?
+    public var xcodeVersion: String? = nil
+    public var changeHandler: ((_ path: String, _ isWrite: Bool) -> Void)?
     public private(set) var activeApp: NSRunningApplication? = nil
     private var observer: AXObserver?
     private var observingElement: AXUIElement?
@@ -27,7 +28,7 @@ class Watcher: NSObject {
     
     
     @objc private func appChanged(_ notification: Notification) {
-        guard let newApp = notification.userInfo?["NSWorkspaceApplicationKey"] as? NSRunningApplication else { NSLog("Get new app failed"); return }
+        guard let newApp = notification.userInfo?["NSWorkspaceApplicationKey"] as? NSRunningApplication else { return }
         handleAppChanged(newApp)
     }
     
@@ -43,7 +44,21 @@ class Watcher: NSObject {
         }
     }
     
+    private func setXcodeVersion(_ app: NSRunningApplication) {
+        guard
+            let url = app.bundleURL,
+            let bundle = Bundle(url: url),
+            let info = bundle.infoDictionary
+        else { return }
+
+        let build = info["CFBundleVersion"] as! String
+        let version = info["CFBundleShortVersionString"] as! String
+        
+        xcodeVersion = "\(version)-\(build)"
+    }
+    
     private func watch(app: NSRunningApplication) {
+        setXcodeVersion(app)
         var error = AXObserverCreate(app.processIdentifier, observerCallback, &observer)
         guard error == .success else { NSLog("AXObserverCreateWithInfoCallback failed: \(error.rawValue)"); return }
         guard let observer else { return }

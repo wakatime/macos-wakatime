@@ -152,22 +152,25 @@ struct WakaTime: App {
         NSApp.terminate(self)
     }
     
-    private func shouldSendHeartbeat(file: String?, time: TimeInterval, isWrite: Bool) -> Bool {
-        guard let file = file else { return false }
+    private func shouldSendHeartbeat(file: String, time: TimeInterval, isWrite: Bool) -> Bool {
         return isWrite || file != lastFile || lastTime + 120 < time
     }
 
-    public func documentChanged(file: String?, isWrite: Bool = false) {
+    public func documentChanged(file: String, isWrite: Bool = false) {
         let time = NSDate().timeIntervalSince1970
         guard shouldSendHeartbeat(file: file, time: time, isWrite: isWrite) else { return }
+        guard let xcodeVersion = watcher.xcodeVersion else {
+            NSLog("Skipping \(file) because Xcode version unset.")
+            return
+        }
         
-        lastFile = file!
+        lastFile = file
         lastTime = time
         
         let cli = NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli"])
         let process = Process()
         process.launchPath = cli
-        var args = ["--entity", file!, "--plugin", "xcode/unknown xcode-wakatime/" + version]
+        var args = ["--entity", file, "--plugin", "xcode/\(xcodeVersion) xcode-wakatime/" + version]
         if isWrite {
             args.append("--write")
         }
