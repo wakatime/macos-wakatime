@@ -6,12 +6,12 @@ class Watcher: NSObject {
     private static let appIDsToWatch = ["com.apple.dt.Xcode"]
     private static let axNotificationName = kAXFocusedUIElementChangedNotification as CFString
     
-    public var xcodeVersion: String? = nil
+    public var xcodeVersion: String?
     public var changeHandler: ((_ path: String, _ isWrite: Bool) -> Void)?
-    private(set) var activeApp: NSRunningApplication? = nil
+    private var activeApp: NSRunningApplication?
     private var observer: AXObserver?
     private var observingElement: AXUIElement?
-    private var fileMonitor: FileMonitor?
+    private var folderMonitor: FolderMonitor?
     
     
     override init() {
@@ -87,12 +87,9 @@ class Watcher: NSObject {
     fileprivate func documentChanged(_ path: String) {
         NSLog("Document changed to \(path)")
         changeHandler?(path, false)
-        fileMonitor = nil
-        do {
-            try fileMonitor = FileMonitor(filePath: path)
-        }
-        catch {
-            NSLog("Failed to create FileMonitor: \(error.localizedDescription)")
+        folderMonitor = FolderMonitor(folderPath: (path as NSString).deletingLastPathComponent)
+        folderMonitor!.changeHandler = { [weak self] in
+            self?.changeHandler?(path, true)
         }
     }
 }
@@ -135,32 +132,31 @@ fileprivate extension AXUIElement {
 }
 
 
-
-fileprivate class FileMonitor {
-    private let fileURL: URL
-    private let fileHandle: FileHandle
-    private let fileObject: DispatchSourceFileSystemObject
+class FolderMonitor {
+    private let queue = DispatchQueue(label: "com.WakaTime.FolderMonitor.DispatchQueue", attributes: .concurrent)
+    private let url: URL
+    private var dispatchObject: DispatchSourceFileSystemObject?
     
-    public var changeHandler: ((_ path: String) -> Void)?
+    public var changeHandler: (() -> Void)?
     
-    init(filePath: String) throws {
-        fileURL = URL(string: filePath)!
-        fileHandle = try FileHandle(forReadingFrom: fileURL)
-        fileObject = DispatchSource.makeFileSystemObjectSource(fileDescriptor: fileHandle.fileDescriptor, eventMask: .extend, queue: .main)
-        fileObject.setEventHandler { [weak self] in
-            guard let self = self else { return }
-            self.changeHandler?(self.fileURL.path())
+    init?(folderPath: String) {
+        guard let folderURL = URL(string: folderPath) else { NSLog("Failed to crate url: \(folderPath)"); return nil }
+        self.url = folderURL
+        let descriptor = open(folderURL.path, O_EVTONLY)
+        guard descriptor >= -1 else { NSLog("open returned error: \(descriptor)"); return nil }
+        dispatchObject = DispatchSource.makeFileSystemObjectSource(fileDescriptor: descriptor, eventMask: .write, queue: queue)
+        dispatchObject?.setEventHandler { [weak self] in
+            self?.changeHandler?()
         }
-        fileObject.setCancelHandler { [weak self] in
-            self?.fileHandle.closeFile()
+        dispatchObject?.setCancelHandler {
+            close(descriptor)
         }
-        fileHandle.seekToEndOfFile()
-        fileObject.resume()
-        NSLog("Created FileMonitor for \(fileURL.path())")
+        dispatchObject?.resume()
+        NSLog("Created FolderMonitor for \(folderURL.path())")
     }
     
     deinit {
-        fileObject.cancel()
-        NSLog("Deleted FileMonitor for \(fileURL.path())")
+        dispatchObject?.cancel()
+        NSLog("Deleted FolderMonitor for \(url.path())")
     }
 }
