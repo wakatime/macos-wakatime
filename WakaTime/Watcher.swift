@@ -4,11 +4,13 @@ import AppKit
 class Watcher: NSObject {
     
     private static let appIDsToWatch = ["com.apple.dt.Xcode"]
-    private static let axNotificationName = kAXFocusedUIElementChangedNotification as CFString
     
-    public var xcodeVersion: String? = nil
+    private let callbackQueue = DispatchQueue(label: "com.WakaTime.Watcher.callbackQueue", qos: .utility)
+    private let monitorQueue = DispatchQueue(label: "com.WakaTime.Watcher.monitorQueue", qos: .utility)
+    
+    public var xcodeVersion: String?
     public var changeHandler: ((_ path: String, _ isWrite: Bool) -> Void)?
-    private(set) var activeApp: NSRunningApplication? = nil
+    private var activeApp: NSRunningApplication?
     private var observer: AXObserver?
     private var observingElement: AXUIElement?
     private var fileMonitor: FileMonitor?
@@ -59,40 +61,54 @@ class Watcher: NSObject {
     
     private func watch(app: NSRunningApplication) {
         setXcodeVersion(app)
-        var error = AXObserverCreate(app.processIdentifier, observerCallback, &observer)
-        guard error == .success else { NSLog("AXObserverCreateWithInfoCallback failed: \(error.rawValue)"); return }
-        guard let observer else { return }
-        
-        let this = Unmanaged.passUnretained(self).toOpaque()
-        observingElement = AXUIElementCreateApplication(app.processIdentifier)
-        error = AXObserverAddNotification(observer, observingElement!, Watcher.axNotificationName, this)
-        guard error == .success else { NSLog("AXObserverAddNotification failed: \(error.rawValue)"); return }
-        
-        observer.addToRunLoop()
-        
-        NSLog("Watching for file changes on \(app.localizedName!)")
+        do {
+            let observer = try AXObserver.create(appID: app.processIdentifier, callback: observerCallback)
+            let this = Unmanaged.passUnretained(self).toOpaque()
+            let element = AXUIElementCreateApplication(app.processIdentifier)
+            try observer.add(notification: kAXFocusedUIElementChangedNotification, element: element, refcon: this)
+            try observer.add(notification: kAXSelectedTextChangedNotification, element: element, refcon: this)
+            try observer.add(notification: kAXValueChangedNotification, element: element, refcon: this)
+            observer.addToRunLoop()
+            self.observer = observer
+            self.observingElement = element
+            NSLog("Watching for file changes on \(app.localizedName ?? "nil")")
+        }
+        catch {
+            NSLog("Failed to setup AXObserver: \(error.localizedDescription)")
+        }
     }
     
     private func unwatch(app: NSRunningApplication) {
         if let observer {
             observer.removeFromRunLoop()
-            guard let observingElement else { NSLog("observingElement should not be nil here"); return }
-            AXObserverRemoveNotification(observer, observingElement, Watcher.axNotificationName)
+            guard let observingElement else { fatalError("observingElement should not be nil here") }
+            try? observer.remove(notification: kAXFocusedUIElementChangedNotification, element: observingElement)
+            try? observer.remove(notification: kAXSelectedTextChangedNotification, element: observingElement)
+            try? observer.remove(notification: kAXValueChangedNotification, element: observingElement)
             self.observingElement = nil
             self.observer = nil
-            NSLog("Stopped watching \(app.localizedName!)")
+            NSLog("Stopped watching \(app.localizedName ?? "nil")")
         }
     }
     
-    fileprivate func documentChanged(_ path: String) {
-        NSLog("Document changed to \(path)")
-        changeHandler?(path, false)
-        fileMonitor = nil
-        do {
-            try fileMonitor = FileMonitor(filePath: path)
+    fileprivate var documentPath: String? {
+        didSet {
+            if documentPath != oldValue {
+                guard let newPath = documentPath else { return }
+                documentChanged(path: newPath, isWrite: false)
+                fileMonitor = nil
+                fileMonitor = FileMonitor(filePath: newPath, queue: monitorQueue)
+                fileMonitor?.changeHandler = { [weak self] in
+                    self?.documentChanged(path: newPath, isWrite: true)
+                }
+            }
         }
-        catch {
-            NSLog("Failed to create FileMonitor: \(error.localizedDescription)")
+    }
+    
+    private func documentChanged(path: String, isWrite: Bool) {
+        callbackQueue.async {
+            NSLog("Document changed: \(path) isWrite: \(isWrite)")
+            self.changeHandler?(path, isWrite)
         }
     }
 }
@@ -107,22 +123,55 @@ fileprivate func observerCallback(_ observer: AXObserver, _ element: AXUIElement
             if path.hasPrefix("file://") {
                 path = path.dropFirst(7).description
             }
-            this.documentChanged(path)
+            this.documentPath = path
         }
     }
 }
 
 
 fileprivate extension AXObserver {
-    func addToRunLoop() {
-        CFRunLoopAddSource(RunLoop.current.getCFRunLoop(), AXObserverGetRunLoopSource(self), .defaultMode)
-        NSLog("Added AXObserver \(self) to run loop")
+    static func create(appID: pid_t, callback: AXObserverCallback) throws -> AXObserver  {
+        var observer: AXObserver?
+        let error = AXObserverCreate(appID, callback, &observer)
+        guard error == .success else { throw AXObserverError.createFailed(error) }
+        guard let observer else { throw AXObserverError.createFailed(error) }
+        return observer
     }
     
-    func removeFromRunLoop() {
-        CFRunLoopRemoveSource(RunLoop.current.getCFRunLoop(), AXObserverGetRunLoopSource(self), .defaultMode)
-        NSLog("Removed AXObserver \(self) from run loop")
+    func add(notification: String, element: AXUIElement, refcon: UnsafeMutableRawPointer?) throws {
+        let error = AXObserverAddNotification(self, element, notification as CFString, refcon)
+        guard error == .success else {
+            NSLog("Add notification \(notification) failed: \(error.rawValue)")
+            throw AXObserverError.addNotificationFailed(error)
+        }
+        NSLog("Added notification \(notification) to observer \(self)")
     }
+    
+    func remove(notification: String, element: AXUIElement) throws {
+        let error = AXObserverRemoveNotification(self, element, notification as CFString)
+        guard error == .success else {
+            NSLog("Remove notification \(notification) failed: \(error.rawValue)")
+            throw AXObserverError.removeNotificationFailed(error)
+        }
+        NSLog("Removed notification \(notification) from observer \(self)")
+    }
+    
+    func addToRunLoop(mode: CFRunLoopMode = .defaultMode) {
+        CFRunLoopAddSource(RunLoop.current.getCFRunLoop(), AXObserverGetRunLoopSource(self), mode)
+        NSLog("Added observer \(self) to run loop")
+    }
+    
+    func removeFromRunLoop(mode: CFRunLoopMode = .defaultMode) {
+        CFRunLoopRemoveSource(RunLoop.current.getCFRunLoop(), AXObserverGetRunLoopSource(self), mode)
+        NSLog("Removed observer \(self) from run loop")
+    }
+}
+
+
+fileprivate enum AXObserverError: Error {
+    case createFailed(AXError)
+    case addNotificationFailed(AXError)
+    case removeNotificationFailed(AXError)
 }
 
 
@@ -135,32 +184,31 @@ fileprivate extension AXUIElement {
 }
 
 
-
-fileprivate class FileMonitor {
+class FileMonitor {
     private let fileURL: URL
-    private let fileHandle: FileHandle
-    private let fileObject: DispatchSourceFileSystemObject
+    private var dispatchObject: DispatchSourceFileSystemObject?
     
-    public var changeHandler: ((_ path: String) -> Void)?
+    public var changeHandler: (() -> Void)?
     
-    init(filePath: String) throws {
-        fileURL = URL(string: filePath)!
-        fileHandle = try FileHandle(forReadingFrom: fileURL)
-        fileObject = DispatchSource.makeFileSystemObjectSource(fileDescriptor: fileHandle.fileDescriptor, eventMask: .extend, queue: .main)
-        fileObject.setEventHandler { [weak self] in
-            guard let self = self else { return }
-            self.changeHandler?(self.fileURL.path())
+    
+    init?(filePath: String, queue: DispatchQueue) {
+        fileURL = URL(fileURLWithPath: filePath)
+        let folderURL = fileURL.deletingLastPathComponent() // monitor enclosing folder to track changes by Xcode
+        let descriptor = open(folderURL.path, O_EVTONLY)
+        guard descriptor >= -1 else { NSLog("open failed: \(descriptor)"); return nil }
+        dispatchObject = DispatchSource.makeFileSystemObjectSource(fileDescriptor: descriptor, eventMask: .write, queue: queue)
+        dispatchObject?.setEventHandler { [weak self] in
+            self?.changeHandler?()
         }
-        fileObject.setCancelHandler { [weak self] in
-            self?.fileHandle.closeFile()
+        dispatchObject?.setCancelHandler {
+            close(descriptor)
         }
-        fileHandle.seekToEndOfFile()
-        fileObject.resume()
+        dispatchObject?.activate()
         NSLog("Created FileMonitor for \(fileURL.path())")
     }
     
     deinit {
-        fileObject.cancel()
+        dispatchObject?.cancel()
         NSLog("Deleted FileMonitor for \(fileURL.path())")
     }
 }
