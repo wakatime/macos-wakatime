@@ -5,12 +5,15 @@ class Watcher: NSObject {
     
     private static let appIDsToWatch = ["com.apple.dt.Xcode"]
     
+    private let callbackQueue = DispatchQueue(label: "com.WakaTime.Watcher.callbackQueue", qos: .utility)
+    private let monitorQueue = DispatchQueue(label: "com.WakaTime.Watcher.monitorQueue", qos: .utility)
+    
     public var xcodeVersion: String?
     public var changeHandler: ((_ path: String, _ isWrite: Bool) -> Void)?
     private var activeApp: NSRunningApplication?
     private var observer: AXObserver?
     private var observingElement: AXUIElement?
-    private var folderMonitor: FolderMonitor?
+    private var fileMonitor: FileMonitor?
     
     
     override init() {
@@ -68,7 +71,7 @@ class Watcher: NSObject {
             observer.addToRunLoop()
             self.observer = observer
             self.observingElement = element
-            NSLog("Watching for file changes on \(app.localizedName!)")
+            NSLog("Watching for file changes on \(app.localizedName ?? "nil")")
         }
         catch {
             NSLog("Failed to setup AXObserver: \(error.localizedDescription)")
@@ -84,36 +87,34 @@ class Watcher: NSObject {
             try? observer.remove(notification: kAXValueChangedNotification, element: observingElement)
             self.observingElement = nil
             self.observer = nil
-            NSLog("Stopped watching \(app.localizedName!)")
+            NSLog("Stopped watching \(app.localizedName ?? "nil")")
         }
     }
     
-    fileprivate func documentChanged(_ path: String) {
-        NSLog("Document changed to \(path)")
-        changeHandler?(path, false)
-        folderMonitor = FolderMonitor(folderPath: (path as NSString).deletingLastPathComponent)
-        folderMonitor!.changeHandler = { [weak self] in
-            self?.changeHandler?(path, true)
+    fileprivate var documentPath: String? {
+        didSet {
+            if documentPath != oldValue {
+                guard let newPath = documentPath else { return }
+                documentChanged(path: newPath, isWrite: false)
+                fileMonitor = nil
+                fileMonitor = FileMonitor(filePath: newPath, queue: monitorQueue)
+                fileMonitor?.changeHandler = { [weak self] in
+                    self?.documentChanged(path: newPath, isWrite: true)
+                }
+            }
+        }
+    }
+    
+    private func documentChanged(path: String, isWrite: Bool) {
+        callbackQueue.async {
+            NSLog("Document changed: \(path) isWrite: \(isWrite)")
+            self.changeHandler?(path, isWrite)
         }
     }
 }
 
 
 fileprivate func observerCallback(_ observer: AXObserver, _ element: AXUIElement, _ notification: CFString, _ refcon: UnsafeMutableRawPointer?) {
-    // BEGIN debug value- and text selection changes
-    NSLog(notification as String)
-    switch notification as String {
-    case kAXFocusedUIElementChangedNotification:
-        break // goto if let window
-    case kAXSelectedTextChangedNotification:
-        return
-    case kAXValueChangedNotification:
-        return
-    default:
-        fatalError()
-    }
-    // END debug
-    
     if let window = element.getValue(for: kAXWindowAttribute) {
         guard CFGetTypeID(element) == AXUIElementGetTypeID() else { return }
         if var path = (window as! AXUIElement).getValue(for: kAXDocumentAttribute) as? String {
@@ -122,7 +123,7 @@ fileprivate func observerCallback(_ observer: AXObserver, _ element: AXUIElement
             if path.hasPrefix("file://") {
                 path = path.dropFirst(7).description
             }
-            this.documentChanged(path)
+            this.documentPath = path
         }
     }
 }
@@ -183,18 +184,18 @@ fileprivate extension AXUIElement {
 }
 
 
-class FolderMonitor {
-    private let queue = DispatchQueue(label: "com.WakaTime.FolderMonitor.DispatchQueue", attributes: .concurrent)
-    private let url: URL
+class FileMonitor {
+    private let fileURL: URL
     private var dispatchObject: DispatchSourceFileSystemObject?
     
     public var changeHandler: (() -> Void)?
     
-    init?(folderPath: String) {
-        guard let folderURL = URL(string: folderPath) else { NSLog("Failed to crate url: \(folderPath)"); return nil }
-        self.url = folderURL
+    
+    init?(filePath: String, queue: DispatchQueue) {
+        fileURL = URL(fileURLWithPath: filePath)
+        let folderURL = fileURL.deletingLastPathComponent() // monitor enclosing folder to track changes by Xcode
         let descriptor = open(folderURL.path, O_EVTONLY)
-        guard descriptor >= -1 else { NSLog("open returned error: \(descriptor)"); return nil }
+        guard descriptor >= -1 else { NSLog("open failed: \(descriptor)"); return nil }
         dispatchObject = DispatchSource.makeFileSystemObjectSource(fileDescriptor: descriptor, eventMask: .write, queue: queue)
         dispatchObject?.setEventHandler { [weak self] in
             self?.changeHandler?()
@@ -202,12 +203,12 @@ class FolderMonitor {
         dispatchObject?.setCancelHandler {
             close(descriptor)
         }
-        dispatchObject?.resume()
-        NSLog("Created FolderMonitor for \(folderURL.path())")
+        dispatchObject?.activate()
+        NSLog("Created FileMonitor for \(fileURL.path())")
     }
     
     deinit {
         dispatchObject?.cancel()
-        NSLog("Deleted FolderMonitor for \(url.path())")
+        NSLog("Deleted FileMonitor for \(fileURL.path())")
     }
 }
