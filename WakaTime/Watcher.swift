@@ -4,7 +4,6 @@ import AppKit
 class Watcher: NSObject {
     
     private static let appIDsToWatch = ["com.apple.dt.Xcode"]
-    private static let axNotificationName = kAXFocusedUIElementChangedNotification as CFString
     
     public var xcodeVersion: String?
     public var changeHandler: ((_ path: String, _ isWrite: Bool) -> Void)?
@@ -59,25 +58,30 @@ class Watcher: NSObject {
     
     private func watch(app: NSRunningApplication) {
         setXcodeVersion(app)
-        var error = AXObserverCreate(app.processIdentifier, observerCallback, &observer)
-        guard error == .success else { NSLog("AXObserverCreateWithInfoCallback failed: \(error.rawValue)"); return }
-        guard let observer else { return }
-        
-        let this = Unmanaged.passUnretained(self).toOpaque()
-        observingElement = AXUIElementCreateApplication(app.processIdentifier)
-        error = AXObserverAddNotification(observer, observingElement!, Watcher.axNotificationName, this)
-        guard error == .success else { NSLog("AXObserverAddNotification failed: \(error.rawValue)"); return }
-        
-        observer.addToRunLoop()
-        
-        NSLog("Watching for file changes on \(app.localizedName!)")
+        do {
+            let observer = try AXObserver.create(appID: app.processIdentifier, callback: observerCallback)
+            let this = Unmanaged.passUnretained(self).toOpaque()
+            let element = AXUIElementCreateApplication(app.processIdentifier)
+            try observer.add(notification: kAXFocusedUIElementChangedNotification, element: element, refcon: this)
+            try observer.add(notification: kAXSelectedTextChangedNotification, element: element, refcon: this)
+            try observer.add(notification: kAXValueChangedNotification, element: element, refcon: this)
+            observer.addToRunLoop()
+            self.observer = observer
+            self.observingElement = element
+            NSLog("Watching for file changes on \(app.localizedName!)")
+        }
+        catch {
+            NSLog("Failed to setup AXObserver: \(error.localizedDescription)")
+        }
     }
     
     private func unwatch(app: NSRunningApplication) {
         if let observer {
             observer.removeFromRunLoop()
-            guard let observingElement else { NSLog("observingElement should not be nil here"); return }
-            AXObserverRemoveNotification(observer, observingElement, Watcher.axNotificationName)
+            guard let observingElement else { fatalError("observingElement should not be nil here") }
+            try? observer.remove(notification: kAXFocusedUIElementChangedNotification, element: observingElement)
+            try? observer.remove(notification: kAXSelectedTextChangedNotification, element: observingElement)
+            try? observer.remove(notification: kAXValueChangedNotification, element: observingElement)
             self.observingElement = nil
             self.observer = nil
             NSLog("Stopped watching \(app.localizedName!)")
@@ -96,6 +100,20 @@ class Watcher: NSObject {
 
 
 fileprivate func observerCallback(_ observer: AXObserver, _ element: AXUIElement, _ notification: CFString, _ refcon: UnsafeMutableRawPointer?) {
+    // BEGIN debug value- and text selection changes
+    NSLog(notification as String)
+    switch notification as String {
+    case kAXFocusedUIElementChangedNotification:
+        break // goto if let window
+    case kAXSelectedTextChangedNotification:
+        return
+    case kAXValueChangedNotification:
+        return
+    default:
+        fatalError()
+    }
+    // END debug
+    
     if let window = element.getValue(for: kAXWindowAttribute) {
         guard CFGetTypeID(element) == AXUIElementGetTypeID() else { return }
         if var path = (window as! AXUIElement).getValue(for: kAXDocumentAttribute) as? String {
@@ -111,15 +129,48 @@ fileprivate func observerCallback(_ observer: AXObserver, _ element: AXUIElement
 
 
 fileprivate extension AXObserver {
-    func addToRunLoop() {
-        CFRunLoopAddSource(RunLoop.current.getCFRunLoop(), AXObserverGetRunLoopSource(self), .defaultMode)
-        NSLog("Added AXObserver \(self) to run loop")
+    static func create(appID: pid_t, callback: AXObserverCallback) throws -> AXObserver  {
+        var observer: AXObserver?
+        let error = AXObserverCreate(appID, callback, &observer)
+        guard error == .success else { throw AXObserverError.createFailed(error) }
+        guard let observer else { throw AXObserverError.createFailed(error) }
+        return observer
     }
     
-    func removeFromRunLoop() {
-        CFRunLoopRemoveSource(RunLoop.current.getCFRunLoop(), AXObserverGetRunLoopSource(self), .defaultMode)
-        NSLog("Removed AXObserver \(self) from run loop")
+    func add(notification: String, element: AXUIElement, refcon: UnsafeMutableRawPointer?) throws {
+        let error = AXObserverAddNotification(self, element, notification as CFString, refcon)
+        guard error == .success else {
+            NSLog("Add notification \(notification) failed: \(error.rawValue)")
+            throw AXObserverError.addNotificationFailed(error)
+        }
+        NSLog("Added notification \(notification) to observer \(self)")
     }
+    
+    func remove(notification: String, element: AXUIElement) throws {
+        let error = AXObserverRemoveNotification(self, element, notification as CFString)
+        guard error == .success else {
+            NSLog("Remove notification \(notification) failed: \(error.rawValue)")
+            throw AXObserverError.removeNotificationFailed(error)
+        }
+        NSLog("Removed notification \(notification) from observer \(self)")
+    }
+    
+    func addToRunLoop(mode: CFRunLoopMode = .defaultMode) {
+        CFRunLoopAddSource(RunLoop.current.getCFRunLoop(), AXObserverGetRunLoopSource(self), mode)
+        NSLog("Added observer \(self) to run loop")
+    }
+    
+    func removeFromRunLoop(mode: CFRunLoopMode = .defaultMode) {
+        CFRunLoopRemoveSource(RunLoop.current.getCFRunLoop(), AXObserverGetRunLoopSource(self), mode)
+        NSLog("Removed observer \(self) from run loop")
+    }
+}
+
+
+fileprivate enum AXObserverError: Error {
+    case createFailed(AXError)
+    case addNotificationFailed(AXError)
+    case removeNotificationFailed(AXError)
 }
 
 
