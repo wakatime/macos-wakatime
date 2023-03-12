@@ -28,7 +28,6 @@ class Watcher: NSObject {
         NSWorkspace.shared.notificationCenter.removeObserver(self) // needed prior macOS 11 only
     }
     
-    
     @objc private func appChanged(_ notification: Notification) {
         guard let newApp = notification.userInfo?["NSWorkspaceApplicationKey"] as? NSRunningApplication else { return }
         handleAppChanged(newApp)
@@ -66,8 +65,8 @@ class Watcher: NSObject {
             let this = Unmanaged.passUnretained(self).toOpaque()
             let element = AXUIElementCreateApplication(app.processIdentifier)
             try observer.add(notification: kAXFocusedUIElementChangedNotification, element: element, refcon: this)
-            try observer.add(notification: kAXSelectedTextChangedNotification, element: element, refcon: this)
-            try observer.add(notification: kAXValueChangedNotification, element: element, refcon: this)
+            //try observer.add(notification: kAXSelectedTextChangedNotification, element: element, refcon: this)
+            //try observer.add(notification: kAXValueChangedNotification, element: element, refcon: this)
             observer.addToRunLoop()
             self.observer = observer
             self.observingElement = element
