@@ -29,7 +29,7 @@ struct WakaTime: App {
             Divider()
             Button("Quit") { self.quit() }
         }
-        Window("Settings", id:"settings") {
+        Window("WakaTime Settings", id: "settings") {
             SettingsView(apiKey: $settings.apiKey)
         }
     }

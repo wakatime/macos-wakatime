@@ -11,28 +11,25 @@ struct SettingsView: View {
             VStack {
                 Text("WakaTime API Key:")
                 TextField("apikey", text: $apiKey)
-                List {
-                    HStack {
-                        Button("Save") {
-                            ConfigFile.setSetting(section: "settings", key: "api_key", val: $apiKey.wrappedValue)
-                            dismiss()
-                        }
-                        Button("Cancel") {
-                            dismiss()
-                        }
+                HStack {
+                    Button("Save") {
+                        ConfigFile.setSetting(section: "settings", key: "api_key", val: $apiKey.wrappedValue)
+                        dismiss()
                     }
+                    .keyboardShortcut(.defaultAction)
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .keyboardShortcut(.cancelAction)
                 }
             }
+            .padding()
         }
         .task {
-            for window in NSApplication.shared.windows {
-                guard window.identifier?.rawValue == "settings" else { continue }
-                window.standardWindowButton(.zoomButton)?.isEnabled = false
-                window.standardWindowButton(.closeButton)?.isEnabled = false
-                window.standardWindowButton(.miniaturizeButton)?.isEnabled = false
-                window.standardWindowButton(.zoomButton)?.isHidden = true
-                window.standardWindowButton(.closeButton)?.isHidden = true
-                window.standardWindowButton(.miniaturizeButton)?.isHidden = true
+            if let window = NSApplication.shared.windows.first(where: { $0.identifier?.rawValue == "settings" }) {
+                window.styleMask.insert(.closable)
+                window.styleMask.remove(.miniaturizable)
+                window.styleMask.remove(.resizable)
                 window.setFrame(NSRect(x: window.frame.origin.x, y: window.frame.origin.y, width: 400, height: 140), display: true)
             }
         }
