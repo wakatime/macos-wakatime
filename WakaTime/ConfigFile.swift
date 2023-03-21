@@ -8,15 +8,22 @@
 import Foundation
 
 struct ConfigFile {
+    private static var filePath: String {
+        NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime.cfg"])
+    }
 
-    static func getSetting(section: String, key: String) -> String {
-        let file = NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime.cfg"])
+    private static var filePathInternal: String {
+        NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime-internal.cfg"])
+    }
+
+    static func getSetting(section: String, key: String, internalConfig: Bool = false) -> String? {
+        let file = internalConfig ? Self.filePathInternal : Self.filePath
         let contents: String
         do {
             contents = try String(contentsOfFile: file)
         } catch {
             print("Failed reading \(file): " + error.localizedDescription)
-            return ""
+            return nil
         }
         let lines = contents.split(separator:"\n")
         
@@ -31,11 +38,11 @@ struct ConfigFile {
                 }
             }
         }
-        return ""
+        return nil
     }
     
-    static func setSetting(section: String, key: String, val: String) {
-        let file = NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime.cfg"])
+    static func setSetting(section: String, key: String, val: String, internalConfig: Bool = false) {
+        let file = internalConfig ? Self.filePathInternal : Self.filePath
         let contents: String
         do {
             contents = try String(contentsOfFile: file)
