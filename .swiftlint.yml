@@ -1,0 +1,160 @@
+#
+# .swiftlint.yml
+#
+#
+
+disabled_rules:
+  - inclusive_language
+  - nesting
+  - redundant_string_enum_value
+  - todo
+  - trailing_comma
+  - type_body_length
+  - vertical_parameter_alignment
+  # 36 false positives. Will disable weak_delegate rule for now
+  - weak_delegate
+
+opt_in_rules:
+  - array_init
+  - closure_end_indentation
+  - closure_spacing
+  - contains_over_first_not_nil
+  - empty_count
+  - explicit_enum_raw_value
+  - explicit_init
+  - fatal_error_message
+  - first_where
+  - force_unwrapping
+  - implicit_return
+  - literal_expression_end_indentation
+  - operator_usage_whitespace
+  - overridden_super_call
+  - override_in_extension
+  - private_outlet
+  - redundant_nil_coalescing
+  - sorted_first_last
+  - strict_fileprivate
+  - trailing_closure
+  - unneeded_parentheses_in_closure_argument
+
+excluded:
+  - Carthage
+  - Pods
+  - ThirdParty
+  - Vendor
+  - Scripts
+  - Generated
+  - fastlane
+  - build
+
+force_cast: error
+force_try: error
+force_unwrapping: error
+
+trailing_whitespace:
+  ignores_empty_lines: false
+  severity: warning
+trailing_newline: error
+trailing_semicolon: error
+
+vertical_whitespace:
+  max_empty_lines: 1
+  severity: warning
+
+comma: error
+colon:
+  severity: error
+opening_brace: error
+empty_count: error
+legacy_constructor: error
+statement_position:
+  statement_mode: default
+  severity: error
+legacy_constant: error
+
+type_name:
+  min_length: 3
+  max_length:
+    warning: 45
+    error: 50
+  excluded:
+    - T
+
+identifier_name:
+  max_length:
+    warning: 40
+    error: 50
+  min_length:
+    error: 3
+  excluded:
+    - x
+    - y
+    - z
+    - i
+    - j
+    - at
+    - on
+    - id
+    - db
+    - rs
+    - to
+    - in
+    - me
+    - up
+    - dx
+    - dy
+    - preferredInterfaceOrientationForPresentation
+
+function_parameter_count:
+  warning: 10
+  error: 10
+
+line_length:
+  warning: 140
+  error: 140
+
+function_body_length:
+  warning: 150
+  error: 200
+
+file_length:
+  warning: 1000
+  error: 1000
+
+cyclomatic_complexity:
+  warning: 30
+  error: 30
+
+large_tuple:
+  warning: 4
+  error: 5
+
+switch_case_alignment:
+  indented_cases: true
+
+reporter: 'xcode'
+
+custom_rules:
+  comments_space:
+    name: 'Space After Comment'
+    regex: '(^ *//\w+)'
+    message: 'There should be a space after //'
+    severity: warning
+
+  empty_first_line:
+    name: 'Empty First Line'
+    regex: '(^[ a-zA-Z ]*(?:protocol|extension|class|struct|func) [ a-zA-Z0-9:,<>\.\(\)\"-=`]*\{\n( *)?\n)'
+    message: 'There should not be an empty line after a declaration'
+    severity: error
+
+  empty_line_after_guard:
+    name: 'Empty Line After Guard'
+    regex: '(^ *guard[ a-zA-Z0-9=?.\(\),><!`]*\{[ a-zA-Z0-9=?.\(\),><!`\"]*\}\n *(?!(?:return|guard))\S+)'
+    message: 'There should be an empty line after a guard'
+    severity: error
+
+  empty_line_after_super:
+    name: 'Empty Line After Super'
+    regex: '(^ *super\.[ a-zA-Z0-9=?.\(\)\{\}:,><!`\"]*\n *(?!(?:\}|return))\S+)'
+    message: 'There should be an empty line after super'
+    severity: error
