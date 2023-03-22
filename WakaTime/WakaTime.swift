@@ -12,6 +12,10 @@ struct WakaTime: App {
     let watcher = Watcher()
     let version = Bundle.main.infoDictionary!["CFBundleShortVersionString"] as! String
 
+    enum Constants {
+        static let settingsDeepLink: String = "wakatime://settings"
+    }
+
     init() {
         registerAsLoginItem()
         self.isCLILatest { [self] isLatest in
@@ -31,15 +35,15 @@ struct WakaTime: App {
             Divider()
             Button("Quit") { self.quit() }
         }
-        Window("WakaTime Settings", id: "settings") {
+        WindowGroup("WakaTime Settings", id: "settings") {
             SettingsView(apiKey: $settings.apiKey)
-        }
+        }.handlesExternalEvents(matching: ["settings"])
     }
     
     private func checkForApiKey() {
         let apiKey = ConfigFile.getSetting(section: "settings", key: "api_key")
-        if apiKey == nil {
-            promptForApiKey()
+        if (apiKey ?? "").isEmpty {
+            openSettingsDeeplink()
         }
     }
     
@@ -47,6 +51,12 @@ struct WakaTime: App {
         openWindow(id: "settings")
         NSApp.activate(ignoringOtherApps: true)
         settings.apiKey = ConfigFile.getSetting(section: "settings", key: "api_key") ?? ""
+    }
+
+    private func openSettingsDeeplink() {
+        if let url = URL(string: Constants.settingsDeepLink) {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     private func registerAsLoginItem() {

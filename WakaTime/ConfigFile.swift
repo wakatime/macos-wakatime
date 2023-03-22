@@ -58,20 +58,35 @@ struct ConfigFile {
         let lines = contents.split(separator:"\n")
         var output: [String] = []
         var currentSection = ""
+        var found = false
         for line in lines {
             if line.hasPrefix("[") && line.hasSuffix("]") {
+                if (currentSection == section && !found) {
+                    output.append(key + " = " + val)
+                    found = true
+                }
                 output.append(String(line))
                 currentSection = String(line.dropFirst().dropLast())
             } else if currentSection == section {
                 let parts = line.split(separator: "=", maxSplits: 2)
                 if parts.count == 2 && parts[0].trimmingCharacters(in: .whitespacesAndNewlines) == key {
-                    output.append(key + " = " + val)
+                    if (!found) {
+                        output.append(key + " = " + val)
+                        found = true
+                    }
                 } else {
                     output.append(String(line))
                 }
             } else {
                 output.append(String(line))
             }
+        }
+        
+        if (!found) {
+            if (currentSection != section) {
+                output.append("[" + section + "]")
+            }
+            output.append(key + " = " + val)
         }
          
         do {
