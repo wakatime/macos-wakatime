@@ -42,7 +42,7 @@ struct WakaTime: App {
     
     private func checkForApiKey() {
         let apiKey = ConfigFile.getSetting(section: "settings", key: "api_key")
-        if (apiKey ?? "").isEmpty {
+        if apiKey.isEmpty {
             openSettingsDeeplink()
         }
     }
@@ -272,4 +272,12 @@ struct WakaTime: App {
         process.standardError = FileHandle.nullDevice
         process.launch()
     }
+}
+
+extension Optional where Wrapped: Collection {
+
+    var isEmpty: Bool {
+        return self?.isEmpty ?? true
+    }
+
 }
