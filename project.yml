@@ -1,7 +1,7 @@
 name: WakaTime
 
 options:
-  bundleIdPrefix: xcode-wakatime
+  bundleIdPrefix: macos-wakatime
   createIntermediateGroups: true
   preGenCommand: ./install_linter.sh
 
