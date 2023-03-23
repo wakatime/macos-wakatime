@@ -37,15 +37,8 @@ opt_in_rules:
   - trailing_closure
   - unneeded_parentheses_in_closure_argument
 
-excluded:
-  - Carthage
-  - Pods
-  - ThirdParty
-  - Vendor
-  - Scripts
-  - Generated
-  - fastlane
-  - build
+included:
+  - WakaTime
 
 force_cast: error
 force_try: error
