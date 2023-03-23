@@ -23,3 +23,6 @@ targets:
       DEVELOPMENT_TEAM: ${SV_DEVELOPMENT_TEAM}
       ENABLE_HARDENED_RUNTIME: YES
       DEAD_CODE_STRIPPING: YES
+    postCompileScripts:
+      - script: ./Scripts/SwiftLint/swiftlint lint --quiet
+        name: Swiftlint

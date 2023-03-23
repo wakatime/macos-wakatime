@@ -82,7 +82,7 @@ struct WakaTime: App {
             // print("has a11y permission")
         }
     }
-    
+
     private static func getLatestVersion() async throws -> String? {
         struct Release: Decodable {
             let tagName: String
@@ -90,7 +90,7 @@ struct WakaTime: App {
                 case tagName = "tag_name"
             }
         }
-        
+
         let apiUrl = "https://api.github.com/repos/wakatime/wakatime-cli/releases/latest"
         var request = URLRequest(url: URL(string: apiUrl)!, cachePolicy: .reloadIgnoringCacheData)
         let lastModified = ConfigFile.getSetting(section: "internal", key: "cli_version_last_modified", internalConfig: true)
@@ -100,6 +100,7 @@ struct WakaTime: App {
         }
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else { return nil }
+
         if httpResponse.statusCode == 304 {
             // Current version is still the latest version available
             return currentVersion
@@ -114,10 +115,13 @@ struct WakaTime: App {
             return nil
         }
     }
-    
+
     private static func isCLILatest() async -> Bool {
-        let cli = NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli"])
+        let cli = NSString.path(
+            withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli"]
+        )
         guard FileManager.default.fileExists(atPath: cli) else { return false }
+
         let outputPipe = Pipe()
         let process = Process()
         process.launchPath = cli
@@ -132,7 +136,7 @@ struct WakaTime: App {
         }
         let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
         let output = String(decoding: outputData, as: UTF8.self)
-        let version = output.firstMatch(of: /([0-9]+\.[0-9]+\.[0-9]+)/)
+        let version = output.firstMatch(of: /([0 - 9] + \.[0 - 9] + \.[0 - 9]+)/)
         let remoteVersion = try? await getLatestVersion()
         guard let remoteVersion else {
             // Could not retrieve remote version
@@ -146,7 +150,7 @@ struct WakaTime: App {
             return false
         }
     }
-    
+
     private static func downloadCLI() {
         let dir = NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime"])
         if !FileManager.default.fileExists(atPath: dir) {
