@@ -17,7 +17,7 @@ struct ConfigFile {
     }
 
     static func getSetting(section: String, key: String, internalConfig: Bool = false) -> String? {
-        let file = internalConfig ? Self.filePathInternal : Self.filePath
+        let file = internalConfig ? filePathInternal : filePath
         let contents: String
         do {
             contents = try String(contentsOfFile: file)
@@ -42,7 +42,7 @@ struct ConfigFile {
     }
     
     static func setSetting(section: String, key: String, val: String, internalConfig: Bool = false) {
-        let file = internalConfig ? Self.filePathInternal : Self.filePath
+        let file = internalConfig ? filePathInternal : filePath
         let contents: String
         do {
             contents = try String(contentsOfFile: file)
