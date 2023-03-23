@@ -3,7 +3,7 @@ name: WakaTime
 options:
   bundleIdPrefix: macos-wakatime
   createIntermediateGroups: true
-  preGenCommand: ./pre_xcodegen.sh
+  preGenCommand: swift build
 
 packages:
   WakaTime:

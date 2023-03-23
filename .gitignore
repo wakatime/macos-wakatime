@@ -2,3 +2,5 @@
 *.xcodeproj
 xcuserdata/
 Mint/
+.build/
+Package.resolved
