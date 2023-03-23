@@ -18,8 +18,10 @@ struct WakaTime: App {
 
     init() {
         registerAsLoginItem()
-        self.isCLILatest { [self] isLatest in
-            if !isLatest { self.downloadCLI() }
+        Task {
+            if !(await Self.isCLILatest()) {
+                Self.downloadCLI()
+            }
         }
         requestA11yPermission()
         watcher.changeHandler = documentChanged
@@ -78,7 +80,7 @@ struct WakaTime: App {
         }
     }
     
-    private func getLatestVersion(completion: @escaping ((String?, Error?) -> Void)) {
+    private static func getLatestVersion() async throws -> String? {
         struct Release: Decodable {
             let tagName: String
             private enum CodingKeys: String, CodingKey {
@@ -93,39 +95,26 @@ struct WakaTime: App {
         if let lastModified, currentVersion != nil {
             request.setValue(lastModified, forHTTPHeaderField: "If-Modified-Since")
         }
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            guard let data, let httpResponse = response as? HTTPURLResponse else {
-                completion(nil, error)
-                return
-            }
-            if httpResponse.statusCode == 304 {
-                DispatchQueue.main.async {
-                    // Current version is still the latest version available
-                    completion(currentVersion, nil)
-                }
-            } else if let lastModified = httpResponse.value(forHTTPHeaderField: "Last-Modified"),
-                      let release = try? JSONDecoder().decode(Release.self, from: data) {
-                // Remote version successfully decoded
-                ConfigFile.setSetting(section: "internal", key: "cli_version_last_modified", val: lastModified, internalConfig: true)
-                ConfigFile.setSetting(section: "internal", key: "cli_version", val: release.tagName, internalConfig: true)
-                DispatchQueue.main.async {
-                    completion(release.tagName, nil)
-                }
-            } else {
-                DispatchQueue.main.async {
-                    // Unexpected response
-                    completion(nil, nil)
-                }
-            }
-        }.resume()
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else { return nil }
+        if httpResponse.statusCode == 304 {
+            // Current version is still the latest version available
+            return currentVersion
+        } else if let lastModified = httpResponse.value(forHTTPHeaderField: "Last-Modified"),
+                  let release = try? JSONDecoder().decode(Release.self, from: data) {
+            // Remote version successfully decoded
+            ConfigFile.setSetting(section: "internal", key: "cli_version_last_modified", val: lastModified, internalConfig: true)
+            ConfigFile.setSetting(section: "internal", key: "cli_version", val: release.tagName, internalConfig: true)
+            return release.tagName
+        } else {
+            // Unexpected response
+            return nil
+        }
     }
     
-    private func isCLILatest(completion: @escaping (Bool) -> Void) {
+    private static func isCLILatest() async -> Bool {
         let cli = NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli"])
-        guard FileManager.default.fileExists(atPath: cli) else {
-            completion(false)
-            return
-        }
+        guard FileManager.default.fileExists(atPath: cli) else { return false }
         let outputPipe = Pipe()
         let process = Process()
         process.launchPath = cli
@@ -136,29 +125,26 @@ struct WakaTime: App {
             try process.run()
         } catch {
             // Error running CLI process
-            completion(false)
-            return
+            return false
         }
         let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
         let output = String(decoding: outputData, as: UTF8.self)
         let version = output.firstMatch(of: /([0-9]+\.[0-9]+\.[0-9]+)/)
-        getLatestVersion { remoteVersion, error in
-            guard let remoteVersion, error == nil else {
-                // Could not retrieve remote version
-                completion(true)
-                return
-            }
-            if let version, "v" + version.0 == remoteVersion {
-                // Local version up to date
-                completion(true)
-            } else {
-                // Newer version available
-                completion(false)
-            }
+        let remoteVersion = try? await getLatestVersion()
+        guard let remoteVersion else {
+            // Could not retrieve remote version
+            return true
+        }
+        if let version, "v" + version.0 == remoteVersion {
+            // Local version up to date
+            return true
+        } else {
+            // Newer version available
+            return false
         }
     }
     
-    private func downloadCLI() {
+    private static func downloadCLI() {
         let dir = NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime"])
         if !FileManager.default.fileExists(atPath: dir) {
             do {
@@ -220,7 +206,7 @@ struct WakaTime: App {
         }.resume()
     }
     
-    private func architecture() -> String {
+    private static func architecture() -> String {
         var systeminfo = utsname()
         uname(&systeminfo)
         let machine = withUnsafeBytes(of: &systeminfo.machine) {bufPtr->String in
