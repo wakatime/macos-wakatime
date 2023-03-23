@@ -3,11 +3,11 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    
+
     @Binding var apiKey: String
-    
+
     var body: some View {
-        GeometryReader { geometry in
+        GeometryReader { _ in
             VStack {
                 Text("WakaTime API Key:")
                 TextField("apikey", text: $apiKey)
@@ -36,6 +36,6 @@ struct SettingsView: View {
     }
 }
 
-class SettingsModel : ObservableObject {
+class SettingsModel: ObservableObject {
     @Published var apiKey = ""
 }
