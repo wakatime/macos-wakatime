@@ -18,6 +18,8 @@ If you’re prompted to enter your API Key, you can find that [here](https://wak
 2. Open the project with Xcode.
 3. Click Run (⌘+R) or Build (⌘+B).
 
+If you run into Accessibility problems, try running `sudo tccutil reset Accessibility`.
+
 ## Uninstall
 
 To uninstall, move `WakaTime.app` into your mac Trash.
