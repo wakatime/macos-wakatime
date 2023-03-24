@@ -1,0 +1,20 @@
+name: Build
+
+on: pull_request
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Install xcodegen
+        run: brew install xcodegen
+      -
+        name: Generate Project
+        run: xcodegen
+      -
+        name: Build App
+        run: xcodebuild
