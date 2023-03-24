@@ -27,7 +27,7 @@ struct WakaTime: App {
             }
         }
         requestA11yPermission()
-        watcher.changeHandler = documentChanged
+        watcher.eventHandler = documentChanged
         checkForApiKey()
     }
 

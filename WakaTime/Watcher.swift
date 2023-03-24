@@ -9,7 +9,7 @@ class Watcher: NSObject {
     private let monitorQueue = DispatchQueue(label: "com.WakaTime.Watcher.monitorQueue", qos: .utility)
 
     public var xcodeVersion: String?
-    public var changeHandler: ((_ path: String, _ isWrite: Bool) -> Void)?
+    public var eventHandler: ((_ path: String, _ isWrite: Bool) -> Void)?
     private var activeApp: NSRunningApplication?
     private var observer: AXObserver?
     private var observingElement: AXUIElement?
@@ -74,7 +74,6 @@ class Watcher: NSObject {
             let element = AXUIElementCreateApplication(app.processIdentifier)
             try observer.add(notification: kAXFocusedUIElementChangedNotification, element: element, refcon: this)
             try observer.add(notification: kAXSelectedTextChangedNotification, element: element, refcon: this)
-            try observer.add(notification: kAXValueChangedNotification, element: element, refcon: this)
             observer.addToRunLoop()
             self.observer = observer
             self.observingElement = element
@@ -103,20 +102,20 @@ class Watcher: NSObject {
             if documentPath != oldValue {
                 guard let newPath = documentPath else { return }
 
-                documentChanged(path: newPath, isWrite: false)
+                handleEvent(path: newPath, isWrite: false)
                 fileMonitor = nil
                 fileMonitor = FileMonitor(filePath: newPath, queue: monitorQueue)
-                fileMonitor?.changeHandler = { [weak self] in
-                    self?.documentChanged(path: newPath, isWrite: true)
+                fileMonitor?.eventHandler = { [weak self] in
+                    self?.handleEvent(path: newPath, isWrite: true)
                 }
             }
         }
     }
 
-    private func documentChanged(path: String, isWrite: Bool) {
+    private func handleEvent(path: String, isWrite: Bool) {
         callbackQueue.async {
             NSLog("Document changed: \(path) isWrite: \(isWrite)")
-            self.changeHandler?(path, isWrite)
+            self.eventHandler?(path, isWrite)
         }
     }
 }
@@ -127,35 +126,43 @@ private func observerCallback(
     _ notification: CFString,
     _ refcon: UnsafeMutableRawPointer?
 ) {
-    let notificationString = notification as String
-    switch notificationString {
-        case "AXValueChanged":
-            // TODO: - Find what type of action to monitor
-            if let valueDescription = element.valueDescription {
-                print("value description: \(valueDescription)")
-            }
-        case "AXSelectedTextChanged":
-            if let selectedText = element.selectedText, !selectedText.isEmpty {
-                print("Selected text changed:  \(selectedText)")
-            }
-        case "AXFocusedUIElementChanged":
-            if let window = element.getValue(for: kAXWindowAttribute) {
-                guard CFGetTypeID(element) == AXUIElementGetTypeID() else { return }
+    guard let refcon = refcon else { return }
 
-                if var path = (window as! AXUIElement).getValue(for: kAXDocumentAttribute) as? String {
-                    guard let refcon else { return }
+    let axNotification = AXUIElementNotification.notificationFrom(string: notification as String)
+    let this = Unmanaged<Watcher>.fromOpaque(refcon).takeUnretainedValue()
 
-                    let this = Unmanaged<Watcher>.fromOpaque(refcon).takeUnretainedValue()
-                    if path.hasPrefix("file://") {
-                        path = path.dropFirst(7).description
-                    }
-                    this.documentPath = path
-                    print("have new document path: \(path)")
-                }
-            }
+    switch axNotification {
+        case .selectedTextChanged:
+            guard
+                let currentPath = getCurrentPath(element: element, refcon: refcon),
+                let selectedText = element.selectedText,
+                !selectedText.isEmpty
+            else { return }
+
+                this.eventHandler?(currentPath, false)
+                print("Selected text changed: \(selectedText)")
+        case .focusedUIElementChanged:
+            guard let currentPath = getCurrentPath(element: element, refcon: refcon) else { return }
+
+            this.documentPath = currentPath
+            print("have new document path: \(currentPath)")
         default:
             break
     }
+}
+
+private func getCurrentPath(element: AXUIElement, refcon: UnsafeMutableRawPointer?) -> String? {
+    if let window = element.getValue(for: kAXWindowAttribute) {
+        guard CFGetTypeID(element) == AXUIElementGetTypeID() else { return nil }
+
+        if var path = (window as! AXUIElement).getValue(for: kAXDocumentAttribute) as? String {
+            if path.hasPrefix("file://") {
+                path = path.dropFirst(7).description
+            }
+           return path
+        }
+    }
+    return nil
 }
 
 extension AXObserver {
@@ -210,9 +217,6 @@ extension AXUIElement {
     var selectedText: String? {
         rawValue(for: kAXSelectedTextAttribute) as? String
     }
-    var valueDescription: String? {
-        rawValue(for: kAXValueAttribute) as? String
-    }
 
     func rawValue(for attribute: String) -> AnyObject? {
         var rawValue: AnyObject?
@@ -231,7 +235,7 @@ class FileMonitor {
     private let fileURL: URL
     private var dispatchObject: DispatchSourceFileSystemObject?
 
-    public var changeHandler: (() -> Void)?
+    public var eventHandler: (() -> Void)?
 
     init?(filePath: String, queue: DispatchQueue) {
         fileURL = URL(fileURLWithPath: filePath)
@@ -240,7 +244,7 @@ class FileMonitor {
         guard descriptor >= -1 else { NSLog("open failed: \(descriptor)"); return nil }
         dispatchObject = DispatchSource.makeFileSystemObjectSource(fileDescriptor: descriptor, eventMask: .write, queue: queue)
         dispatchObject?.setEventHandler { [weak self] in
-            self?.changeHandler?()
+            self?.eventHandler?()
         }
         dispatchObject?.setCancelHandler {
             close(descriptor)
@@ -252,5 +256,22 @@ class FileMonitor {
     deinit {
         dispatchObject?.cancel()
         NSLog("Deleted FileMonitor for \(fileURL.path())")
+    }
+}
+
+enum AXUIElementNotification {
+    case selectedTextChanged
+    case focusedUIElementChanged
+    case uknown
+
+    static func notificationFrom(string notification: String) -> AXUIElementNotification {
+        switch notification {
+            case "AXSelectedTextChanged":
+                return .selectedTextChanged
+            case "AXFocusedUIElementChanged":
+                return .focusedUIElementChanged
+            default:
+                return .uknown
+        }
     }
 }
