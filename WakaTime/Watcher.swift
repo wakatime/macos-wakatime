@@ -133,19 +133,14 @@ private func observerCallback(
 
     switch axNotification {
         case .selectedTextChanged:
-            guard
-                let currentPath = getCurrentPath(element: element, refcon: refcon),
-                let selectedText = element.selectedText,
-                !selectedText.isEmpty
-            else { return }
+            guard let currentPath = getCurrentPath(element: element, refcon: refcon) else { return }
 
                 this.eventHandler?(currentPath, false)
-                print("Selected text changed: \(selectedText)")
+                // print("Selected text changed: \(element.selectedText)")
         case .focusedUIElementChanged:
             guard let currentPath = getCurrentPath(element: element, refcon: refcon) else { return }
 
             this.documentPath = currentPath
-            print("have new document path: \(currentPath)")
         default:
             break
     }
