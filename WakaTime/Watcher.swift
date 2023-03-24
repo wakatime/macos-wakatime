@@ -14,6 +14,7 @@ class Watcher: NSObject {
     private var observer: AXObserver?
     private var observingElement: AXUIElement?
     private var fileMonitor: FileMonitor?
+    private var selectedText: String?
 
     override init() {
         super.init()
@@ -72,8 +73,8 @@ class Watcher: NSObject {
             let this = Unmanaged.passUnretained(self).toOpaque()
             let element = AXUIElementCreateApplication(app.processIdentifier)
             try observer.add(notification: kAXFocusedUIElementChangedNotification, element: element, refcon: this)
-            // try observer.add(notification: kAXSelectedTextChangedNotification, element: element, refcon: this)
-            // try observer.add(notification: kAXValueChangedNotification, element: element, refcon: this)
+            try observer.add(notification: kAXSelectedTextChangedNotification, element: element, refcon: this)
+            try observer.add(notification: kAXValueChangedNotification, element: element, refcon: this)
             observer.addToRunLoop()
             self.observer = observer
             self.observingElement = element
@@ -126,18 +127,34 @@ private func observerCallback(
     _ notification: CFString,
     _ refcon: UnsafeMutableRawPointer?
 ) {
-    if let window = element.getValue(for: kAXWindowAttribute) {
-        guard CFGetTypeID(element) == AXUIElementGetTypeID() else { return }
-
-        if var path = (window as! AXUIElement).getValue(for: kAXDocumentAttribute) as? String {
-            guard let refcon else { return }
-
-            let this = Unmanaged<Watcher>.fromOpaque(refcon).takeUnretainedValue()
-            if path.hasPrefix("file://") {
-                path = path.dropFirst(7).description
+    let notificationString = notification as String
+    switch notificationString {
+        case "AXValueChanged":
+            // TODO: - Find what type of action to monitor
+            if let valueDescription = element.valueDescription {
+                print("value description: \(valueDescription)")
             }
-            this.documentPath = path
-        }
+        case "AXSelectedTextChanged":
+            if let selectedText = element.selectedText, !selectedText.isEmpty {
+                print("Selected text changed:  \(selectedText)")
+            }
+        case "AXFocusedUIElementChanged":
+            if let window = element.getValue(for: kAXWindowAttribute) {
+                guard CFGetTypeID(element) == AXUIElementGetTypeID() else { return }
+
+                if var path = (window as! AXUIElement).getValue(for: kAXDocumentAttribute) as? String {
+                    guard let refcon else { return }
+
+                    let this = Unmanaged<Watcher>.fromOpaque(refcon).takeUnretainedValue()
+                    if path.hasPrefix("file://") {
+                        path = path.dropFirst(7).description
+                    }
+                    this.documentPath = path
+                    print("have new document path: \(path)")
+                }
+            }
+        default:
+            break
     }
 }
 
@@ -190,6 +207,19 @@ private enum AXObserverError: Error {
 }
 
 extension AXUIElement {
+    var selectedText: String? {
+        rawValue(for: kAXSelectedTextAttribute) as? String
+    }
+    var valueDescription: String? {
+        rawValue(for: kAXValueAttribute) as? String
+    }
+
+    func rawValue(for attribute: String) -> AnyObject? {
+        var rawValue: AnyObject?
+        let error = AXUIElementCopyAttributeValue(self, attribute as CFString, &rawValue)
+        return error == .success ? rawValue : nil
+    }
+
     func getValue(for attribute: String) -> CFTypeRef? {
         var result: CFTypeRef?
         guard AXUIElementCopyAttributeValue(self, attribute as CFString, &result) == .success else { return nil }
