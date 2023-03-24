@@ -27,7 +27,7 @@ struct WakaTime: App {
             }
         }
         requestA11yPermission()
-        watcher.changeHandler = documentChanged
+        watcher.eventHandler = handleEvent
         checkForApiKey()
     }
 
@@ -251,13 +251,11 @@ struct WakaTime: App {
         isWrite || file != lastFile || lastTime + 120 < time
     }
 
-    public func documentChanged(file: String, isWrite: Bool = false) {
+    public func handleEvent(file: String, isWrite: Bool = false) {
+        guard let xcodeVersion = watcher.xcodeVersion else { return }
+
         let time = NSDate().timeIntervalSince1970
         guard shouldSendHeartbeat(file: file, time: time, isWrite: isWrite) else { return }
-        guard let xcodeVersion = watcher.xcodeVersion else {
-            NSLog("Skipping \(file) because Xcode version unset.")
-            return
-        }
 
         lastFile = file
         lastTime = time
