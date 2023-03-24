@@ -17,7 +17,7 @@ targets:
     sources: [WakaTime]
     settings:
       CURRENT_PROJECT_VERSION: 2
-      MARKETING_VERSION: 0.1.1
+      MARKETING_VERSION: 0.0.1
       INFOPLIST_FILE: WakaTime/WakaTime-Info.plist
       GENERATE_INFOPLIST_FILE: YES
       CODE_SIGN_STYLE: Automatic
