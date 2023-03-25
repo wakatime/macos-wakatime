@@ -3,4 +3,5 @@
 xcuserdata/
 Mint/
 .build/
+build/
 Package.resolved
