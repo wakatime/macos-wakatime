@@ -114,7 +114,7 @@ class Watcher: NSObject {
 
     private func handleEvent(path: String, isWrite: Bool) {
         callbackQueue.async {
-            NSLog("Document changed: \(path) isWrite: \(isWrite)")
+            NSLog("Document changed: \(URL(string: path)?.formatted() ?? path) isWrite: \(isWrite)")
             self.eventHandler?(path, isWrite)
         }
     }
@@ -249,12 +249,12 @@ class FileMonitor {
             close(descriptor)
         }
         dispatchObject?.activate()
-        NSLog("Created FileMonitor for \(fileURL.formatted(.url))")
+        NSLog("Created FileMonitor for \(fileURL.formatted())")
     }
 
     deinit {
         dispatchObject?.cancel()
-        NSLog("Deleted FileMonitor for \(fileURL.formatted(.url))")
+        NSLog("Deleted FileMonitor for \(fileURL.formatted())")
     }
 }
 
