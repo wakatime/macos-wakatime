@@ -1,4 +1,4 @@
-# xcode-wakatime
+# macos-wakatime
 
 Mac system tray app for automatic time tracking and metrics generated from your Xcode activity.
 
@@ -31,6 +31,16 @@ If you don’t use any other WakaTime plugins, run `rm -r ~/.wakatime*`.
 
 To fix linter warning(s), run `swiftlint --fix`.
 
+## Contributing
+
+Pull requests and issues are welcome!
+See [Contributing][contributing] for more details.
+
+Many thanks to all [contributors][authors]!
+
+Made with :heart: by the WakaTime Team.
 
 [api key]: https://wakatime.com/api-key
 [dashboard]: https://wakatime.com/
+[contributing]: CONTRIBUTING.md
+[authors]: AUTHORS
