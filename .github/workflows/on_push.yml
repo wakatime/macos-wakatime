@@ -128,16 +128,28 @@ jobs:
         name: Zip
         run: ditto -c -k --sequesterRsrc --keepParent WakaTime.app WakaTime.zip
       -
-        name: Create release
-        uses: softprops/action-gh-release@v1
+        name: Upload artifacts
+        uses: actions/upload-artifact@v3
         with:
           name: app
-          path: WakaTime.zip
+          path: ./WakaTime.zip
+      -
+        name: Remove tag if failure
+        if: ${{ failure() }}
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            github.rest.git.deleteRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: "tags/${{ needs.version.outputs.semver_tag }}"
+            })
 
   release:
     name: Release
     runs-on: ubuntu-latest
-    needs: [sign]
+    needs: [version, sign]
     steps:
       -
         name: Checkout
