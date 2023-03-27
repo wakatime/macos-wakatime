@@ -22,14 +22,8 @@ jobs:
         name: Generate project
         run: xcodegen
       -
-        name: Build app
+        name: Build app to run linters
         run: xcodebuild
-      -
-        name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: app
-          path: build/Debug/WakaTime.app
 
   version:
     name: Version
@@ -55,7 +49,8 @@ jobs:
           prerelease_id: alpha
           develop_branch_name: main
           main_branch_name: release
-      - name: Create tag
+      - 
+        name: Create tag
         uses: actions/github-script@v6
         with:
           github-token: ${{ github.token }}
@@ -75,12 +70,25 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v3
-      -
-        name: Download artifacts
-        uses: actions/download-artifact@v3
+      - 
+        name: Update project.yml
+        uses: fjogeleit/yaml-update-action@main
         with:
-          name: app
-          path: WakaTime.app/
+          valueFile: './project.yml'
+          propertyPath: 'targets.WakaTime.settings.MARKETING_VERSION'
+          value: ${{ needs.version.outputs.semver_tag }}
+          commitChange: true
+          branch: ${{ github.ref }}
+          message: "Update MARKETING_VERSION to ${{ needs.version.outputs.semver_tag }}"
+      -
+        name: Install xcodegen via Homebrew for linting and building xcode project
+        run: brew install xcodegen
+      -
+        name: Generate project
+        run: xcodegen
+      -
+        name: Build app to run linters
+        run: xcodebuild
       -
         name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v1
@@ -91,7 +99,7 @@ jobs:
           p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
       - 
         name: Codesign app bundle
-        run: /usr/bin/codesign --force -s "WakaTime" --options runtime WakaTime.app -v
+        run: /usr/bin/codesign --force -s "WakaTime" --options runtime build/Debug/WakaTime.app -v
       - 
         name: Notarize app bundle
         env:
@@ -110,7 +118,7 @@ jobs:
           # notarization service
 
           echo "Creating temp notarization archive"
-          ditto -c -k --keepParent "WakaTime.app" "notarization.zip"
+          ditto -c -k --keepParent "build/Debug/WakaTime.app" "notarization.zip"
 
           # Here we send the notarization request to the Apple's Notarization service, waiting for the result.
           # This typically takes a few seconds inside a CI environment, but it might take more depending on the App
@@ -123,10 +131,10 @@ jobs:
           # Finally, we need to "attach the staple" to our executable, which will allow our app to be
           # validated by macOS even when an internet connection is not available.
           echo "Attach staple"
-          xcrun stapler staple "WakaTime.app"
+          xcrun stapler staple "build/Debug/WakaTime.app"
       -
         name: Zip
-        run: ditto -c -k --sequesterRsrc --keepParent WakaTime.app WakaTime.zip
+        run: ditto -c -k --sequesterRsrc --keepParent build/Debug/WakaTime.app WakaTime.zip
       -
         name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -200,16 +208,6 @@ jobs:
           files: ./WakaTime.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - 
-        name: Update project.yml
-        uses: fjogeleit/yaml-update-action@main
-        with:
-          valueFile: 'project.yml'
-          propertyPath: 'targets.WakaTime.settings.MARKETING_VERSION'
-          value: ${{ needs.version.outputs.semver_tag }}
-          commitChange: true
-          branch: ${{ github.ref }}
-          message: "Update MARKETING_VERSION to ${{ needs.version.outputs.semver_tag }}"
       -
         name: Remove tag if failure
         if: ${{ failure() }}
