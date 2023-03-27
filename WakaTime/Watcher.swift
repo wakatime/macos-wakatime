@@ -133,7 +133,10 @@ private func observerCallback(
 
     switch axNotification {
         case .selectedTextChanged:
-            guard let currentPath = getCurrentPath(element: element, refcon: refcon) else { return }
+            guard
+                let currentPath = getCurrentPath(element: element, refcon: refcon),
+                !element.selectedText.isEmpty
+            else { return }
 
                 this.eventHandler?(currentPath, false)
                 // print("Selected text changed: \(element.selectedText)")
