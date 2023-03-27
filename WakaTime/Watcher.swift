@@ -237,6 +237,7 @@ class FileMonitor {
 
     init?(filePath: String, queue: DispatchQueue) {
         guard let fileURL = URL(string: filePath) else { NSLog("No valid path: \(filePath)"); return nil }
+
         self.fileURL = fileURL
         let folderURL = fileURL.deletingLastPathComponent() // monitor enclosing folder to track changes by Xcode
         let descriptor = open(folderURL.path, O_EVTONLY)
