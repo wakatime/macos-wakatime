@@ -103,11 +103,11 @@ class Watcher: NSObject {
                 guard let newPath = documentPath else { return }
 
                 handleEvent(path: newPath, isWrite: false)
-                /*fileMonitor = nil
+                fileMonitor = nil
                 fileMonitor = FileMonitor(filePath: newPath, queue: monitorQueue)
                 fileMonitor?.eventHandler = { [weak self] in
                     self?.handleEvent(path: newPath, isWrite: true)
-                }*/
+                }
             }
         }
     }
@@ -236,7 +236,8 @@ class FileMonitor {
     public var eventHandler: (() -> Void)?
 
     init?(filePath: String, queue: DispatchQueue) {
-        fileURL = URL(fileURLWithPath: filePath)
+        guard let fileURL = URL(string: filePath) else { NSLog("No valid path: \(filePath)"); return nil }
+        self.fileURL = fileURL
         let folderURL = fileURL.deletingLastPathComponent() // monitor enclosing folder to track changes by Xcode
         let descriptor = open(folderURL.path, O_EVTONLY)
         guard descriptor >= -1 else { NSLog("open failed: \(descriptor)"); return nil }
@@ -248,12 +249,12 @@ class FileMonitor {
             close(descriptor)
         }
         dispatchObject?.activate()
-        NSLog("Created FileMonitor for \(fileURL.path())")
+        NSLog("Created FileMonitor for \(fileURL.formatted(.url))")
     }
 
     deinit {
         dispatchObject?.cancel()
-        NSLog("Deleted FileMonitor for \(fileURL.path())")
+        NSLog("Deleted FileMonitor for \(fileURL.formatted(.url))")
     }
 }
 
