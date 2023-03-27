@@ -103,11 +103,11 @@ class Watcher: NSObject {
                 guard let newPath = documentPath else { return }
 
                 handleEvent(path: newPath, isWrite: false)
-                fileMonitor = nil
+                /*fileMonitor = nil
                 fileMonitor = FileMonitor(filePath: newPath, queue: monitorQueue)
                 fileMonitor?.eventHandler = { [weak self] in
                     self?.handleEvent(path: newPath, isWrite: true)
-                }
+                }*/
             }
         }
     }
