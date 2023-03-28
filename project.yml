@@ -3,7 +3,6 @@ name: WakaTime
 options:
   bundleIdPrefix: macos-wakatime
   createIntermediateGroups: true
-  preGenCommand: swift build
 
 targets:
   WakaTime:
@@ -21,5 +20,5 @@ targets:
       ENABLE_HARDENED_RUNTIME: YES
       DEAD_CODE_STRIPPING: YES
     postCompileScripts:
-      - script: ./.build/artifacts/swiftlint/SwiftLintBinary.artifactbundle/swiftlint-0.51.0-macos/bin/swiftlint lint --quiet
+      - script: ./Scripts/Lint/swiftlint lint --quiet
         name: Swiftlint
