@@ -5,3 +5,4 @@ Mint/
 .build/
 build/
 Package.resolved
+.vscode/
