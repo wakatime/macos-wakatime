@@ -9,7 +9,7 @@ struct WakaTime: App {
     @Environment(\.openWindow) private var openWindow
 
     @StateObject private var settings = SettingsModel()
-    @State private var lastFile: String = ""
+    @State private var lastFile: URL?
     @State private var lastTime: TimeInterval = 0
 
     let watcher = Watcher()
@@ -247,11 +247,11 @@ struct WakaTime: App {
         NSApp.terminate(self)
     }
 
-    private func shouldSendHeartbeat(file: String, time: TimeInterval, isWrite: Bool) -> Bool {
+    private func shouldSendHeartbeat(file: URL, time: TimeInterval, isWrite: Bool) -> Bool {
         isWrite || file != lastFile || lastTime + 120 < time
     }
 
-    public func handleEvent(file: String, isWrite: Bool = false) {
+    public func handleEvent(file: URL, isWrite: Bool = false) {
         guard let xcodeVersion = watcher.xcodeVersion else { return }
 
         let time = NSDate().timeIntervalSince1970
@@ -265,7 +265,7 @@ struct WakaTime: App {
         )
         let process = Process()
         process.launchPath = cli
-        var args = ["--entity", file, "--plugin", "xcode/\(xcodeVersion) xcode-wakatime/" + version]
+        var args = ["--entity", file.formatted(), "--plugin", "xcode/\(xcodeVersion) xcode-wakatime/" + version]
         if isWrite {
             args.append("--write")
         }

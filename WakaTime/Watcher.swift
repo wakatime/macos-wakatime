@@ -9,7 +9,7 @@ class Watcher: NSObject {
     private let monitorQueue = DispatchQueue(label: "com.WakaTime.Watcher.monitorQueue", qos: .utility)
 
     public var xcodeVersion: String?
-    public var eventHandler: ((_ path: String, _ isWrite: Bool) -> Void)?
+    public var eventHandler: ((_ path: URL, _ isWrite: Bool) -> Void)?
     private var activeApp: NSRunningApplication?
     private var observer: AXObserver?
     private var observingElement: AXUIElement?
@@ -97,7 +97,7 @@ class Watcher: NSObject {
         }
     }
 
-    var documentPath: String? {
+    var documentPath: URL? {
         didSet {
             if documentPath != oldValue {
                 guard let newPath = documentPath else { return }
@@ -112,9 +112,9 @@ class Watcher: NSObject {
         }
     }
 
-    private func handleEvent(path: String, isWrite: Bool) {
+    private func handleEvent(path: URL, isWrite: Bool) {
         callbackQueue.async {
-            NSLog("Document changed: \(URL(string: path)?.formatted() ?? path) isWrite: \(isWrite)")
+            NSLog("Document changed: \(path.formatted()) isWrite: \(isWrite)")
             self.eventHandler?(path, isWrite)
         }
     }
@@ -149,7 +149,7 @@ private func observerCallback(
     }
 }
 
-private func getCurrentPath(element: AXUIElement, refcon: UnsafeMutableRawPointer?) -> String? {
+private func getCurrentPath(element: AXUIElement, refcon: UnsafeMutableRawPointer?) -> URL? {
     if let window = element.getValue(for: kAXWindowAttribute) {
         guard CFGetTypeID(element) == AXUIElementGetTypeID() else { return nil }
 
@@ -157,7 +157,8 @@ private func getCurrentPath(element: AXUIElement, refcon: UnsafeMutableRawPointe
             if path.hasPrefix("file://") {
                 path = path.dropFirst(7).description
             }
-           return path
+
+           return URL(string: path)
         }
     }
     return nil
@@ -235,10 +236,8 @@ class FileMonitor {
 
     public var eventHandler: (() -> Void)?
 
-    init?(filePath: String, queue: DispatchQueue) {
-        guard let fileURL = URL(string: filePath) else { NSLog("No valid path: \(filePath)"); return nil }
-
-        self.fileURL = fileURL
+    init?(filePath: URL, queue: DispatchQueue) {
+        self.fileURL = filePath
         let folderURL = fileURL.deletingLastPathComponent() // monitor enclosing folder to track changes by Xcode
         let descriptor = open(folderURL.path, O_EVTONLY)
         guard descriptor >= -1 else { NSLog("open failed: \(descriptor)"); return nil }
