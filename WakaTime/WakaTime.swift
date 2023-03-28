@@ -65,14 +65,12 @@ struct WakaTime: App {
     }
 
     private func registerAsLoginItem() {
-        guard
-            SMAppService.mainApp.status == .notFound,
-            SMAppService.mainApp.status != .enabled,
-            SMAppService.mainApp.status != .requiresApproval
-        else { return }
+        let loginItem = SMAppService.loginItem(identifier: "macos-wakatime.WakaTime")
+        
+        guard loginItem.status == .notFound else { return }
 
         do {
-            try SMAppService.mainApp.register()
+            try loginItem.register()
         } catch let error {
             print(error)
         }
