@@ -20,5 +20,5 @@ targets:
       ENABLE_HARDENED_RUNTIME: YES
       DEAD_CODE_STRIPPING: YES
     postCompileScripts:
-      - script: ./Scripts/SwiftLint/swiftlint lint --quiet
+      - script: ./Scripts/Lint/swiftlint lint --quiet
         name: Swiftlint
