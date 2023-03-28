@@ -74,12 +74,11 @@ jobs:
         name: Update project.yml
         uses: fjogeleit/yaml-update-action@main
         with:
-          valueFile: './project.yml'
+          valueFile: 'project.yml'
           propertyPath: 'targets.WakaTime.settings.MARKETING_VERSION'
           value: ${{ needs.version.outputs.semver_tag }}
           commitChange: true
-          branch: ${{ github.ref }}
-          masterBranchName: ${{ github.ref }}
+          branch: ${{ github.ref_name }}
           message: "Update MARKETING_VERSION to ${{ needs.version.outputs.semver_tag }}"
       -
         name: Install xcodegen via Homebrew for linting and building xcode project
