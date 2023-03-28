@@ -163,6 +163,31 @@ jobs:
         with:
           fetch-depth: 0
       -
+        # Run only for main branch
+        if: ${{ github.ref == 'refs/heads/main' }}
+        name: Changelog for main
+        uses: gandarez/changelog-action@v1.2.0
+        id: changelog-main
+        with:
+          current_tag: ${{ github.sha }}
+          previous_tag: ${{ needs.version.outputs.ancestor_tag }}
+          exclude: |
+            ^Merge pull request .*
+      -
+        # Run only for release branch
+        if: ${{ github.ref == 'refs/heads/release' }}
+        name: Get related pull request
+        uses: 8BitJonny/gh-get-current-pr@2.2.0
+        id: changelog-release
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Prepare changelog
+        id: changelog
+        run: |
+          echo "${{ steps.changelog-main.outputs.changelog || steps.changelog-release.outputs.pr_body }}" > changelog.txt
+          ./bin/prepare_changelog.sh $(echo ${GITHUB_REF#refs/heads/}) "$(cat changelog.txt)"
+      -
         name: Download artifacts
         uses: actions/download-artifact@v3
         with:
@@ -174,6 +199,7 @@ jobs:
         with:
           name: ${{ needs.version.outputs.semver_tag }}
           tag_name: ${{ needs.version.outputs.semver_tag }}
+          body: "## Changelog\n${{ steps.changelog.outputs.changelog }}"
           prerelease: ${{ needs.version.outputs.is_prerelease }}
           target_commitish: ${{ github.sha }}
           draft: false
@@ -192,4 +218,3 @@ jobs:
               repo: context.repo.repo,
               ref: "tags/${{ needs.version.outputs.semver_tag }}"
             })
-
