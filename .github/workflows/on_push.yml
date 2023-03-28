@@ -49,7 +49,7 @@ jobs:
           prerelease_id: alpha
           develop_branch_name: main
           main_branch_name: release
-      - 
+      -
         name: Create tag
         uses: actions/github-script@v6
         with:
@@ -70,14 +70,14 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v3
-      - 
+      -
         name: Update project.yml
         uses: fjogeleit/yaml-update-action@main
         with:
           valueFile: 'project.yml'
           propertyPath: 'targets.WakaTime.settings.MARKETING_VERSION'
           value: ${{ needs.version.outputs.semver_tag }}
-          commitChange: true
+          commitChange: false
           branch: ${{ github.ref_name }}
           message: "Update MARKETING_VERSION to ${{ needs.version.outputs.semver_tag }}"
       -
@@ -97,10 +97,10 @@ jobs:
           p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
           # The password used to import the PKCS12 file.
           p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
-      - 
+      -
         name: Codesign app bundle
         run: /usr/bin/codesign --force -s "WakaTime" --options runtime build/Debug/WakaTime.app -v
-      - 
+      -
         name: Notarize app bundle
         env:
           NOTARIZATION_APPLE_ID: ${{ secrets.AC_USERNAME }}
