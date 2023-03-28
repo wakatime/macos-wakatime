@@ -275,3 +275,4 @@ enum AXUIElementNotification {
         }
     }
 }
+// swiftlint:enable force_cast

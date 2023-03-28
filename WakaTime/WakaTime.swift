@@ -281,3 +281,6 @@ extension Optional where Wrapped: Collection {
         self?.isEmpty ?? true
     }
 }
+// swiftlint:enable force_unwrapping
+// swiftlint:enable force_try
+// swiftlint:enable force_cast
