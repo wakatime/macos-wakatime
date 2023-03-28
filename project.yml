@@ -25,5 +25,5 @@ targets:
       ENABLE_HARDENED_RUNTIME: YES
       DEAD_CODE_STRIPPING: YES
     postCompileScripts:
-      - script: ./.build/artifacts/swiftlint/SwiftLintBinary.artifactbundle/swiftlint-0.51.0-rc.2-macos/bin/swiftlint lint --quiet
+      - script: ./.build/artifacts/swiftlint/SwiftLintBinary.artifactbundle/swiftlint-0.51.0-macos/bin/swiftlint lint --quiet
         name: Swiftlint

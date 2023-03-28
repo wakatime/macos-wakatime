@@ -6,6 +6,6 @@ import PackageDescription
 let package = Package(
     name: "WakaTime",
     dependencies: [
-        .package(url: "https://github.com/Realm/SwiftLint", from: "0.51.0-rc.2"),
+        .package(url: "https://github.com/Realm/SwiftLint", from: "0.51.0"),
     ]
 )
