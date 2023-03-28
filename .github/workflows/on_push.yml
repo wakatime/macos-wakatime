@@ -79,6 +79,7 @@ jobs:
           value: ${{ needs.version.outputs.semver_tag }}
           commitChange: true
           branch: ${{ github.ref }}
+          masterBranchName: ${{ github.ref }}
           message: "Update MARKETING_VERSION to ${{ needs.version.outputs.semver_tag }}"
       -
         name: Install xcodegen via Homebrew for linting and building xcode project
