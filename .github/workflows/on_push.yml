@@ -78,8 +78,6 @@ jobs:
           propertyPath: 'targets.WakaTime.settings.MARKETING_VERSION'
           value: ${{ needs.version.outputs.semver_tag }}
           commitChange: false
-          branch: ${{ github.ref_name }}
-          message: "Update MARKETING_VERSION to ${{ needs.version.outputs.semver_tag }}"
       -
         name: Install xcodegen via Homebrew for linting and building xcode project
         run: brew install xcodegen
