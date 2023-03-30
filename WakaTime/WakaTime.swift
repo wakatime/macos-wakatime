@@ -9,8 +9,7 @@ struct WakaTime: App {
     @Environment(\.openWindow) private var openWindow
 
     @StateObject private var settings = SettingsModel()
-    @State private var lastFile: URL?
-    @State private var lastTime: TimeInterval = 0
+    var state = State()
 
     let watcher = Watcher()
     let version = Bundle.main.infoDictionary!["CFBundleShortVersionString"] as! String
@@ -247,18 +246,24 @@ struct WakaTime: App {
         NSApp.terminate(self)
     }
 
-    private func shouldSendHeartbeat(file: URL, time: TimeInterval, isWrite: Bool) -> Bool {
-        isWrite || file != lastFile || lastTime + 120 < time
+    private func shouldSendHeartbeat(file: URL, time: Int, isWrite: Bool) -> Bool {
+        guard
+            !isWrite,
+            file.formatted() == state.lastFile,
+            state.lastTime + 120 > time
+        else { return true }
+
+        return false
     }
 
     public func handleEvent(file: URL, isWrite: Bool = false) {
         guard let xcodeVersion = watcher.xcodeVersion else { return }
 
-        let time = NSDate().timeIntervalSince1970
+        let time = Int(NSDate().timeIntervalSince1970)
         guard shouldSendHeartbeat(file: file, time: time, isWrite: isWrite) else { return }
 
-        lastFile = file
-        lastTime = time
+        state.lastFile = file.formatted()
+        state.lastTime = time
 
         let cli = NSString.path(
             withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli"]
@@ -284,3 +289,8 @@ extension Optional where Wrapped: Collection {
 // swiftlint:enable force_unwrapping
 // swiftlint:enable force_try
 // swiftlint:enable force_cast
+
+class State: ObservableObject {
+    @Published var lastFile = ""
+    @Published var lastTime = 0
+}
