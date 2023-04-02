@@ -56,14 +56,10 @@ class Watcher: NSObject {
     private func setXcodeVersion(_ app: NSRunningApplication) {
         guard
             let url = app.bundleURL,
-            let bundle = Bundle(url: url),
-            let info = bundle.infoDictionary
+            let bundle = Bundle(url: url)
         else { return }
 
-        let build = info["CFBundleVersion"] as! String
-        let version = info["CFBundleShortVersionString"] as! String
-
-        xcodeVersion = "\(version)-\(build)"
+        xcodeVersion = "\(bundle.version)-\(bundle.build)"
     }
 
     private func watch(app: NSRunningApplication) {

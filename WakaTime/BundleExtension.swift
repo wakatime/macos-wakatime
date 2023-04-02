@@ -1,23 +1,16 @@
-//
-//  BundleExtension.swift
-//  WakaTime
-//
-//  Created by chester on 2023/4/2.
-//
-
 import Foundation
 
 extension Bundle {
     var displayName: String {
-        readFromInfoDict(key: "CFBundleDisplayName") ?? "displayName null"
+        readFromInfoDict(key: "CFBundleDisplayName") ?? "unknown"
     }
 
     var version: String {
-        readFromInfoDict(key: "CFBundleShortVersionString") ?? "version null"
+        readFromInfoDict(key: "CFBundleShortVersionString") ?? "unknown"
     }
 
     var build: String {
-        readFromInfoDict(key: "CFBundleVersion") ?? "build null"
+        readFromInfoDict(key: "CFBundleVersion") ?? "unknown"
     }
 
     private func readFromInfoDict(key: String) -> String? {
