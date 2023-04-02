@@ -12,7 +12,6 @@ struct WakaTime: App {
     var state = State()
 
     let watcher = Watcher()
-    let version = Bundle.main.infoDictionary!["CFBundleShortVersionString"] as! String
 
     enum Constants {
         static let settingsDeepLink: String = "wakatime://settings"
@@ -270,7 +269,7 @@ struct WakaTime: App {
         )
         let process = Process()
         process.launchPath = cli
-        var args = ["--entity", file.formatted(), "--plugin", "xcode/\(xcodeVersion) xcode-wakatime/" + version]
+        var args = ["--entity", file.formatted(), "--plugin", "xcode/\(xcodeVersion) xcode-wakatime/" + Bundle.main.version]
         if isWrite {
             args.append("--write")
         }
