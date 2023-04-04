@@ -22,6 +22,8 @@ struct SettingsView: View {
                     }
                     .keyboardShortcut(.cancelAction)
                 }
+                Text("Version: \(Bundle.main.version) (\(Bundle.main.build))")
+                    .padding()
             }
             .padding()
         }

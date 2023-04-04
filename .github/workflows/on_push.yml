@@ -62,9 +62,27 @@ jobs:
               sha: context.sha
             })
 
+  format:
+    name: Format version from tag
+    needs: [version]
+    runs-on: ubuntu-latest
+    env:
+      semver_tag:
+    outputs:
+      semver: ${{ steps.format.outputs.semver }}
+    steps:
+      -
+        name: Remove v prefix
+        id: format
+        run: |
+          echo "${{ needs.version.outputs.semver_tag }}"
+          ver=`echo "${{ needs.version.outputs.semver_tag }}" | sed 's/^v//'`
+          echo "$ver"
+          echo "semver=$ver" >> $GITHUB_OUTPUT
+
   sign:
     name: Sign Apple app
-    needs: [version]
+    needs: [format]
     runs-on: macos-latest
     steps:
       -
@@ -76,7 +94,7 @@ jobs:
         with:
           valueFile: 'project.yml'
           propertyPath: 'targets.WakaTime.settings.MARKETING_VERSION'
-          value: ${{ needs.version.outputs.semver_tag }}
+          value: ${{ needs.format.outputs.semver }}
           commitChange: false
       -
         name: Install xcodegen via Homebrew for linting and building xcode project

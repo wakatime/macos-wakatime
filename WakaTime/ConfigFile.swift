@@ -1,10 +1,3 @@
-//
-//  ConfigFile.swift
-//  WakaTime
-//
-//  Created by Alan Hamlett on 3/6/23.
-//
-
 import Foundation
 
 struct ConfigFile {

@@ -56,14 +56,10 @@ class Watcher: NSObject {
     private func setXcodeVersion(_ app: NSRunningApplication) {
         guard
             let url = app.bundleURL,
-            let bundle = Bundle(url: url),
-            let info = bundle.infoDictionary
+            let bundle = Bundle(url: url)
         else { return }
 
-        let build = info["CFBundleVersion"] as! String
-        let version = info["CFBundleShortVersionString"] as! String
-
-        xcodeVersion = "\(version)-\(build)"
+        xcodeVersion = "\(bundle.version)-\(bundle.build)"
     }
 
     private func watch(app: NSRunningApplication) {
@@ -77,6 +73,10 @@ class Watcher: NSObject {
             observer.addToRunLoop()
             self.observer = observer
             self.observingElement = element
+            let activeWindow = element.getValue(for: kAXFocusedWindowAttribute) as! AXUIElement
+            if let currentPath = getCurrentPath(window: activeWindow, refcon: this) {
+                self.documentPath = currentPath
+            }
             NSLog("Watching for file changes on \(app.localizedName ?? "nil")")
         } catch {
             NSLog("Failed to setup AXObserver: \(error.localizedDescription)")
@@ -137,12 +137,10 @@ private func observerCallback(
                 let currentPath = getCurrentPath(element: element, refcon: refcon),
                 !element.selectedText.isEmpty
             else { return }
-
                 this.eventHandler?(currentPath, false)
                 // print("Selected text changed: \(element.selectedText)")
         case .focusedUIElementChanged:
             guard let currentPath = getCurrentPath(element: element, refcon: refcon) else { return }
-
             this.documentPath = currentPath
         default:
             break
@@ -151,16 +149,21 @@ private func observerCallback(
 
 private func getCurrentPath(element: AXUIElement, refcon: UnsafeMutableRawPointer?) -> URL? {
     if let window = element.getValue(for: kAXWindowAttribute) {
-        guard CFGetTypeID(element) == AXUIElementGetTypeID() else { return nil }
-
-        if var path = (window as! AXUIElement).getValue(for: kAXDocumentAttribute) as? String {
-            if path.hasPrefix("file://") {
-                path = path.dropFirst(7).description
-            }
-
-           return URL(string: path)
-        }
+        return getCurrentPath(window: (window as! AXUIElement), refcon: refcon)
     }
+    return nil
+}
+
+private func getCurrentPath(window: AXUIElement, refcon: UnsafeMutableRawPointer?) -> URL? {
+    guard CFGetTypeID(window) == AXUIElementGetTypeID() else { return nil }
+
+    if var path = window.getValue(for: kAXDocumentAttribute) as? String {
+        if path.hasPrefix("file://") {
+            path = path.dropFirst(7).description
+        }
+        return URL(string: path)
+    }
+
     return nil
 }
 
