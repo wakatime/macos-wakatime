@@ -32,6 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test]
     outputs:
+      semver: ${{ steps.format.outputs.semver }}
       semver_tag: ${{ steps.semver-tag.outputs.semver_tag }}
       ancestor_tag: ${{ steps.semver-tag.outputs.ancestor_tag }}
       is_prerelease: ${{ steps.semver-tag.outputs.is_prerelease }}
@@ -50,6 +51,14 @@ jobs:
           develop_branch_name: main
           main_branch_name: release
       -
+        name: Format
+        id: format
+        run: |
+          echo "${{ steps.semver-tag.outputs.semver_tag }}"
+          ver=`echo "${{ steps.semver-tag.outputs.semver_tag }}" | sed 's/^v//'`
+          echo "$ver"
+          echo "semver=$ver" >> $GITHUB_OUTPUT
+      -
         name: Create tag
         uses: actions/github-script@v6
         with:
@@ -62,27 +71,9 @@ jobs:
               sha: context.sha
             })
 
-  format:
-    name: Format version from tag
-    needs: [version]
-    runs-on: ubuntu-latest
-    env:
-      semver_tag:
-    outputs:
-      semver: ${{ steps.format.outputs.semver }}
-    steps:
-      -
-        name: Remove v prefix
-        id: format
-        run: |
-          echo "${{ needs.version.outputs.semver_tag }}"
-          ver=`echo "${{ needs.version.outputs.semver_tag }}" | sed 's/^v//'`
-          echo "$ver"
-          echo "semver=$ver" >> $GITHUB_OUTPUT
-
   sign:
     name: Sign Apple app
-    needs: [format]
+    needs: [version]
     runs-on: macos-latest
     steps:
       -
@@ -94,7 +85,7 @@ jobs:
         with:
           valueFile: 'project.yml'
           propertyPath: 'targets.WakaTime.settings.MARKETING_VERSION'
-          value: ${{ needs.format.outputs.semver }}
+          value: ${{ needs.version.outputs.semver }}
           commitChange: false
       -
         name: Install xcodegen via Homebrew for linting and building xcode project
@@ -173,7 +164,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    needs: [version, sign]
+    needs: [sign]
     steps:
       -
         name: Checkout
