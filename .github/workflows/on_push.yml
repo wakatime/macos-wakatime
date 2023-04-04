@@ -164,7 +164,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    needs: [sign]
+    needs: [version, sign]
     steps:
       -
         name: Checkout
