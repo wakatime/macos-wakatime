@@ -76,7 +76,7 @@ jobs:
         with:
           valueFile: 'project.yml'
           propertyPath: 'targets.WakaTime.settings.MARKETING_VERSION'
-          value: echo ${{ needs.version.outputs.semver_tag }} | sed 's/^v//'
+          value: ${needs.version.outputs.semver_tag/v/}
           commitChange: false
       -
         name: Install xcodegen via Homebrew for linting and building xcode project
