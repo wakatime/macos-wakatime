@@ -95,7 +95,7 @@ jobs:
         run: xcodegen
       -
         name: Build app
-        run: xcodebuild
+        run: xcodebuild -configuration Release
       -
         name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v1
@@ -106,7 +106,7 @@ jobs:
           p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
       -
         name: Codesign app bundle
-        run: /usr/bin/codesign --force -s "WakaTime" --options runtime build/Debug/WakaTime.app -v
+        run: /usr/bin/codesign --force -s "WakaTime" --options runtime build/Release/WakaTime.app -v
       -
         name: Notarize app bundle
         env:
@@ -125,7 +125,7 @@ jobs:
           # notarization service
 
           echo "Creating temp notarization archive"
-          ditto -c -k --keepParent "build/Debug/WakaTime.app" "notarization.zip"
+          ditto -c -k --keepParent "build/Release/WakaTime.app" "notarization.zip"
 
           # Here we send the notarization request to the Apple's Notarization service, waiting for the result.
           # This typically takes a few seconds inside a CI environment, but it might take more depending on the App
@@ -138,10 +138,10 @@ jobs:
           # Finally, we need to "attach the staple" to our executable, which will allow our app to be
           # validated by macOS even when an internet connection is not available.
           echo "Attach staple"
-          xcrun stapler staple "build/Debug/WakaTime.app"
+          xcrun stapler staple "build/Release/WakaTime.app"
       -
         name: Zip
-        run: ditto -c -k --sequesterRsrc --keepParent build/Debug/WakaTime.app WakaTime.zip
+        run: ditto -c -k --sequesterRsrc --keepParent build/Release/WakaTime.app WakaTime.zip
       -
         name: Upload artifacts
         uses: actions/upload-artifact@v3
