@@ -18,7 +18,9 @@ struct WakaTime: App {
     }
 
     init() {
+#if !DEBUG
         registerAsLoginItem()
+#endif
         Task {
             if !(await Self.isCLILatest()) {
                 Self.downloadCLI()
