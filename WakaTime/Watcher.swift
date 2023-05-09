@@ -3,8 +3,6 @@ import AppKit
 
 // swiftlint:disable force_cast
 class Watcher: NSObject {
-    private static let appIDsToWatch = ["com.apple.dt.Xcode"]
-
     private let callbackQueue = DispatchQueue(label: "com.WakaTime.Watcher.callbackQueue", qos: .utility)
     private let monitorQueue = DispatchQueue(label: "com.WakaTime.Watcher.monitorQueue", qos: .utility)
 
@@ -46,7 +44,7 @@ class Watcher: NSObject {
     private func handleAppChanged(_ app: NSRunningApplication) {
         if app != activeApp {
             NSLog("App changed from \(activeApp?.localizedName ?? "nil") to \(app.localizedName ?? "nil")")
-            if let newAppID = app.bundleIdentifier, Watcher.appIDsToWatch.contains(newAppID) {
+            if let newAppID = app.bundleIdentifier, MonitoringManager.isAppMonitored(for: newAppID) {
                 watch(app: app)
             } else if let oldApp = activeApp {
                 unwatch(app: oldApp)
