@@ -4,7 +4,6 @@ import SwiftUI
 @main
 // swiftlint:disable force_unwrapping
 // swiftlint:disable force_try
-// swiftlint:disable force_cast
 struct WakaTime: App {
     @Environment(\.openWindow) private var openWindow
 
@@ -26,7 +25,7 @@ struct WakaTime: App {
                 Self.downloadCLI()
             }
         }
-        requestA11yPermission()
+        //requestA11yPermission()
         watcher.eventHandler = handleEvent
         checkForApiKey()
     }
@@ -37,12 +36,19 @@ struct WakaTime: App {
             Button("Settings") {
                 promptForApiKey()
             }
+            Button("Monitored Apps") {
+                openWindow(id: "monitored_apps_container_view")
+                NSApp.activate(ignoringOtherApps: true)
+            }
             Divider()
             Button("Quit") { self.quit() }
         }
         WindowGroup("WakaTime Settings", id: "settings") {
             SettingsView(apiKey: $settings.apiKey)
         }.handlesExternalEvents(matching: ["settings"])
+        WindowGroup("Monitored Apps", id: "monitored_apps_container_view") {
+            MonitoredAppsContainerView()
+        }.handlesExternalEvents(matching: ["monitored_apps_container_view"])
     }
 
     private func checkForApiKey() {
@@ -286,9 +292,16 @@ extension Optional where Wrapped: Collection {
 }
 // swiftlint:enable force_unwrapping
 // swiftlint:enable force_try
-// swiftlint:enable force_cast
 
 class State: ObservableObject {
     @Published var lastFile = ""
     @Published var lastTime = 0
+}
+
+struct MonitoredAppsContainerView: View {
+    var body: some View {
+        VStack {
+            MonitoredAppsViewRepresentable()
+        }
+    }
 }
