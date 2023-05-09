@@ -8,11 +8,13 @@ class Watcher: NSObject {
     private let callbackQueue = DispatchQueue(label: "com.WakaTime.Watcher.callbackQueue", qos: .utility)
     private let monitorQueue = DispatchQueue(label: "com.WakaTime.Watcher.monitorQueue", qos: .utility)
 
-    public var xcodeVersion: String?
-    public var eventHandler: ((_ path: URL, _ isWrite: Bool) -> Void)?
+    var xcodeVersion: String?
+    var eventHandler: ((_ path: URL, _ isWrite: Bool, _ isBuilding: Bool) -> Void)?
+    var isBuilding = false
     private var activeApp: NSRunningApplication?
     private var observer: AXObserver?
     private var observingElement: AXUIElement?
+    private var observingActivityTextElement: AXUIElement?
     private var fileMonitor: FileMonitor?
     private var selectedText: String?
 
@@ -69,6 +71,7 @@ class Watcher: NSObject {
             let this = Unmanaged.passUnretained(self).toOpaque()
             let element = AXUIElementCreateApplication(app.processIdentifier)
             try observer.add(notification: kAXFocusedUIElementChangedNotification, element: element, refcon: this)
+            try observer.add(notification: kAXFocusedWindowChangedNotification, element: element, refcon: this)
             try observer.add(notification: kAXSelectedTextChangedNotification, element: element, refcon: this)
             observer.addToRunLoop()
             self.observer = observer
@@ -77,6 +80,7 @@ class Watcher: NSObject {
             if let currentPath = getCurrentPath(window: activeWindow, refcon: this) {
                 self.documentPath = currentPath
             }
+            observeActivityText(activeWindow: activeWindow)
             NSLog("Watching for file changes on \(app.localizedName ?? "nil")")
         } catch {
             NSLog("Failed to setup AXObserver: \(error.localizedDescription)")
@@ -97,6 +101,35 @@ class Watcher: NSObject {
         }
     }
 
+    func observeActivityText(activeWindow: AXUIElement) {
+        let this = Unmanaged.passUnretained(self).toOpaque()
+        activeWindow.traverse { element in
+            let id = element.getValue(for: kAXIdentifierAttribute) as? String
+            if id == "Activity Text" {
+                // Remove previously observed "Activity Text" value observer, if any
+                if let observingActivityTextElement {
+                    try? self.observer?.remove(notification: kAXValueChangedNotification, element: observingActivityTextElement)
+                }
+                do {
+                    // Try to add observer to the current "Activity Text" UI element
+                    try self.observer?.add(notification: kAXValueChangedNotification, element: element, refcon: this)
+                    observingActivityTextElement = element
+                    // Update the current isBuilding state when the observed "Activity Text" UI element changes
+                    let value = element.getValue(for: kAXValueAttribute) as? String
+                    self.isBuilding = checkIsBuilding(activityText: value)
+                } catch {
+                    observingActivityTextElement = nil
+                }
+                return false // "Activity Text" element found, abort traversal
+            }
+            return true // continue traversal
+        }
+    }
+
+    func checkIsBuilding(activityText: String?) -> Bool {
+        activityText == "Build" || (activityText?.contains("Building") != nil)
+    }
+
     var documentPath: URL? {
         didSet {
             if documentPath != oldValue {
@@ -114,8 +147,8 @@ class Watcher: NSObject {
 
     private func handleEvent(path: URL, isWrite: Bool) {
         callbackQueue.async {
-            NSLog("Document changed: \(path.formatted()) isWrite: \(isWrite)")
-            self.eventHandler?(path, isWrite)
+            NSLog("Document changed: \(path.formatted()) isWrite: \(isWrite) isBuilding: \(self.isBuilding)")
+            self.eventHandler?(path, isWrite, self.isBuilding)
         }
     }
 }
@@ -137,11 +170,22 @@ private func observerCallback(
                 let currentPath = getCurrentPath(element: element, refcon: refcon),
                 !element.selectedText.isEmpty
             else { return }
-                this.eventHandler?(currentPath, false)
-                // print("Selected text changed: \(element.selectedText)")
+            this.eventHandler?(currentPath, false, this.isBuilding)
+            // print("Selected text changed: \(element.selectedText)")
         case .focusedUIElementChanged:
             guard let currentPath = getCurrentPath(element: element, refcon: refcon) else { return }
             this.documentPath = currentPath
+            print("Document path changed:", currentPath)
+        case .focusedWindowChanged:
+            this.observeActivityText(activeWindow: element)
+            print("Window changed")
+        case .valueChanged:
+            let id = element.getValue(for: kAXIdentifierAttribute) as? String
+            let value = element.getValue(for: kAXValueAttribute) as? String
+            if let id, id == "Activity Text" {
+                this.isBuilding = this.checkIsBuilding(activityText: value)
+                print("Activity Text value changed:", value ?? "<<nil>>")
+            }
         default:
             break
     }
@@ -231,6 +275,22 @@ extension AXUIElement {
         guard AXUIElementCopyAttributeValue(self, attribute as CFString, &result) == .success else { return nil }
         return result
     }
+
+    var children: [AXUIElement]? {
+        guard let rawChildren = rawValue(for: kAXChildrenAttribute) else { return nil }
+        return rawChildren as? [AXUIElement]
+    }
+
+    // Traverses the element's subtree (breadth-first) until visitor() returns false or traversal is completed
+    func traverse(visitor: (AXUIElement) -> Bool, element: AXUIElement? = nil) {
+        let element = element ?? self
+        if let children = element.children {
+            for child in children {
+                if !visitor(child) { return }
+                traverse(visitor: visitor, element: child)
+            }
+        }
+    }
 }
 
 class FileMonitor {
@@ -264,6 +324,8 @@ class FileMonitor {
 enum AXUIElementNotification {
     case selectedTextChanged
     case focusedUIElementChanged
+    case focusedWindowChanged
+    case valueChanged
     case uknown
 
     static func notificationFrom(string notification: String) -> AXUIElementNotification {
@@ -272,6 +334,10 @@ enum AXUIElementNotification {
                 return .selectedTextChanged
             case "AXFocusedUIElementChanged":
                 return .focusedUIElementChanged
+            case "AXFocusedWindowChanged":
+                return .focusedWindowChanged
+            case "AXValueChanged":
+                return .valueChanged
             default:
                 return .uknown
         }

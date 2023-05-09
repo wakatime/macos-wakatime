@@ -257,7 +257,7 @@ struct WakaTime: App {
         return false
     }
 
-    public func handleEvent(file: URL, isWrite: Bool = false) {
+    public func handleEvent(file: URL, isWrite: Bool, isBuilding: Bool) {
         guard let xcodeVersion = watcher.xcodeVersion else { return }
 
         let time = Int(NSDate().timeIntervalSince1970)
@@ -274,6 +274,10 @@ struct WakaTime: App {
         var args = ["--entity", file.formatted(), "--plugin", "xcode/\(xcodeVersion) xcode-wakatime/" + Bundle.main.version]
         if isWrite {
             args.append("--write")
+        }
+        if isBuilding {
+            args.append("--category")
+            args.append("building")
         }
         process.arguments = args
         process.standardOutput = FileHandle.nullDevice
