@@ -29,8 +29,8 @@ class AppInfo {
         return NSWorkspace.shared.icon(forFile: path)
     }
 
-    static func getIcon(bundleID: String) -> NSImage? {
-        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else { return nil }
+    static func getIcon(bundleId: String) -> NSImage? {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) else { return nil }
 
         return getIcon(file: url.path())
     }

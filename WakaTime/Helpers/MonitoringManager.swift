@@ -13,7 +13,7 @@ class MonitoringManager {
         case off
     }
 
-    public static let appIDsToWatch = ["com.apple.dt.Xcode", "com.postmanlabs.mac"]
+    public static let appIDsToWatch = ["com.apple.dt.Xcode", "com.postmanlabs.mac", "com.figma.Desktop"]
 
     static func isAppMonitored(for bundleId: String) -> Bool {
         guard appIDsToWatch.contains(bundleId) else { return false }
