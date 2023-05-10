@@ -25,7 +25,7 @@ struct WakaTime: App {
                 Self.downloadCLI()
             }
         }
-        //requestA11yPermission()
+        requestA11yPermission()
         watcher.eventHandler = handleEvent
         checkForApiKey()
     }
