@@ -127,7 +127,7 @@ class Watcher: NSObject {
     }
 
     func checkIsBuilding(activityText: String?) -> Bool {
-        activityText == "Build" || (activityText?.contains("Building") != nil)
+        activityText == "Build" || (activityText?.contains("Building") == true)
     }
 
     var documentPath: URL? {
