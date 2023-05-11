@@ -51,12 +51,12 @@ class Watcher: NSObject {
             }
             activeApp = app
         }
-        
+
         setAppVersion(app)
     }
 
     private func setAppVersion(_ app: NSRunningApplication) {
-        guard 
+        guard
             let id = app.bundleIdentifier,
             appVersions[id] != nil,
             let url = app.bundleURL,
@@ -72,7 +72,7 @@ class Watcher: NSObject {
             let app = activeApp,
             let id = app.bundleIdentifier
         else { return nil }
-        
+
         return AppInfo.getAppName(bundleId: id)
     }
 
@@ -81,13 +81,13 @@ class Watcher: NSObject {
             let app = activeApp,
             let id = app.bundleIdentifier
         else { return nil }
-        
+
         return appVersions[id]
     }
 
     private func watch(app: NSRunningApplication) {
         setAppVersion(app)
-        
+
         do {
             let observer = try AXObserver.create(appID: app.processIdentifier, callback: observerCallback)
             let this = Unmanaged.passUnretained(self).toOpaque()
