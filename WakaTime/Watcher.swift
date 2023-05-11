@@ -6,7 +6,7 @@ class Watcher: NSObject {
     private let callbackQueue = DispatchQueue(label: "com.WakaTime.Watcher.callbackQueue", qos: .utility)
     private let monitorQueue = DispatchQueue(label: "com.WakaTime.Watcher.monitorQueue", qos: .utility)
 
-    var xcodeVersion: String?
+    var appVersions: [String: String] = [:]
     var eventHandler: ((_ path: URL, _ isWrite: Bool, _ isBuilding: Bool) -> Void)?
     var isBuilding = false
     private var activeApp: NSRunningApplication?
@@ -51,19 +51,43 @@ class Watcher: NSObject {
             }
             activeApp = app
         }
+        
+        setAppVersion(app)
     }
 
-    private func setXcodeVersion(_ app: NSRunningApplication) {
-        guard
+    private func setAppVersion(_ app: NSRunningApplication) {
+        guard 
+            let id = app.bundleIdentifier,
+            appVersions[id] != nil,
             let url = app.bundleURL,
             let bundle = Bundle(url: url)
         else { return }
 
-        xcodeVersion = "\(bundle.version)-\(bundle.build)"
+        let version = "\(bundle.version)-\(bundle.build)"
+        appVersions[id] = version
+    }
+
+    public func getCurrentAppName() -> String? {
+        guard
+            let app = activeApp,
+            let id = app.bundleIdentifier
+        else { return nil }
+        
+        return AppInfo.getAppName(bundleId: id)
+    }
+
+    public func getCurrentAppVersion() -> String? {
+        guard
+            let app = activeApp,
+            let id = app.bundleIdentifier
+        else { return nil }
+        
+        return appVersions[id]
     }
 
     private func watch(app: NSRunningApplication) {
-        setXcodeVersion(app)
+        setAppVersion(app)
+        
         do {
             let observer = try AXObserver.create(appID: app.processIdentifier, callback: observerCallback)
             let this = Unmanaged.passUnretained(self).toOpaque()

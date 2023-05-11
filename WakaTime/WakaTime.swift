@@ -257,7 +257,10 @@ struct WakaTime: App {
     }
 
     public func handleEvent(file: URL, isWrite: Bool, isBuilding: Bool) {
-        guard let xcodeVersion = watcher.xcodeVersion else { return }
+        guard
+            let appName = watcher.getCurrentAppName(),
+            let appVersion = watcher.getCurrentAppVersion()
+        else { return }
 
         let time = Int(NSDate().timeIntervalSince1970)
         guard shouldSendHeartbeat(file: file, time: time, isWrite: isWrite) else { return }
@@ -270,7 +273,7 @@ struct WakaTime: App {
         )
         let process = Process()
         process.launchPath = cli
-        var args = ["--entity", file.formatted(), "--plugin", "xcode/\(xcodeVersion) xcode-wakatime/" + Bundle.main.version]
+        var args = ["--entity", file.formatted(), "--plugin", "\(appName)/\(appVersion) macos-wakatime/" + Bundle.main.version]
         if isWrite {
             args.append("--write")
         }
