@@ -58,7 +58,7 @@ class Watcher: NSObject {
     private func setAppVersion(_ app: NSRunningApplication) {
         guard
             let id = app.bundleIdentifier,
-            appVersions[id] != nil,
+            appVersions[id] == nil,
             let url = app.bundleURL,
             let bundle = Bundle(url: url)
         else { return }
