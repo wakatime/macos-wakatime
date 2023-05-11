@@ -257,18 +257,22 @@ struct WakaTime: App {
     }
 
     public func handleEvent(app: NSRunningApplication, file: URL, isWrite: Bool, isBuilding: Bool) {
-        guard
-            let id = app.bundleIdentifier,
-            MonitoringManager.isAppMonitored(for: id),
-            let appName = AppInfo.getAppName(bundleId: id),
-            let appVersion = watcher.getAppVersion(app)
-        else { return }
-
         let time = Int(NSDate().timeIntervalSince1970)
         guard shouldSendHeartbeat(file: file, time: time, isWrite: isWrite) else { return }
 
         state.lastFile = file.formatted()
         state.lastTime = time
+
+        guard
+            let id = app.bundleIdentifier,
+            let appName = AppInfo.getAppName(bundleId: id),
+            let appVersion = watcher.getAppVersion(app)
+        else { return }
+
+        // make sure we should be tracking this app to avoid race condition bugs
+        // do this after shouldSendHeartbeat for better performance because handleEvent may
+        // be called frequently
+        guard MonitoringManager.isAppMonitored(for: id) else { return }
 
         let cli = NSString.path(
             withComponents: ConfigFile.resourcesFolder + ["wakatime-cli"]
