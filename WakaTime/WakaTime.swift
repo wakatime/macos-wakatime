@@ -4,7 +4,6 @@ import SwiftUI
 @main
 // swiftlint:disable force_unwrapping
 // swiftlint:disable force_try
-// swiftlint:disable force_cast
 struct WakaTime: App {
     @Environment(\.openWindow) private var openWindow
 
@@ -37,12 +36,19 @@ struct WakaTime: App {
             Button("Settings") {
                 promptForApiKey()
             }
+            Button("Monitored Apps") {
+                openWindow(id: "monitored_apps_container_view")
+                NSApp.activate(ignoringOtherApps: true)
+            }
             Divider()
             Button("Quit") { self.quit() }
         }
         WindowGroup("WakaTime Settings", id: "settings") {
             SettingsView(apiKey: $settings.apiKey)
         }.handlesExternalEvents(matching: ["settings"])
+        WindowGroup("Monitored Apps", id: "monitored_apps_container_view") {
+            MonitoredAppsContainerView()
+        }.handlesExternalEvents(matching: ["monitored_apps_container_view"])
     }
 
     private func checkForApiKey() {
@@ -250,21 +256,30 @@ struct WakaTime: App {
         return false
     }
 
-    public func handleEvent(file: URL, isWrite: Bool, isBuilding: Bool) {
-        guard let xcodeVersion = watcher.xcodeVersion else { return }
-
+    public func handleEvent(app: NSRunningApplication, file: URL, isWrite: Bool, isBuilding: Bool) {
         let time = Int(NSDate().timeIntervalSince1970)
         guard shouldSendHeartbeat(file: file, time: time, isWrite: isWrite) else { return }
 
         state.lastFile = file.formatted()
         state.lastTime = time
 
+        guard
+            let id = app.bundleIdentifier,
+            let appName = AppInfo.getAppName(bundleId: id),
+            let appVersion = watcher.getAppVersion(app)
+        else { return }
+
+        // make sure we should be tracking this app to avoid race condition bugs
+        // do this after shouldSendHeartbeat for better performance because handleEvent may
+        // be called frequently
+        guard MonitoringManager.isAppMonitored(for: id) else { return }
+
         let cli = NSString.path(
             withComponents: ConfigFile.resourcesFolder + ["wakatime-cli"]
         )
         let process = Process()
         process.launchPath = cli
-        var args = ["--entity", file.formatted(), "--plugin", "xcode/\(xcodeVersion) xcode-wakatime/" + Bundle.main.version]
+        var args = ["--entity", file.formatted(), "--plugin", "\(appName)/\(appVersion) macos-wakatime/" + Bundle.main.version]
         if isWrite {
             args.append("--write")
         }
@@ -286,9 +301,16 @@ extension Optional where Wrapped: Collection {
 }
 // swiftlint:enable force_unwrapping
 // swiftlint:enable force_try
-// swiftlint:enable force_cast
 
 class State: ObservableObject {
     @Published var lastFile = ""
     @Published var lastTime = 0
+}
+
+struct MonitoredAppsContainerView: View {
+    var body: some View {
+        VStack {
+            MonitoredAppsViewRepresentable()
+        }
+    }
 }

@@ -4,11 +4,11 @@ struct ConfigFile {
     private static var userHome: [String] {
         FileManager.default.homeDirectoryForCurrentUser.pathComponents
     }
-    
+
     public static var resourcesFolder: [String] {
         userHome + [".wakatime"]
     }
-    
+
     private static var filePath: String {
         NSString.path(withComponents: userHome + [".wakatime.cfg"])
     }

@@ -3,15 +3,13 @@ import AppKit
 
 // swiftlint:disable force_cast
 class Watcher: NSObject {
-    private static let appIDsToWatch = ["com.apple.dt.Xcode"]
-
     private let callbackQueue = DispatchQueue(label: "com.WakaTime.Watcher.callbackQueue", qos: .utility)
     private let monitorQueue = DispatchQueue(label: "com.WakaTime.Watcher.monitorQueue", qos: .utility)
 
-    var xcodeVersion: String?
-    var eventHandler: ((_ path: URL, _ isWrite: Bool, _ isBuilding: Bool) -> Void)?
+    var appVersions: [String: String] = [:]
+    var eventHandler: ((_ app: NSRunningApplication, _ path: URL, _ isWrite: Bool, _ isBuilding: Bool) -> Void)?
     var isBuilding = false
-    private var activeApp: NSRunningApplication?
+    var activeApp: NSRunningApplication?
     private var observer: AXObserver?
     private var observingElement: AXUIElement?
     private var observingActivityTextElement: AXUIElement?
@@ -46,26 +44,37 @@ class Watcher: NSObject {
     private func handleAppChanged(_ app: NSRunningApplication) {
         if app != activeApp {
             NSLog("App changed from \(activeApp?.localizedName ?? "nil") to \(app.localizedName ?? "nil")")
-            if let newAppID = app.bundleIdentifier, Watcher.appIDsToWatch.contains(newAppID) {
+            if let newAppID = app.bundleIdentifier, MonitoringManager.isAppMonitored(for: newAppID) {
                 watch(app: app)
             } else if let oldApp = activeApp {
                 unwatch(app: oldApp)
             }
             activeApp = app
         }
+
+        setAppVersion(app)
     }
 
-    private func setXcodeVersion(_ app: NSRunningApplication) {
+    private func setAppVersion(_ app: NSRunningApplication) {
         guard
+            let id = app.bundleIdentifier,
+            appVersions[id] == nil,
             let url = app.bundleURL,
             let bundle = Bundle(url: url)
         else { return }
 
-        xcodeVersion = "\(bundle.version)-\(bundle.build)"
+        let version = "\(bundle.version)-\(bundle.build)"
+        appVersions[id] = version
+    }
+
+    public func getAppVersion(_ app: NSRunningApplication) -> String? {
+        guard let id = app.bundleIdentifier else { return nil }
+        return appVersions[id]
     }
 
     private func watch(app: NSRunningApplication) {
-        setXcodeVersion(app)
+        setAppVersion(app)
+
         do {
             let observer = try AXObserver.create(appID: app.processIdentifier, callback: observerCallback)
             let this = Unmanaged.passUnretained(self).toOpaque()
@@ -135,20 +144,22 @@ class Watcher: NSObject {
             if documentPath != oldValue {
                 guard let newPath = documentPath else { return }
 
-                handleEvent(path: newPath, isWrite: false)
+                handleNotificationEvent(path: newPath, isWrite: false)
                 fileMonitor = nil
                 fileMonitor = FileMonitor(filePath: newPath, queue: monitorQueue)
                 fileMonitor?.eventHandler = { [weak self] in
-                    self?.handleEvent(path: newPath, isWrite: true)
+                    self?.handleNotificationEvent(path: newPath, isWrite: true)
                 }
             }
         }
     }
 
-    private func handleEvent(path: URL, isWrite: Bool) {
+    private func handleNotificationEvent(path: URL, isWrite: Bool) {
         callbackQueue.async {
+            guard let app = self.activeApp else { return }
+
             NSLog("Document changed: \(path.formatted()) isWrite: \(isWrite) isBuilding: \(self.isBuilding)")
-            self.eventHandler?(path, isWrite, self.isBuilding)
+            self.eventHandler?(app, path, isWrite, self.isBuilding)
         }
     }
 }
@@ -164,13 +175,15 @@ private func observerCallback(
     let axNotification = AXUIElementNotification.notificationFrom(string: notification as String)
     let this = Unmanaged<Watcher>.fromOpaque(refcon).takeUnretainedValue()
 
+    guard let app = this.activeApp else { return }
+
     switch axNotification {
         case .selectedTextChanged:
             guard
                 let currentPath = getCurrentPath(element: element, refcon: refcon),
                 !element.selectedText.isEmpty
             else { return }
-            this.eventHandler?(currentPath, false, this.isBuilding)
+            this.eventHandler?(app, currentPath, false, this.isBuilding)
             // print("Selected text changed: \(element.selectedText)")
         case .focusedUIElementChanged:
             guard let currentPath = getCurrentPath(element: element, refcon: refcon) else { return }
