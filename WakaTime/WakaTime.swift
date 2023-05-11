@@ -256,10 +256,12 @@ struct WakaTime: App {
         return false
     }
 
-    public func handleEvent(file: URL, isWrite: Bool, isBuilding: Bool) {
+    public func handleEvent(app: NSRunningApplication, file: URL, isWrite: Bool, isBuilding: Bool) {
         guard
-            let appName = watcher.getCurrentAppName(),
-            let appVersion = watcher.getCurrentAppVersion()
+            let id = app.bundleIdentifier,
+            MonitoringManager.isAppMonitored(for: id),
+            let appName = AppInfo.getAppName(bundleId: id),
+            let appVersion = watcher.getAppVersion(app)
         else { return }
 
         let time = Int(NSDate().timeIntervalSince1970)
