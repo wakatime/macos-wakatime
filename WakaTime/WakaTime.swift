@@ -124,7 +124,7 @@ struct WakaTime: App {
 
     private static func isCLILatest() async -> Bool {
         let cli = NSString.path(
-            withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli"]
+            withComponents: ConfigFile.resourcesFolder + ["wakatime-cli"]
         )
         guard FileManager.default.fileExists(atPath: cli) else { return false }
 
@@ -158,7 +158,7 @@ struct WakaTime: App {
     }
 
     private static func downloadCLI() {
-        let dir = NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime"])
+        let dir = NSString.path(withComponents: ConfigFile.resourcesFolder)
         if !FileManager.default.fileExists(atPath: dir) {
             do {
                 try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true, attributes: nil)
@@ -168,16 +168,9 @@ struct WakaTime: App {
         }
 
         let url = "https://github.com/wakatime/wakatime-cli/releases/latest/download/wakatime-cli-darwin-\(architecture()).zip"
-        let zipFile = NSString.path(
-            withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli.zip"]
-        )
-        let cli = NSString.path(
-            withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli"]
-        )
-        let cliReal = NSString.path(
-            withComponents:
-                FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli-darwin-\(architecture())"]
-        )
+        let zipFile = NSString.path(withComponents: ConfigFile.resourcesFolder + ["wakatime-cli.zip"])
+        let cli = NSString.path(withComponents: ConfigFile.resourcesFolder + ["wakatime-cli"])
+        let cliReal = NSString.path(withComponents: ConfigFile.resourcesFolder + ["wakatime-cli-darwin-\(architecture())"])
 
         if FileManager.default.fileExists(atPath: zipFile) {
             do {
@@ -264,7 +257,10 @@ struct WakaTime: App {
     }
 
     public func handleEvent(file: URL, isWrite: Bool, isBuilding: Bool) {
-        guard let xcodeVersion = watcher.xcodeVersion else { return }
+        guard
+            let appName = watcher.getCurrentAppName(),
+            let appVersion = watcher.getCurrentAppVersion()
+        else { return }
 
         let time = Int(NSDate().timeIntervalSince1970)
         guard shouldSendHeartbeat(file: file, time: time, isWrite: isWrite) else { return }
@@ -273,11 +269,11 @@ struct WakaTime: App {
         state.lastTime = time
 
         let cli = NSString.path(
-            withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli"]
+            withComponents: ConfigFile.resourcesFolder + ["wakatime-cli"]
         )
         let process = Process()
         process.launchPath = cli
-        var args = ["--entity", file.formatted(), "--plugin", "xcode/\(xcodeVersion) xcode-wakatime/" + Bundle.main.version]
+        var args = ["--entity", file.formatted(), "--plugin", "\(appName)/\(appVersion) macos-wakatime/" + Bundle.main.version]
         if isWrite {
             args.append("--write")
         }
