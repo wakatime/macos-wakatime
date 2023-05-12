@@ -76,11 +76,7 @@ struct WakaTime: App {
             PropertiesManager.shouldLaunchOnLogin
         else { return }
 
-        do {
-            try SMAppService.mainApp.register()
-        } catch let error {
-            print(error)
-        }
+        SettingsManager.registerAsLoginItem()
     }
 
     private func requestA11yPermission() {

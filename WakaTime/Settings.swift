@@ -1,6 +1,5 @@
 import Foundation
 import SwiftUI
-import ServiceManagement
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
@@ -13,11 +12,10 @@ struct SettingsView: View {
                 VStack(alignment: .leading) {
                     Toggle("Launch on login", isOn: $isToggleOn)
                         .onChange(of: isToggleOn) { newValue in
-                            PropertiesManager.shouldLaunchOnLogin = newValue
                             if newValue {
-                                registerAsLoginItem()
+                                SettingsManager.registerAsLoginItem()
                             } else {
-                                unregisterAsLoginItem()
+                                SettingsManager.unregisterAsLoginItem()
                             }
                         }
                     Spacer()
@@ -53,33 +51,6 @@ struct SettingsView: View {
             }
         }
     }
-
-    private func registerAsLoginItem() {
-        guard
-            PropertiesManager.shouldLaunchOnLogin
-        else { return }
-
-        do {
-            try SMAppService.mainApp.register()
-            print("Registered for login")
-        } catch let error {
-            print(error)
-        }
-    }
-
-    private func unregisterAsLoginItem() {
-        guard
-            !PropertiesManager.shouldLaunchOnLogin
-        else { return }
-
-        do {
-            try SMAppService.mainApp.unregister()
-            print("Unregistered for login")
-        } catch let error {
-            print(error)
-        }
-    }
-
 }
 
 class SettingsModel: ObservableObject {
