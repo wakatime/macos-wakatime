@@ -4,7 +4,6 @@ import SwiftUI
 @main
 // swiftlint:disable force_unwrapping
 // swiftlint:disable force_try
-// swiftlint:disable force_cast
 struct WakaTime: App {
     @Environment(\.openWindow) private var openWindow
 
@@ -18,7 +17,9 @@ struct WakaTime: App {
     }
 
     init() {
+#if !DEBUG
         registerAsLoginItem()
+#endif
         Task {
             if !(await Self.isCLILatest()) {
                 Self.downloadCLI()
@@ -35,12 +36,19 @@ struct WakaTime: App {
             Button("Settings") {
                 promptForApiKey()
             }
+            Button("Monitored Apps") {
+                openWindow(id: "monitored_apps_container_view")
+                NSApp.activate(ignoringOtherApps: true)
+            }
             Divider()
             Button("Quit") { self.quit() }
         }
         WindowGroup("WakaTime Settings", id: "settings") {
             SettingsView(apiKey: $settings.apiKey)
         }.handlesExternalEvents(matching: ["settings"])
+        WindowGroup("Monitored Apps", id: "monitored_apps_container_view") {
+            MonitoredAppsContainerView()
+        }.handlesExternalEvents(matching: ["monitored_apps_container_view"])
     }
 
     private func checkForApiKey() {
@@ -63,13 +71,12 @@ struct WakaTime: App {
     }
 
     private func registerAsLoginItem() {
-        guard SMAppService.mainApp.status == .notFound else { return }
+        guard
+            SMAppService.mainApp.status == .notFound,
+            PropertiesManager.shouldLaunchOnLogin
+        else { return }
 
-        do {
-            try SMAppService.mainApp.register()
-        } catch let error {
-            print(error)
-        }
+        SettingsManager.registerAsLoginItem()
     }
 
     private func requestA11yPermission() {
@@ -116,7 +123,7 @@ struct WakaTime: App {
 
     private static func isCLILatest() async -> Bool {
         let cli = NSString.path(
-            withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli"]
+            withComponents: ConfigFile.resourcesFolder + ["wakatime-cli"]
         )
         guard FileManager.default.fileExists(atPath: cli) else { return false }
 
@@ -150,7 +157,7 @@ struct WakaTime: App {
     }
 
     private static func downloadCLI() {
-        let dir = NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime"])
+        let dir = NSString.path(withComponents: ConfigFile.resourcesFolder)
         if !FileManager.default.fileExists(atPath: dir) {
             do {
                 try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true, attributes: nil)
@@ -160,16 +167,9 @@ struct WakaTime: App {
         }
 
         let url = "https://github.com/wakatime/wakatime-cli/releases/latest/download/wakatime-cli-darwin-\(architecture()).zip"
-        let zipFile = NSString.path(
-            withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli.zip"]
-        )
-        let cli = NSString.path(
-            withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli"]
-        )
-        let cliReal = NSString.path(
-            withComponents:
-                FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli-darwin-\(architecture())"]
-        )
+        let zipFile = NSString.path(withComponents: ConfigFile.resourcesFolder + ["wakatime-cli.zip"])
+        let cli = NSString.path(withComponents: ConfigFile.resourcesFolder + ["wakatime-cli"])
+        let cliReal = NSString.path(withComponents: ConfigFile.resourcesFolder + ["wakatime-cli-darwin-\(architecture())"])
 
         if FileManager.default.fileExists(atPath: zipFile) {
             do {
@@ -255,23 +255,36 @@ struct WakaTime: App {
         return false
     }
 
-    public func handleEvent(file: URL, isWrite: Bool = false) {
-        guard let xcodeVersion = watcher.xcodeVersion else { return }
-
+    public func handleEvent(app: NSRunningApplication, file: URL, isWrite: Bool, isBuilding: Bool) {
         let time = Int(NSDate().timeIntervalSince1970)
         guard shouldSendHeartbeat(file: file, time: time, isWrite: isWrite) else { return }
 
         state.lastFile = file.formatted()
         state.lastTime = time
 
+        guard
+            let id = app.bundleIdentifier,
+            let appName = AppInfo.getAppName(bundleId: id),
+            let appVersion = watcher.getAppVersion(app)
+        else { return }
+
+        // make sure we should be tracking this app to avoid race condition bugs
+        // do this after shouldSendHeartbeat for better performance because handleEvent may
+        // be called frequently
+        guard MonitoringManager.isAppMonitored(for: id) else { return }
+
         let cli = NSString.path(
-            withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime", "wakatime-cli"]
+            withComponents: ConfigFile.resourcesFolder + ["wakatime-cli"]
         )
         let process = Process()
         process.launchPath = cli
-        var args = ["--entity", file.formatted(), "--plugin", "xcode/\(xcodeVersion) xcode-wakatime/" + Bundle.main.version]
+        var args = ["--entity", file.formatted(), "--plugin", "\(appName)/\(appVersion) macos-wakatime/" + Bundle.main.version]
         if isWrite {
             args.append("--write")
+        }
+        if isBuilding {
+            args.append("--category")
+            args.append("building")
         }
         process.arguments = args
         process.standardOutput = FileHandle.nullDevice
@@ -287,9 +300,16 @@ extension Optional where Wrapped: Collection {
 }
 // swiftlint:enable force_unwrapping
 // swiftlint:enable force_try
-// swiftlint:enable force_cast
 
 class State: ObservableObject {
     @Published var lastFile = ""
     @Published var lastTime = 0
+}
+
+struct MonitoredAppsContainerView: View {
+    var body: some View {
+        VStack {
+            MonitoredAppsViewRepresentable()
+        }
+    }
 }

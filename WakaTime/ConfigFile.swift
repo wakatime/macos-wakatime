@@ -1,12 +1,20 @@
 import Foundation
 
 struct ConfigFile {
+    private static var userHome: [String] {
+        FileManager.default.homeDirectoryForCurrentUser.pathComponents
+    }
+
+    public static var resourcesFolder: [String] {
+        userHome + [".wakatime"]
+    }
+
     private static var filePath: String {
-        NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime.cfg"])
+        NSString.path(withComponents: userHome + [".wakatime.cfg"])
     }
 
     private static var filePathInternal: String {
-        NSString.path(withComponents: FileManager.default.homeDirectoryForCurrentUser.pathComponents + [".wakatime-internal.cfg"])
+        NSString.path(withComponents: resourcesFolder + ["wakatime-internal.cfg"])
     }
 
     static func getSetting(section: String, key: String, internalConfig: Bool = false) -> String? {
