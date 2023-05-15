@@ -1,15 +1,10 @@
 import ServiceManagement
 import SwiftUI
 
-@main
 // swiftlint:disable force_unwrapping
 // swiftlint:disable force_try
-struct WakaTime: App {
-    @Environment(\.openWindow) private var openWindow
-
-    @StateObject private var settings = SettingsModel()
+class WakaTime {
     var state = State()
-
     let watcher = Watcher()
 
     enum Constants {
@@ -17,9 +12,7 @@ struct WakaTime: App {
     }
 
     init() {
-#if !DEBUG
         registerAsLoginItem()
-#endif
         Task {
             if !(await Self.isCLILatest()) {
                 Self.downloadCLI()
@@ -30,38 +23,11 @@ struct WakaTime: App {
         checkForApiKey()
     }
 
-    var body: some Scene {
-        MenuBarExtra("WakaTime", image: "WakaTime") {
-            Button("Dashboard") { self.dashboard() }
-            Button("Settings") {
-                promptForApiKey()
-            }
-            Button("Monitored Apps") {
-                openWindow(id: "monitored_apps_container_view")
-                NSApp.activate(ignoringOtherApps: true)
-            }
-            Divider()
-            Button("Quit") { self.quit() }
-        }
-        WindowGroup("WakaTime Settings", id: "settings") {
-            SettingsView(apiKey: $settings.apiKey)
-        }.handlesExternalEvents(matching: ["settings"])
-        WindowGroup("Monitored Apps", id: "monitored_apps_container_view") {
-            MonitoredAppsContainerView()
-        }.handlesExternalEvents(matching: ["monitored_apps_container_view"])
-    }
-
     private func checkForApiKey() {
         let apiKey = ConfigFile.getSetting(section: "settings", key: "api_key")
         if apiKey.isEmpty {
             openSettingsDeeplink()
         }
-    }
-
-    private func promptForApiKey() {
-        openWindow(id: "settings")
-        NSApp.activate(ignoringOtherApps: true)
-        settings.apiKey = ConfigFile.getSetting(section: "settings", key: "api_key") ?? ""
     }
 
     private func openSettingsDeeplink() {
@@ -71,12 +37,11 @@ struct WakaTime: App {
     }
 
     private func registerAsLoginItem() {
-        guard
-            SMAppService.mainApp.status == .notFound,
-            PropertiesManager.shouldLaunchOnLogin
-        else { return }
-
-        SettingsManager.registerAsLoginItem()
+        if SMLoginItemSetEnabled("macos-wakatime.WakaTimeHelper" as CFString, true) {
+            print("Login item added successfully.")
+        } else {
+            print("Failed to add login item.")
+        }
     }
 
     private func requestA11yPermission() {
@@ -141,13 +106,20 @@ struct WakaTime: App {
         }
         let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
         let output = String(decoding: outputData, as: UTF8.self)
-        let version = output.firstMatch(of: /([0 - 9] + \.[0 - 9] + \.[0 - 9]+)/)
+        let version: String?
+        if let regex = try? NSRegularExpression(pattern: "([0-9]+\\.[0-9]+\\.[0-9]+)"),
+           let match = regex.firstMatch(in: output, range: NSRange(output.startIndex..., in: output)),
+           let range = Range(match.range, in: output) {
+            version = String(output[range])
+        } else {
+            version = nil
+        }
         let remoteVersion = try? await getLatestVersion()
         guard let remoteVersion else {
             // Could not retrieve remote version
             return true
         }
-        if let version, "v" + version.0 == remoteVersion {
+        if let version, "v" + version == remoteVersion {
             // Local version up to date
             return true
         } else {
@@ -296,6 +268,14 @@ struct WakaTime: App {
 extension Optional where Wrapped: Collection {
     var isEmpty: Bool {
         self?.isEmpty ?? true
+    }
+}
+
+extension URL {
+    func formatted() -> String {
+        let components = URLComponents(url: self, resolvingAgainstBaseURL: true)
+        let path = components?.path ?? ""
+        return path.replacingOccurrences(of: " ", with: "\\ ")
     }
 }
 // swiftlint:enable force_unwrapping

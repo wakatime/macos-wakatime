@@ -8,7 +8,7 @@ targets:
   WakaTime:
     type: application
     platform: macOS
-    deploymentTarget: 13.0
+    deploymentTarget: 10.15
     sources: [WakaTime]
     settings:
       CURRENT_PROJECT_VERSION: 2
@@ -19,6 +19,33 @@ targets:
       DEVELOPMENT_TEAM: ${SV_DEVELOPMENT_TEAM}
       ENABLE_HARDENED_RUNTIME: YES
       DEAD_CODE_STRIPPING: YES
+    postCompileScripts:
+      - script: ./Scripts/Lint/swiftlint lint --quiet
+        name: Swiftlint
+    dependencies:
+      - target: WakaTime Helper
+    postBuildScripts:
+      - script: |
+          LOGIN_ITEMS_DIR="$BUILT_PRODUCTS_DIR/$PRODUCT_NAME.app/Contents/Library/LoginItems"
+          rm -rf "$LOGIN_ITEMS_DIR"
+          mkdir -p "$LOGIN_ITEMS_DIR"
+          mv "$BUILT_PRODUCTS_DIR/$PRODUCT_NAME.app/Contents/Resources/WakaTime Helper.app" "$LOGIN_ITEMS_DIR/"
+        name: Move "WakaTime Helper.app" to LoginItems
+  WakaTime Helper:
+    type: application
+    platform: macOS
+    deploymentTarget: 10.15
+    sources: [WakaTime Helper]
+    settings:
+      CURRENT_PROJECT_VERSION: 1
+      MARKETING_VERSION: 0.0.1
+      INFOPLIST_FILE: WakaTime Helper/WakaTime Helper-Info.plist
+      GENERATE_INFOPLIST_FILE: YES
+      CODE_SIGN_STYLE: Automatic
+      DEVELOPMENT_TEAM: ${SV_DEVELOPMENT_TEAM}
+      ENABLE_HARDENED_RUNTIME: YES
+      DEAD_CODE_STRIPPING: YES
+      SKIP_INSTALL: YES
     postCompileScripts:
       - script: ./Scripts/Lint/swiftlint lint --quiet
         name: Swiftlint
