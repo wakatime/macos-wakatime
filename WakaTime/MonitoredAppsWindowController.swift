@@ -1,20 +1,20 @@
 import AppKit
 
-class SettingsWindowController: NSWindowController, NSTextFieldDelegate {
-    let settingsView = SettingsView()
+class MonitoredAppsWindowController: NSWindowController {
+    let monitoredAppsView = MonitoredAppsView()
 
     convenience init() {
         self.init(window: nil)
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 400, height: 150),
-            styleMask: [.titled, .closable],
+            styleMask: [.titled, .closable, .resizable],
             backing: .buffered,
             defer: false
         )
         window.center()
-        window.title = "Settings"
-        window.contentView = settingsView
+        window.title = "Monitored Apps"
+        window.contentView = monitoredAppsView
         self.window = window
     }
 }
