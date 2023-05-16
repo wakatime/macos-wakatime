@@ -37,11 +37,7 @@ class WakaTime {
     }
 
     private func registerAsLoginItem() {
-        if SMLoginItemSetEnabled("macos-wakatime.WakaTimeHelper" as CFString, true) {
-            print("Login item added successfully.")
-        } else {
-            print("Failed to add login item.")
-        }
+        SettingsManager.registerAsLoginItem()
     }
 
     private func requestA11yPermission() {
@@ -284,12 +280,4 @@ extension URL {
 class State: ObservableObject {
     @Published var lastFile = ""
     @Published var lastTime = 0
-}
-
-struct MonitoredAppsContainerView: View {
-    var body: some View {
-        VStack {
-            MonitoredAppsViewRepresentable()
-        }
-    }
 }

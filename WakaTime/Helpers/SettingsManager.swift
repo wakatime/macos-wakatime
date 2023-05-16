@@ -5,23 +5,20 @@ class SettingsManager {
     static func registerAsLoginItem() {
         PropertiesManager.shouldLaunchOnLogin = true
 
-        do {
-            try SMAppService.mainApp.register()
-            print("Registered for login")
-        } catch let error {
-            print(error)
+        if SMLoginItemSetEnabled("macos-wakatime.WakaTimeHelper" as CFString, true) {
+            print("Login item enabled successfully.")
+        } else {
+            print("Failed to enable login item.")
         }
     }
 
     static func unregisterAsLoginItem() {
         PropertiesManager.shouldLaunchOnLogin = false
 
-        do {
-            try SMAppService.mainApp.unregister()
-            print("Unregistered for login")
-        } catch let error {
-            print(error)
+        if SMLoginItemSetEnabled("macos-wakatime.WakaTimeHelper" as CFString, false) {
+            print("Login item disabled successfully.")
+        } else {
+            print("Failed to disable login item.")
         }
     }
-
 }

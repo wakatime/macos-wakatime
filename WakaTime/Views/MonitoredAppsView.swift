@@ -1,9 +1,9 @@
-import Foundation
 import AppKit
-import SwiftUI
 
 class MonitoredAppsView: NSView {
-    func viewDidLoad() {
+    init() {
+        super.init(frame: .zero)
+
         let stackView = NSStackView(frame: .zero)
         stackView.orientation = .vertical
         stackView.distribution = .equalSpacing
@@ -18,6 +18,10 @@ class MonitoredAppsView: NSView {
         stackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -32).isActive = true
 
         buildView(stackView: stackView)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 
     func buildView(stackView: NSStackView) {
@@ -74,18 +78,5 @@ class MonitoredAppsView: NSView {
         let bundleId = MonitoringManager.appIDsToWatch[index]
 
         MonitoringManager.set(monitoringState: sender.state == .on ? .on : .off, for: bundleId)
-    }
-}
-
-struct MonitoredAppsViewRepresentable: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSView {
-        let view = MonitoredAppsView()
-        // Configure your NSView here
-        view.viewDidLoad()
-        return view
-    }
-
-    func updateNSView(_ nsView: NSView, context: Context) {
-        // Update your NSView here
     }
 }

@@ -4,6 +4,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var window: NSWindow!
     var statusBarItem: NSStatusItem!
     var settingsWindowController = SettingsWindowController()
+    var monitoredAppsWindowController = MonitoredAppsWindowController()
     var wakaTime: WakaTime?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
@@ -25,6 +26,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(withTitle: "Dashboard", action: #selector(AppDelegate.dashboardClicked(_:)), keyEquivalent: "")
         menu.addItem(withTitle: "Settings", action: #selector(AppDelegate.settingsClicked(_:)), keyEquivalent: "")
+        menu.addItem(withTitle: "Monitored Apps", action: #selector(AppDelegate.monitoredAppsClicked(_:)), keyEquivalent: "")
         menu.addItem(NSMenuItem.separator())
         menu.addItem(withTitle: "Quit", action: #selector(AppDelegate.quitClicked(_:)), keyEquivalent: "")
 
@@ -53,6 +55,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         showSettings()
     }
 
+    @objc func monitoredAppsClicked(_ sender: AnyObject) {
+        showMonitoredApps()
+    }
+
     @objc func quitClicked(_ sender: AnyObject) {
         NSApplication.shared.terminate(self)
     }
@@ -60,5 +66,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func showSettings() {
         NSApp.activate(ignoringOtherApps: true)
         settingsWindowController.showWindow(self)
+    }
+
+    private func showMonitoredApps() {
+        NSApp.activate(ignoringOtherApps: true)
+        monitoredAppsWindowController.showWindow(self)
     }
 }
