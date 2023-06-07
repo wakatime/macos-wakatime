@@ -97,6 +97,9 @@ jobs:
         name: Build app
         run: xcodebuild -configuration Release
       -
+        name: Remove libswift_Concurrency
+        run: rm -f build/Release/WakaTime.app/Contents/Frameworks/libswift_Concurrency.dylib
+      -
         name: Temporarily move helper outside app
         run: mv build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime\ Helper.app ./WakaTime\ Helper.app
       -
