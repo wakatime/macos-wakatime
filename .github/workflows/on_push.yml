@@ -97,6 +97,9 @@ jobs:
         name: Build app
         run: xcodebuild -configuration Release
       -
+        name: Temporarily move helper outside app
+        run: mv build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime\ Helper.app ./WakaTime\ Helper.app
+      -
         name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v1
         with:
@@ -105,10 +108,10 @@ jobs:
           # The password used to import the PKCS12 file.
           p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
       -
-        name: Codesign helper bundle
-        run: /usr/bin/codesign --force -s "WakaTime" --options runtime build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime\ Helper.app -v
+        name: Codesign helper
+        run: /usr/bin/codesign --force -s "WakaTime" --options runtime WakaTime\ Helper.app -v
       -
-        name: Notarize helper bundle
+        name: Notarize helper
         env:
           NOTARIZATION_APPLE_ID: ${{ secrets.AC_USERNAME }}
           NOTARIZATION_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -125,7 +128,7 @@ jobs:
           # notarization service
 
           echo "Creating temp notarization archive"
-          ditto -c -k --keepParent "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app" "helper_notarization.zip"
+          ditto -c -k --keepParent "WakaTime Helper.app" "helper_notarization.zip"
 
           # Here we send the notarization request to the Apple's Notarization service, waiting for the result.
           # This typically takes a few seconds inside a CI environment, but it might take more depending on the App
@@ -138,7 +141,7 @@ jobs:
           # Finally, we need to "attach the staple" to our executable, which will allow our app to be
           # validated by macOS even when an internet connection is not available.
           echo "Attach staple"
-          xcrun stapler staple "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app"
+          xcrun stapler staple "WakaTime Helper.app"
       -
         name: Codesign app bundle
         run: /usr/bin/codesign --force -s "WakaTime" --options runtime build/Release/WakaTime.app -v
@@ -174,6 +177,9 @@ jobs:
           # validated by macOS even when an internet connection is not available.
           echo "Attach staple"
           xcrun stapler staple "build/Release/WakaTime.app"
+      -
+        name: Move helper back into app
+        run: mv ./WakaTime\ Helper.app build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime\ Helper.app
       -
         name: Zip
         run: ditto -c -k --sequesterRsrc --keepParent build/Release/WakaTime.app WakaTime.zip
