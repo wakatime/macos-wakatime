@@ -4,8 +4,9 @@ import SwiftUI
 // swiftlint:disable force_unwrapping
 // swiftlint:disable force_try
 class WakaTime {
-    var state = State()
     let watcher = Watcher()
+    var lastFile = ""
+    var lastTime = 0
 
     enum Constants {
         static let settingsDeepLink: String = "wakatime://settings"
@@ -216,8 +217,8 @@ class WakaTime {
     private func shouldSendHeartbeat(file: URL, time: Int, isWrite: Bool) -> Bool {
         guard
             !isWrite,
-            file.formatted() == state.lastFile,
-            state.lastTime + 120 > time
+            file.formatted() == lastFile,
+            lastTime + 120 > time
         else { return true }
 
         return false
@@ -227,8 +228,8 @@ class WakaTime {
         let time = Int(NSDate().timeIntervalSince1970)
         guard shouldSendHeartbeat(file: file, time: time, isWrite: isWrite) else { return }
 
-        state.lastFile = file.formatted()
-        state.lastTime = time
+        lastFile = file.formatted()
+        lastTime = time
 
         guard
             let id = app.bundleIdentifier,
@@ -276,8 +277,3 @@ extension URL {
 }
 // swiftlint:enable force_unwrapping
 // swiftlint:enable force_try
-
-class State: ObservableObject {
-    @Published var lastFile = ""
-    @Published var lastTime = 0
-}
