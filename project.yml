@@ -26,6 +26,7 @@ targets:
       - target: WakaTime Helper
     postBuildScripts:
       - script: |
+          rm "$BUILT_PRODUCTS_DIR/$PRODUCT_NAME.app/Contents/Frameworks/libswift_Concurrency.dylib"
           LOGIN_ITEMS_DIR="$BUILT_PRODUCTS_DIR/$PRODUCT_NAME.app/Contents/Library/LoginItems"
           rm -rf "$LOGIN_ITEMS_DIR"
           mkdir -p "$LOGIN_ITEMS_DIR"
