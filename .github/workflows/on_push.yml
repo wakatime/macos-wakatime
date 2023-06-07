@@ -115,24 +115,23 @@ jobs:
           /usr/bin/codesign --force -s "WakaTime" --options runtime build/Release/WakaTime.app -v
           /usr/bin/codesign --verify --deep --strict --verbose=2 build/Release/WakaTime.app
       -
-        name: Notarize helper
+        name: Store Credentials
         env:
           NOTARIZATION_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           NOTARIZATION_APPLE_ID: ${{ secrets.AC_USERNAME }}
           NOTARIZATION_PWD: ${{ secrets.AC_PASSWORD }}
+        run: xcrun notarytool store-credentials "notarytool-profile" --apple-id "$NOTARIZATION_APPLE_ID" --team-id "$NOTARIZATION_TEAM_ID" --password "$NOTARIZATION_PWD"
+      -
+        name: Notarize helper
         run: |
           ditto -c -k --keepParent "WakaTime Helper.app" helper.zip
-          xcrun altool --notarize-app --primary-bundle-id "macos-wakatime.WakaTimeHelper" --apple-id "$NOTARIZATION_APPLE_ID" --team-id "$NOTARIZATION_TEAM_ID" --password "$NOTARIZATION_PWD" --file helper.zip
+          xcrun notarytool submit helper.zip --keychain-profile "notarytool-profile" --wait
           xcrun stapler staple "WakaTime Helper.app"
       -
         name: Notarize app bundle
-        env:
-          NOTARIZATION_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          NOTARIZATION_APPLE_ID: ${{ secrets.AC_USERNAME }}
-          NOTARIZATION_PWD: ${{ secrets.AC_PASSWORD }}
         run: |
           ditto -c -k --keepParent build/Release/WakaTime.app main.zip
-          xcrun altool --notarize-app --primary-bundle-id "macos-wakatime.WakaTime" --apple-id "$NOTARIZATION_APPLE_ID" --team-id "$NOTARIZATION_TEAM_ID" --password "$NOTARIZATION_PWD" --file main.zip
+          xcrun notarytool submit main.zip --keychain-profile "notarytool-profile" --wait
           xcrun stapler staple build/Release/WakaTime.app
       -
         name: Move helper back into app
