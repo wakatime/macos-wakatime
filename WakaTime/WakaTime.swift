@@ -38,6 +38,10 @@ class WakaTime {
     }
 
     private func registerAsLoginItem() {
+        guard
+            !SettingsManager.loginItemRegistered(),
+            PropertiesManager.shouldLaunchOnLogin
+        else { return }
         SettingsManager.registerAsLoginItem()
     }
 
