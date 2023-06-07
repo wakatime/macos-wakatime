@@ -20,8 +20,8 @@ class SettingsView: NSView, NSTextFieldDelegate {
         return apiKeyLabel
     }()
 
-    lazy var textField: NSTextField = {
-        let textField = NSTextField(frame: .zero)
+    lazy var textField: WKTextField = {
+        let textField = WKTextField(frame: .zero)
         textField.stringValue = ConfigFile.getSetting(section: "settings", key: "api_key") ?? ""
         textField.delegate = self
         textField.translatesAutoresizingMaskIntoConstraints = false
