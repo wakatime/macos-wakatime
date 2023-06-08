@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import Firebase
 
 class WakaTime {
     // MARK: Watcher
@@ -27,8 +28,18 @@ class WakaTime {
         Dependencies.installDependencies()
         if SettingsManager.shouldRegisterAsLoginItem() { SettingsManager.registerAsLoginItem() }
         Accessibility.requestA11yPermission()
+
+        configureFirebase()
         checkForApiKey()
         watcher.eventHandler = handleEvent
+    }
+
+    private func configureFirebase() {
+        // Needed for uncaught exception reporting
+        UserDefaults.standard.register(
+          defaults: ["NSApplicationCrashOnExceptions": true]
+        )
+        FirebaseApp.configure()
     }
 
     private func checkForApiKey() {
