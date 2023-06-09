@@ -18,6 +18,10 @@ targets:
     platform: macOS
     deploymentTarget: 10.15
     sources: [WakaTime]
+    entitlements:
+      path: WakaTime/Wakatime.entitlements
+      properties:
+        keychain-access-groups: [$(AppIdentifierPrefix)macos-wakatime.WakaTime]
     settings:
       CURRENT_PROJECT_VERSION: local-build
       MARKETING_VERSION: local-build
