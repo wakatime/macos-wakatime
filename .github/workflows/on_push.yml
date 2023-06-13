@@ -43,6 +43,11 @@ jobs:
           /usr/bin/codesign --force -s "WakaTime" --options runtime "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app" -v
           /usr/bin/codesign --verify --deep --strict --verbose=2 "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app"
       -
+        name: Codesign libswift_Concurrency.dylib
+        run: |
+          /usr/bin/codesign --force -s "WakaTime" --options runtime "build/Release/WakaTime.app/Contents/Frameworks/libswift_Concurrency.dylib" -v
+          /usr/bin/codesign --verify --deep --strict --verbose=2 "build/Release/WakaTime.app/Contents/Frameworks/libswift_Concurrency.dylib"
+      -
         name: Codesign WakaTime.app
         run: |
           /usr/bin/codesign --force -s "WakaTime" --options runtime build/Release/WakaTime.app -v
