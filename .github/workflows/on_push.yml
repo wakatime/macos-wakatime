@@ -76,7 +76,7 @@ jobs:
         run: |
           ditto -c -k --keepParent build/Release/WakaTime.app main.zip
           UUID=$(xcrun notarytool submit main.zip --keychain-profile "notarytool-profile" --wait | grep -o '[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}')
-          xcrun notarytool log --keychain-profile "notarytool-profile" $UUID
+          xcrun notarytool log --keychain-profile "notarytool-profile" "$UUID"
       -
         name: Staple WakaTime.app
         run: |
