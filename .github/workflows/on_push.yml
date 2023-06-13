@@ -171,7 +171,7 @@ jobs:
         with:
           fetch-depth: 0
       -
-        # Run only for main branch
+        # Run only for main branch (aka develop)
         if: ${{ github.ref == 'refs/heads/main' }}
         name: Changelog for main
         uses: gandarez/changelog-action@v1.2.0
@@ -201,6 +201,39 @@ jobs:
         with:
           name: app
           path: ./
+      - 
+        name: Prepare release folder
+        id: prepare
+        run: |
+          mkdir release
+          mv ./WakaTime.zip release/
+      - 
+        name: Prepare Sparkle update creation
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          echo -n "$SPARKLE_PRIVATE_KEY" > ./bin/sparkle/sparkle_private_key
+      - 
+        name: Extract latest changes
+        id: latest_changes
+        run: |
+          python3 ./bin/sparkle/generate_latest_changes.py
+          echo "${{ needs.version.outputs.semver_tag }}" >> title
+      - 
+        name: Generate Sparkle notes
+        run: |
+          pip3 install -r ./bin/sparkle/requirements.txt
+          python3 ./bin/sparkle/generate_html_for_sparkle_release.py
+          mv release/latest_changes.html release/WakaTime.html
+      - 
+        name: Update appcast
+        run: |
+          ./bin/sparkle/generate_appcast \
+              --ed-key-file ./bin/sparkle/sparkle_private_key \
+              --link https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/releases \
+              --download-url-prefix https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/releases/download/${{ needs.version.outputs.semver_tag }}/ \
+              -o release/appcast.xml \
+              release/
       -
         name: "Create release"
         uses: softprops/action-gh-release@master
@@ -211,7 +244,9 @@ jobs:
           prerelease: ${{ needs.version.outputs.is_prerelease }}
           target_commitish: ${{ github.sha }}
           draft: false
-          files: ./WakaTime.zip
+          files: |
+            ./release/WakaTime.zip
+            ./release/appcast.xml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       -

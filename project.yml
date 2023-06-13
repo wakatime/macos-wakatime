@@ -4,6 +4,11 @@ options:
   bundleIdPrefix: macos-wakatime
   createIntermediateGroups: true
 
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.0.0
+
 targets:
   WakaTime:
     type: application
@@ -24,6 +29,7 @@ targets:
         name: Swiftlint
     dependencies:
       - target: WakaTime Helper
+      - package: Sparkle
     postBuildScripts:
       - script: |
           LOGIN_ITEMS_DIR="$BUILT_PRODUCTS_DIR/$PRODUCT_NAME.app/Contents/Library/LoginItems"
