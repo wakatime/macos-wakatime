@@ -105,7 +105,17 @@ jobs:
           # The password used to import the PKCS12 file.
           p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
       -
-        name: Codesign
+        name: Codesign Helper
+        run: |
+          /usr/bin/codesign --force -s "WakaTime" --options runtime "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app" -v
+          /usr/bin/codesign --verify --deep --strict --verbose=2 "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app"
+      -
+        name: Codesign libswift_Concurrency.dylib
+        run: |
+          /usr/bin/codesign --force -s "WakaTime" --options runtime build/Release/WakaTime.app/Contents/Frameworks/libswift_Concurrency.dylib -v
+          /usr/bin/codesign --verify --deep --strict --verbose=2 build/Release/WakaTime.app/Contents/Frameworks/libswift_Concurrency.dylib
+      -
+        name: Codesign App
         run: |
           /usr/bin/codesign --force -s "WakaTime" --options runtime build/Release/WakaTime.app -v
           /usr/bin/codesign --verify --deep --strict --verbose=2 build/Release/WakaTime.app
@@ -117,7 +127,19 @@ jobs:
           NOTARIZATION_PWD: ${{ secrets.AC_PASSWORD }}
         run: xcrun notarytool store-credentials "notarytool-profile" --apple-id "$NOTARIZATION_APPLE_ID" --team-id "$NOTARIZATION_TEAM_ID" --password "$NOTARIZATION_PWD"
       -
-        name: Notarize
+        name: Notarize Helper
+        run: |
+          ditto -c -k --keepParent "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app" helper.zip
+          xcrun notarytool submit helper.zip --keychain-profile "notarytool-profile" --wait
+          xcrun stapler staple "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app"
+      -
+        name: Notarize libswift_Concurrency.dylib
+        run: |
+          ditto -c -k --keepParent build/Release/WakaTime.app/Contents/Frameworks/libswift_Concurrency.dylib concurrency.zip
+          xcrun notarytool submit concurrency.zip --keychain-profile "notarytool-profile" --wait
+          xcrun stapler staple build/Release/WakaTime.app/Contents/Frameworks/libswift_Concurrency.dylib
+      -
+        name: Notarize App
         run: |
           ditto -c -k --keepParent build/Release/WakaTime.app main.zip
           xcrun notarytool submit main.zip --keychain-profile "notarytool-profile" --wait
