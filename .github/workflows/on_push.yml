@@ -50,7 +50,13 @@ jobs:
           NOTARIZATION_PWD: ${{ secrets.AC_PASSWORD }}
         run: xcrun notarytool store-credentials "notarytool-profile" --apple-id "$NOTARIZATION_APPLE_ID" --team-id "$NOTARIZATION_TEAM_ID" --password "$NOTARIZATION_PWD"
       -
-        name: Notarize
+        name: Notarize WakaTime Helper.app
+        run: |
+          ditto -c -k --keepParent "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app" helper.zip
+          xcrun notarytool submit helper.zip --keychain-profile "notarytool-profile" --wait
+          xcrun stapler staple "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app"
+      -
+        name: Notarize WakaTime.app
         run: |
           ditto -c -k --keepParent build/Release/WakaTime.app main.zip
           xcrun notarytool submit main.zip --keychain-profile "notarytool-profile" --wait
