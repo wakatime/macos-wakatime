@@ -35,6 +35,13 @@ To fix linter warning(s), run `swiftlint --fix`.
 
 Pull requests and issues are welcome!
 See [Contributing][contributing] for more details.
+The main thing to know is we require specific branch name prefixes for PRs:
+
+- `^major/.+` - `major`
+- `^feature/.+` - `minor`
+- `^bugfix/.+` - `patch`
+- `^docs?/.+` - `build`
+- `^misc/.+` - `build`
 
 Many thanks to all [contributors][authors]!
 
