@@ -133,12 +133,6 @@ jobs:
           xcrun notarytool submit helper.zip --keychain-profile "notarytool-profile" --wait
           xcrun stapler staple "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app"
       -
-        name: Notarize libswift_Concurrency.dylib
-        run: |
-          ditto -c -k --keepParent build/Release/WakaTime.app/Contents/Frameworks/libswift_Concurrency.dylib concurrency.zip
-          xcrun notarytool submit concurrency.zip --keychain-profile "notarytool-profile" --wait
-          xcrun stapler staple build/Release/WakaTime.app/Contents/Frameworks/libswift_Concurrency.dylib
-      -
         name: Notarize App
         run: |
           ditto -c -k --keepParent build/Release/WakaTime.app main.zip
