@@ -65,6 +65,9 @@ jobs:
         run: |
           ditto -c -k --keepParent build/Release/WakaTime.app main.zip
           xcrun notarytool submit main.zip --keychain-profile "notarytool-profile" --wait
+      -
+        name: Staple WakaTime.app
+        run: |
           xcrun stapler staple build/Release/WakaTime.app
       -
         name: Zip
