@@ -38,11 +38,20 @@ class WakaTime {
     }
 
     private func registerAsLoginItem() {
+        guard shouldRegisterAsLoginItem() else { return }
         guard
             !SettingsManager.loginItemRegistered(),
             PropertiesManager.shouldLaunchOnLogin
         else { return }
         SettingsManager.registerAsLoginItem()
+    }
+
+    private func shouldRegisterAsLoginItem() -> Bool {
+#if DEBUG
+        return false
+#else
+        return true
+#endif
     }
 
     private func requestA11yPermission() {
