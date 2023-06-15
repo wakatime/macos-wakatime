@@ -221,9 +221,12 @@ jobs:
           mv ./WakaTime.zip release/
       -
         name: Update appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
+          echo "$SPARKLE_PRIVATE_KEY" > sparkle_private_key
           ./bin/sparkle/generate_appcast \
-              --ed-key-file ./bin/sparkle/sparkle_private_key \
+              --ed-key-file ./sparkle_private_key \
               --link https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/releases \
               --download-url-prefix https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/releases/download/${{ needs.version.outputs.semver_tag }}/ \
               -o release/appcast.xml \
