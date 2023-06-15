@@ -149,10 +149,12 @@ jobs:
               ref: "tags/${{ needs.version.outputs.semver_tag }}"
             })
 
-  release:
-    name: Release
-    runs-on: macos-latest
+  changelog:
+    name: Changelog
+    runs-on: ubuntu-latest
     needs: [version, sign]
+    outputs:
+      changelog: ${{ steps.changelog.outputs.changelog }}
     steps:
       -
         name: Checkout
@@ -160,7 +162,6 @@ jobs:
         with:
           fetch-depth: 0
       -
-        # Run only for main branch (aka develop)
         if: ${{ github.ref == 'refs/heads/main' }}
         name: Changelog for main
         uses: gandarez/changelog-action@v1.2.0
@@ -171,7 +172,6 @@ jobs:
           exclude: |
             ^Merge pull request .*
       -
-        # Run only for release branch
         if: ${{ github.ref == 'refs/heads/release' }}
         name: Get related pull request
         uses: 8BitJonny/gh-get-current-pr@2.2.0
@@ -185,6 +185,29 @@ jobs:
           echo "${{ steps.changelog-main.outputs.changelog || steps.changelog-release.outputs.pr_body }}" > changelog.txt
           ./bin/prepare_changelog.sh $(echo ${GITHUB_REF#refs/heads/}) "$(cat changelog.txt)"
       -
+        name: Remove tag if failure
+        if: ${{ failure() }}
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            github.rest.git.deleteRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: "tags/${{ needs.version.outputs.semver_tag }}"
+            })
+
+  release:
+    name: Release
+    runs-on: macos-latest
+    needs: [version, sign, prerelease]
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      -
         name: Download artifacts
         uses: actions/download-artifact@v3
         with:
@@ -196,24 +219,6 @@ jobs:
         run: |
           mkdir release
           mv ./WakaTime.zip release/
-      -
-        name: Prepare Sparkle update creation
-        env:
-          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
-        run: |
-          echo -n "$SPARKLE_PRIVATE_KEY" > ./bin/sparkle/sparkle_private_key
-      -
-        name: Extract latest changes
-        id: latest_changes
-        run: |
-          python3 ./bin/sparkle/generate_latest_changes.py
-          echo "${{ needs.version.outputs.semver_tag }}" >> title
-      -
-        name: Generate Sparkle notes
-        run: |
-          pip3 install -r ./bin/sparkle/requirements.txt
-          python3 ./bin/sparkle/generate_html_for_sparkle_release.py
-          mv release/latest_changes.html release/WakaTime.html
       -
         name: Update appcast
         run: |
@@ -229,7 +234,7 @@ jobs:
         with:
           name: ${{ needs.version.outputs.semver_tag }}
           tag_name: ${{ needs.version.outputs.semver_tag }}
-          body: "## Changelog\n${{ steps.changelog.outputs.changelog }}"
+          body: "## Changelog\n${{ needs.changelog.outputs.changelog }}"
           prerelease: ${{ needs.version.outputs.is_prerelease }}
           target_commitish: ${{ github.sha }}
           draft: false
