@@ -105,20 +105,9 @@ jobs:
           # The password used to import the PKCS12 file.
           p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
       -
-        name: Codesign Helper
+        name: Codesign
         run: |
-          /usr/bin/codesign --force -s "WakaTime" --options runtime "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app" -v
-          /usr/bin/codesign --verify --deep --strict --verbose=2 "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app"
-      -
-        name: Codesign libswift_Concurrency.dylib
-        run: |
-          /usr/bin/codesign --force -s "WakaTime" --options runtime build/Release/WakaTime.app/Contents/Frameworks/libswift_Concurrency.dylib -v
-          /usr/bin/codesign --verify --deep --strict --verbose=2 build/Release/WakaTime.app/Contents/Frameworks/libswift_Concurrency.dylib
-      -
-        name: Codesign App
-        run: |
-          /usr/bin/codesign --force -s "WakaTime" --options runtime build/Release/WakaTime.app -v
-          /usr/bin/codesign --verify --deep --strict --verbose=2 build/Release/WakaTime.app
+          codesign -v --force --deep --timestamp -s "WakaTime" --options runtime build/Release/WakaTime.app
       -
         name: Store Credentials
         env:
@@ -201,31 +190,31 @@ jobs:
         with:
           name: app
           path: ./
-      - 
+      -
         name: Prepare release folder
         id: prepare
         run: |
           mkdir release
           mv ./WakaTime.zip release/
-      - 
+      -
         name: Prepare Sparkle update creation
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
           echo -n "$SPARKLE_PRIVATE_KEY" > ./bin/sparkle/sparkle_private_key
-      - 
+      -
         name: Extract latest changes
         id: latest_changes
         run: |
           python3 ./bin/sparkle/generate_latest_changes.py
           echo "${{ needs.version.outputs.semver_tag }}" >> title
-      - 
+      -
         name: Generate Sparkle notes
         run: |
           pip3 install -r ./bin/sparkle/requirements.txt
           python3 ./bin/sparkle/generate_html_for_sparkle_release.py
           mv release/latest_changes.html release/WakaTime.html
-      - 
+      -
         name: Update appcast
         run: |
           ./bin/sparkle/generate_appcast \
