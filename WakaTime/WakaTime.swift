@@ -4,9 +4,9 @@ import SwiftUI
 // swiftlint:disable force_unwrapping
 // swiftlint:disable force_try
 class WakaTime {
-    let watcher = Watcher()
     var lastFile = ""
     var lastTime = 0
+    let watcher = Watcher()
 
     enum Constants {
         static let settingsDeepLink: String = "wakatime://settings"
@@ -217,14 +217,6 @@ class WakaTime {
             return "amd64"
         }
         return "arm64"
-    }
-
-    private func dashboard() {
-        NSWorkspace.shared.open(URL(string: "https://wakatime.com/")!)
-    }
-
-    private func quit() {
-        NSApp.terminate(self)
     }
 
     private func shouldSendHeartbeat(file: URL, time: Int, isWrite: Bool) -> Bool {

@@ -1,4 +1,5 @@
 import Cocoa
+import Sparkle
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var window: NSWindow!
@@ -6,6 +7,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var settingsWindowController = SettingsWindowController()
     var monitoredAppsWindowController = MonitoredAppsWindowController()
     var wakaTime: WakaTime?
+    var updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         wakaTime = WakaTime()
@@ -27,6 +29,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(withTitle: "Dashboard", action: #selector(AppDelegate.dashboardClicked(_:)), keyEquivalent: "")
         menu.addItem(withTitle: "Settings", action: #selector(AppDelegate.settingsClicked(_:)), keyEquivalent: "")
         menu.addItem(withTitle: "Monitored Apps", action: #selector(AppDelegate.monitoredAppsClicked(_:)), keyEquivalent: "")
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(withTitle: "Check for Updates", action: #selector(AppDelegate.checkForUpdatesClicked(_:)), keyEquivalent: "")
         menu.addItem(NSMenuItem.separator())
         menu.addItem(withTitle: "Quit", action: #selector(AppDelegate.quitClicked(_:)), keyEquivalent: "")
 
@@ -57,6 +61,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func monitoredAppsClicked(_ sender: AnyObject) {
         showMonitoredApps()
+    }
+
+    @objc func checkForUpdatesClicked(_ sender: AnyObject) {
+        updaterController.checkForUpdates(sender)
     }
 
     @objc func quitClicked(_ sender: AnyObject) {

@@ -105,20 +105,9 @@ jobs:
           # The password used to import the PKCS12 file.
           p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
       -
-        name: Codesign Helper
+        name: Codesign
         run: |
-          /usr/bin/codesign --force -s "WakaTime" --options runtime "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app" -v
-          /usr/bin/codesign --verify --deep --strict --verbose=2 "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app"
-      -
-        name: Codesign libswift_Concurrency.dylib
-        run: |
-          /usr/bin/codesign --force -s "WakaTime" --options runtime build/Release/WakaTime.app/Contents/Frameworks/libswift_Concurrency.dylib -v
-          /usr/bin/codesign --verify --deep --strict --verbose=2 build/Release/WakaTime.app/Contents/Frameworks/libswift_Concurrency.dylib
-      -
-        name: Codesign App
-        run: |
-          /usr/bin/codesign --force -s "WakaTime" --options runtime build/Release/WakaTime.app -v
-          /usr/bin/codesign --verify --deep --strict --verbose=2 build/Release/WakaTime.app
+          codesign -v --force --deep --timestamp -s "WakaTime" --options runtime build/Release/WakaTime.app
       -
         name: Store Credentials
         env:
@@ -160,10 +149,12 @@ jobs:
               ref: "tags/${{ needs.version.outputs.semver_tag }}"
             })
 
-  release:
-    name: Release
+  changelog:
+    name: Changelog
     runs-on: ubuntu-latest
     needs: [version, sign]
+    outputs:
+      changelog: ${{ steps.changelog.outputs.changelog }}
     steps:
       -
         name: Checkout
@@ -171,7 +162,6 @@ jobs:
         with:
           fetch-depth: 0
       -
-        # Run only for main branch
         if: ${{ github.ref == 'refs/heads/main' }}
         name: Changelog for main
         uses: gandarez/changelog-action@v1.2.0
@@ -182,7 +172,6 @@ jobs:
           exclude: |
             ^Merge pull request .*
       -
-        # Run only for release branch
         if: ${{ github.ref == 'refs/heads/release' }}
         name: Get related pull request
         uses: 8BitJonny/gh-get-current-pr@2.2.0
@@ -196,22 +185,64 @@ jobs:
           echo "${{ steps.changelog-main.outputs.changelog || steps.changelog-release.outputs.pr_body }}" > changelog.txt
           ./bin/prepare_changelog.sh $(echo ${GITHUB_REF#refs/heads/}) "$(cat changelog.txt)"
       -
+        name: Remove tag if failure
+        if: ${{ failure() }}
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            github.rest.git.deleteRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: "tags/${{ needs.version.outputs.semver_tag }}"
+            })
+
+  release:
+    name: Release
+    runs-on: macos-latest
+    needs: [version, sign, changelog]
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      -
         name: Download artifacts
         uses: actions/download-artifact@v3
         with:
           name: app
           path: ./
       -
+        name: Prepare release folder
+        id: prepare
+        run: |
+          mkdir release
+          mv ./WakaTime.zip release/
+      -
+        name: Update appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          echo "$SPARKLE_PRIVATE_KEY" | ./bin/sparkle/generate_appcast \
+            --ed-key-file - \
+            --link https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/releases \
+            --download-url-prefix https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/releases/download/${{ needs.version.outputs.semver_tag }}/ \
+            -o release/appcast.xml \
+            release/
+      -
         name: "Create release"
         uses: softprops/action-gh-release@master
         with:
           name: ${{ needs.version.outputs.semver_tag }}
           tag_name: ${{ needs.version.outputs.semver_tag }}
-          body: "## Changelog\n${{ steps.changelog.outputs.changelog }}"
+          body: "## Changelog\n${{ needs.changelog.outputs.changelog }}"
           prerelease: ${{ needs.version.outputs.is_prerelease }}
           target_commitish: ${{ github.sha }}
           draft: false
-          files: ./WakaTime.zip
+          files: |
+            ./release/WakaTime.zip
+            ./release/appcast.xml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       -

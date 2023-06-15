@@ -4,6 +4,14 @@
 <dict>
 	<key>CFBundleIdentifier</key>
 	<string></string>
+	<key>SUFeedURL</key>
+	<string>https://github.com/wakatime/macos-wakatime/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>6I/0TFjR4Fwf/dRPerG9McAsG5czi7yNBgW6usORg+g=</string>
+	<key>SUAllowsAutomaticUpdates</key>
+	<string>YES</string>
+	<key>SUEnableAutomaticChecks</key>
+	<string>YES</string>
 	<key>LSUIElement</key>
 	<true/>
 	<key>CFBundleURLTypes</key>
