@@ -200,7 +200,7 @@ jobs:
   release:
     name: Release
     runs-on: macos-latest
-    needs: [version, sign, prerelease]
+    needs: [version, sign, changelog]
     steps:
       -
         name: Checkout
