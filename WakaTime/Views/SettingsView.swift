@@ -52,7 +52,6 @@ class SettingsView: NSView, NSTextFieldDelegate {
 
     lazy var versionLabel: NSTextField = {
         let versionString = "Version: \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")"
-            + "(\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""))"
         let versionLabel = NSTextField(labelWithString: versionString)
         versionLabel.translatesAutoresizingMaskIntoConstraints = false
         return versionLabel
