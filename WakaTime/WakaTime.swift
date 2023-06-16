@@ -4,13 +4,25 @@ import SwiftUI
 // swiftlint:disable force_unwrapping
 // swiftlint:disable force_try
 class WakaTime {
-    var lastFile = ""
-    var lastTime = 0
+    // MARK: Watcher
+
     let watcher = Watcher()
+
+    // MARK: Watcher State
+
+    // Note: The lastFile and lastTime member vars are read and written on a worker thread.
+    // To ensure that they can be accessed concurrently from other threads without issues,
+    // they are declared atomic here
+    @Atomic var lastFile = ""
+    @Atomic var lastTime = 0
+
+    // MARK: Constants
 
     enum Constants {
         static let settingsDeepLink: String = "wakatime://settings"
     }
+
+    // MARK: Initialization and Setup
 
     init() {
         registerAsLoginItem()
@@ -184,7 +196,13 @@ class WakaTime {
                 process.arguments = [zipFile, "-d", dir]
                 process.standardOutput = FileHandle.nullDevice
                 process.standardError = FileHandle.nullDevice
-                process.launch()
+                do {
+                    // Use WakaTime's custom execute() method to run the process. This will call Process.launch()
+                    // with ObjC exception bridging on macOS 12 or earlier and Process.run() on macOS 13 or newer.
+                    try process.execute()
+                } catch {
+                    print("Failed to unzip wakatime-cli.zip: \(error)")
+                }
                 process.waitUntilExit()
 
                 // cleanup wakatime-cli.zip
@@ -218,6 +236,8 @@ class WakaTime {
         }
         return "arm64"
     }
+
+    // MARK: Watcher Event Handling
 
     private func shouldSendHeartbeat(file: URL, time: Int, isWrite: Bool) -> Bool {
         guard
@@ -263,21 +283,13 @@ class WakaTime {
         process.arguments = args
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
-        process.launch()
-    }
-}
-
-extension Optional where Wrapped: Collection {
-    var isEmpty: Bool {
-        self?.isEmpty ?? true
-    }
-}
-
-extension URL {
-    func formatted() -> String {
-        let components = URLComponents(url: self, resolvingAgainstBaseURL: true)
-        let path = components?.path ?? ""
-        return path.replacingOccurrences(of: " ", with: "\\ ")
+        do {
+            // Use WakaTime's custom execute() method to run the process. This will call Process.launch()
+            // with ObjC exception bridging on macOS 12 or earlier and Process.run() on macOS 13 or newer.
+            try process.execute()
+        } catch {
+            print("Failed to run wakatime-cli: \(error)")
+        }
     }
 }
 // swiftlint:enable force_unwrapping
