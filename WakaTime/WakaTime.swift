@@ -277,7 +277,13 @@ class WakaTime {
         process.arguments = args
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
-        process.launch()
+        do {
+            // Note: Process.launch() can throw ObjC exceptions. For further reference, see
+            // https://developer.apple.com/documentation/foundation/process/1414189-launch?changes=_3
+            try ObjC.catchException { process.launch() }
+        } catch {
+            print("Failed to run wakatime-cli: \(error)")
+        }
     }
 }
 // swiftlint:enable force_unwrapping
