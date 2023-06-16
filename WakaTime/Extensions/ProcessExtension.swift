@@ -5,7 +5,7 @@ extension Process {
     // Adds Swift exception handling to process.launch().
     func execute() throws {
         if #available(macOS 13.0, *) {
-            // Use process run on macOS 13 or newer. Process.run() throws Swift exceptions.
+            // Use Process.run() on macOS 13 or newer. Process.run() throws Swift exceptions.
             try self.run()
         } else {
             // Note: Process.launch() can throw ObjC exceptions. For further reference, see
