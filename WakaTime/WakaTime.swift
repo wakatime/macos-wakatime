@@ -280,19 +280,5 @@ class WakaTime {
         process.launch()
     }
 }
-
-extension Optional where Wrapped: Collection {
-    var isEmpty: Bool {
-        self?.isEmpty ?? true
-    }
-}
-
-extension URL {
-    func formatted() -> String {
-        let components = URLComponents(url: self, resolvingAgainstBaseURL: true)
-        let path = components?.path ?? ""
-        return path.replacingOccurrences(of: " ", with: "\\ ")
-    }
-}
 // swiftlint:enable force_unwrapping
 // swiftlint:enable force_try
