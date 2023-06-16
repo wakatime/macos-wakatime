@@ -196,7 +196,13 @@ class WakaTime {
                 process.arguments = [zipFile, "-d", dir]
                 process.standardOutput = FileHandle.nullDevice
                 process.standardError = FileHandle.nullDevice
-                process.launch()
+                do {
+                    // Use WakaTime's custom execute() method to run the process. This will call Process.launch()
+                    // with ObjC exception bridging on macOS 12 or earlier and Process.run() on macOS 13 or newer.
+                    try process.execute()
+                } catch {
+                    print("Failed to unzip wakatime-cli.zip: \(error)")
+                }
                 process.waitUntilExit()
 
                 // cleanup wakatime-cli.zip
@@ -278,14 +284,9 @@ class WakaTime {
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
         do {
-            if #available(macOS 13.0, *) {
-                // Use process run on macOS 13 or newer. Process.run() throws Swift exceptions.
-                try process.run()
-            } else {
-                // Note: Process.launch() can throw ObjC exceptions. For further reference, see
-                // https://developer.apple.com/documentation/foundation/process/1414189-launch?changes=_3
-                try ObjC.catchException { process.launch() }
-            }
+            // Use WakaTime's custom execute() method to run the process. This will call Process.launch()
+            // with ObjC exception bridging on macOS 12 or earlier and Process.run() on macOS 13 or newer.
+            try process.execute()
         } catch {
             print("Failed to run wakatime-cli: \(error)")
         }
