@@ -4,13 +4,25 @@ import SwiftUI
 // swiftlint:disable force_unwrapping
 // swiftlint:disable force_try
 class WakaTime {
-    var lastFile = ""
-    var lastTime = 0
+    // MARK: Watcher
+
     let watcher = Watcher()
+
+    // MARK: Watcher State
+
+    // Note: The lastFile and lastTime member vars are read and written on a worker thread.
+    // To ensure that they can be accessed concurrently from other threads without issues,
+    // they are declared atomic here
+    @Atomic var lastFile = ""
+    @Atomic var lastTime = 0
+
+    // MARK: Constants
 
     enum Constants {
         static let settingsDeepLink: String = "wakatime://settings"
     }
+
+    // MARK: Initialization and Setup
 
     init() {
         registerAsLoginItem()
@@ -218,6 +230,8 @@ class WakaTime {
         }
         return "arm64"
     }
+
+    // MARK: Watcher Event Handling
 
     private func shouldSendHeartbeat(file: URL, time: Int, isWrite: Bool) -> Bool {
         guard
