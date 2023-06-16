@@ -29,6 +29,11 @@ class Watcher: NSObject {
         if let app = NSWorkspace.shared.frontmostApplication {
             handleAppChanged(app)
         }
+
+        NSEvent.addGlobalMonitorForEvents(
+            matching: [NSEvent.EventTypeMask.keyDown],
+            handler: handleKeyboardEvent
+        )
     }
 
     deinit {
@@ -53,6 +58,11 @@ class Watcher: NSObject {
         }
 
         setAppVersion(app)
+    }
+
+    func handleKeyboardEvent(event: NSEvent!) {
+        print("keyDown")
+        // TODO: call eventHandler to send heartbeat
     }
 
     private func setAppVersion(_ app: NSRunningApplication) {

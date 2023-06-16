@@ -1,10 +1,3 @@
-//
-//  WKTextField.swift
-//  WakaTime
-//
-//  Created by Tobias Lensing on 07.06.23.
-//
-
 import AppKit
 
 class WKTextField: NSTextField {
