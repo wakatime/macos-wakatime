@@ -84,8 +84,11 @@ jobs:
         uses: fjogeleit/yaml-update-action@main
         with:
           valueFile: 'project.yml'
-          propertyPath: 'targets.WakaTime.settings.MARKETING_VERSION'
-          value: ${{ needs.version.outputs.semver }}
+          changes:  |
+            {
+              "targets.WakaTime.settings.CURRENT_PROJECT_VERSION": "${{ needs.version.outputs.semver }}",
+              "targets.WakaTime.settings.MARKETING_VERSION": "${{ needs.version.outputs.semver }}"
+            }
           commitChange: false
       -
         name: Install xcodegen via Homebrew for linting and building xcode project
