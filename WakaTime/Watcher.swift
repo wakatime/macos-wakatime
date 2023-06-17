@@ -1,3 +1,4 @@
+import EonilFSEvents
 import Foundation
 import AppKit
 
@@ -34,10 +35,23 @@ class Watcher: NSObject {
             matching: [NSEvent.EventTypeMask.keyDown],
             handler: handleKeyboardEvent
         )
+
+        do {
+            try EonilFSEvents.startWatching(
+                paths: ["/"],
+                for: ObjectIdentifier(self),
+                with: { event in
+                    // print(event)
+                }
+            )
+        } catch {
+            NSLog("Failed to setup FSEvents: \(error.localizedDescription)")
+        }
     }
 
     deinit {
         NSWorkspace.shared.notificationCenter.removeObserver(self) // needed prior macOS 11 only
+        EonilFSEvents.stopWatching(for: ObjectIdentifier(self))
     }
 
     @objc private func appChanged(_ notification: Notification) {
