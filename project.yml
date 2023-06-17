@@ -16,8 +16,8 @@ targets:
     deploymentTarget: 10.15
     sources: [WakaTime]
     settings:
-      CURRENT_PROJECT_VERSION: 0.0.1
-      MARKETING_VERSION: 0.0.1
+      CURRENT_PROJECT_VERSION: local-build
+      MARKETING_VERSION: local-build
       INFOPLIST_FILE: WakaTime/WakaTime-Info.plist
       GENERATE_INFOPLIST_FILE: YES
       CODE_SIGN_STYLE: Automatic
@@ -44,8 +44,8 @@ targets:
     deploymentTarget: 10.15
     sources: [WakaTime Helper]
     settings:
-      CURRENT_PROJECT_VERSION: 0.0.1
-      MARKETING_VERSION: 0.0.1
+      CURRENT_PROJECT_VERSION: local-build
+      MARKETING_VERSION: local-build
       INFOPLIST_FILE: WakaTime Helper/WakaTime Helper-Info.plist
       GENERATE_INFOPLIST_FILE: YES
       CODE_SIGN_STYLE: Automatic
