@@ -1,3 +1,4 @@
+//import EonilFSEvents
 import Foundation
 import AppKit
 
@@ -34,10 +35,25 @@ class Watcher: NSObject {
             matching: [NSEvent.EventTypeMask.keyDown],
             handler: handleKeyboardEvent
         )
+
+        /*
+        do {
+            try EonilFSEvents.startWatching(
+                paths: ["/"],
+                for: ObjectIdentifier(self),
+                with: { event in
+                    // print(event)
+                }
+            )
+        } catch {
+            NSLog("Failed to setup FSEvents: \(error.localizedDescription)")
+        }
+        */
     }
 
     deinit {
         NSWorkspace.shared.notificationCenter.removeObserver(self) // needed prior macOS 11 only
+        //EonilFSEvents.stopWatching(for: ObjectIdentifier(self))
     }
 
     @objc private func appChanged(_ notification: Notification) {
@@ -61,7 +77,7 @@ class Watcher: NSObject {
     }
 
     func handleKeyboardEvent(event: NSEvent!) {
-        print("keyDown")
+        // NSLog("keyDown")
         // TODO: call eventHandler to send heartbeat
     }
 
@@ -100,7 +116,7 @@ class Watcher: NSObject {
                 self.documentPath = currentPath
             }
             observeActivityText(activeWindow: activeWindow)
-            NSLog("Watching for file changes on \(app.localizedName ?? "nil")")
+            // NSLog("Watching for file changes on \(app.localizedName ?? "nil")")
         } catch {
             NSLog("Failed to setup AXObserver: \(error.localizedDescription)")
         }
@@ -116,7 +132,7 @@ class Watcher: NSObject {
             try? observer.remove(notification: kAXValueChangedNotification, element: observingElement)
             self.observingElement = nil
             self.observer = nil
-            NSLog("Stopped watching \(app.localizedName ?? "nil")")
+            // NSLog("Stopped watching \(app.localizedName ?? "nil")")
         }
     }
 
@@ -136,6 +152,9 @@ class Watcher: NSObject {
                     // Update the current isBuilding state when the observed "Activity Text" UI element changes
                     let value = element.getValue(for: kAXValueAttribute) as? String
                     self.isBuilding = checkIsBuilding(activityText: value)
+                    if let path = self.documentPath {
+                        self.handleNotificationEvent(path: path, isWrite: false)
+                    }
                 } catch {
                     observingActivityTextElement = nil
                 }
@@ -154,21 +173,22 @@ class Watcher: NSObject {
             if documentPath != oldValue {
                 guard let newPath = documentPath else { return }
 
+                NSLog("Document changed: \(newPath)")
+
                 handleNotificationEvent(path: newPath, isWrite: false)
                 fileMonitor = nil
                 fileMonitor = FileMonitor(filePath: newPath, queue: monitorQueue)
-                fileMonitor?.eventHandler = { [weak self] in
+                fileMonitor?.fileChangedEventHandler = { [weak self] in
                     self?.handleNotificationEvent(path: newPath, isWrite: true)
                 }
             }
         }
     }
 
-    private func handleNotificationEvent(path: URL, isWrite: Bool) {
+    public func handleNotificationEvent(path: URL, isWrite: Bool) {
         callbackQueue.async {
             guard let app = self.activeApp else { return }
 
-            NSLog("Document changed: \(path.formatted()) isWrite: \(isWrite) isBuilding: \(self.isBuilding)")
             self.eventHandler?(app, path, isWrite, self.isBuilding)
         }
     }
@@ -194,20 +214,19 @@ private func observerCallback(
                 !element.selectedText.isEmpty
             else { return }
             this.eventHandler?(app, currentPath, false, this.isBuilding)
-            // print("Selected text changed: \(element.selectedText)")
         case .focusedUIElementChanged:
             guard let currentPath = getCurrentPath(element: element, refcon: refcon) else { return }
             this.documentPath = currentPath
-            print("Document path changed:", currentPath)
         case .focusedWindowChanged:
             this.observeActivityText(activeWindow: element)
-            print("Window changed")
         case .valueChanged:
             let id = element.getValue(for: kAXIdentifierAttribute) as? String
             let value = element.getValue(for: kAXValueAttribute) as? String
             if let id, id == "Activity Text" {
                 this.isBuilding = this.checkIsBuilding(activityText: value)
-                print("Activity Text value changed:", value ?? "<<nil>>")
+                if let path = this.documentPath {
+                    this.handleNotificationEvent(path: path, isWrite: false)
+                }
             }
         default:
             break
@@ -252,7 +271,7 @@ extension AXObserver {
             throw AXObserverError.addNotificationFailed(error)
         }
 
-        NSLog("Added notification \(notification) to observer \(self)")
+        // NSLog("Added notification \(notification) to observer \(self)")
     }
 
     func remove(notification: String, element: AXUIElement) throws {
@@ -262,17 +281,17 @@ extension AXObserver {
             throw AXObserverError.removeNotificationFailed(error)
         }
 
-        NSLog("Removed notification \(notification) from observer \(self)")
+        // NSLog("Removed notification \(notification) from observer \(self)")
     }
 
     func addToRunLoop(mode: CFRunLoopMode = .defaultMode) {
         CFRunLoopAddSource(RunLoop.current.getCFRunLoop(), AXObserverGetRunLoopSource(self), mode)
-        NSLog("Added observer \(self) to run loop")
+        // NSLog("Added observer \(self) to run loop")
     }
 
     func removeFromRunLoop(mode: CFRunLoopMode = .defaultMode) {
         CFRunLoopRemoveSource(RunLoop.current.getCFRunLoop(), AXObserverGetRunLoopSource(self), mode)
-        NSLog("Removed observer \(self) from run loop")
+        // NSLog("Removed observer \(self) from run loop")
     }
 }
 
@@ -320,7 +339,7 @@ class FileMonitor {
     private let fileURL: URL
     private var dispatchObject: DispatchSourceFileSystemObject?
 
-    public var eventHandler: (() -> Void)?
+    public var fileChangedEventHandler: (() -> Void)?
 
     init?(filePath: URL, queue: DispatchQueue) {
         self.fileURL = filePath
@@ -329,18 +348,16 @@ class FileMonitor {
         guard descriptor >= -1 else { NSLog("open failed: \(descriptor)"); return nil }
         dispatchObject = DispatchSource.makeFileSystemObjectSource(fileDescriptor: descriptor, eventMask: .write, queue: queue)
         dispatchObject?.setEventHandler { [weak self] in
-            self?.eventHandler?()
+            self?.fileChangedEventHandler?()
         }
         dispatchObject?.setCancelHandler {
             close(descriptor)
         }
         dispatchObject?.activate()
-        NSLog("Created FileMonitor for \(fileURL.formatted())")
     }
 
     deinit {
         dispatchObject?.cancel()
-        NSLog("Deleted FileMonitor for \(fileURL.formatted())")
     }
 }
 
