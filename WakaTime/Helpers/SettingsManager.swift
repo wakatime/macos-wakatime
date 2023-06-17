@@ -16,6 +16,18 @@ class SettingsManager {
         }
     }
 
+    static func shouldRegisterAsLoginItem() -> Bool {
+        guard
+            !loginItemRegistered(),
+            PropertiesManager.shouldLaunchOnLogin
+        else { return false }
+#if DEBUG
+        return false
+#else
+        return true
+#endif
+    }
+
     static func registerAsLoginItem() {
         PropertiesManager.shouldLaunchOnLogin = true
 
