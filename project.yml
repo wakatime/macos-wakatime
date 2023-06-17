@@ -8,9 +8,6 @@ packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
     from: 2.0.0
-  EonilFSEvents:
-    url: https://github.com/eonil/FSEvents
-    from: 0.1.7
 
 targets:
   WakaTime:
@@ -34,7 +31,6 @@ targets:
     dependencies:
       - target: WakaTime Helper
       - package: Sparkle
-      - package: EonilFSEvents
     postBuildScripts:
       - script: |
           LOGIN_ITEMS_DIR="$BUILT_PRODUCTS_DIR/$PRODUCT_NAME.app/Contents/Library/LoginItems"
