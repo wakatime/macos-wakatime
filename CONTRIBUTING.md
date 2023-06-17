@@ -43,4 +43,13 @@ Please follow our guideline for branch names [here](https://github.com/wakatime/
 
 ## Troubleshooting
 
+If you have trouble building off `main` branch, try:
+
+* close Xcode
+* `rm -rf ~/Library/Developer/Xcode/DerivedData/WakaTime*`
+* `rm -rf ./WakaTime.xcodeproj`
+* `xcodegen`
+* Open the project in Xcode
+* Under `Signing & Capabilities`, set your `Team`
+
 Any question join us on [Slack](https://wakaslack.herokuapp.com/).
