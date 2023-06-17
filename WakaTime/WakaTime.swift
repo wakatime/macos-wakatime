@@ -13,6 +13,7 @@ class WakaTime {
     // they are declared atomic here
     @Atomic var lastFile = ""
     @Atomic var lastTime = 0
+    @Atomic var lastIsBuilding = false
 
     // MARK: Constants
 
@@ -45,9 +46,10 @@ class WakaTime {
 
     // MARK: Watcher Event Handling
 
-    private func shouldSendHeartbeat(file: URL, time: Int, isWrite: Bool) -> Bool {
+    private func shouldSendHeartbeat(file: URL, time: Int, isWrite: Bool, isBuilding: Bool) -> Bool {
         guard
             !isWrite,
+            isBuilding == lastIsBuilding,
             file.formatted() == lastFile,
             lastTime + 120 > time
         else { return true }
@@ -57,10 +59,11 @@ class WakaTime {
 
     public func handleEvent(app: NSRunningApplication, file: URL, isWrite: Bool, isBuilding: Bool) {
         let time = Int(NSDate().timeIntervalSince1970)
-        guard shouldSendHeartbeat(file: file, time: time, isWrite: isWrite) else { return }
+        guard shouldSendHeartbeat(file: file, time: time, isWrite: isWrite, isBuilding: isBuilding) else { return }
 
         lastFile = file.formatted()
         lastTime = time
+        lastIsBuilding = isBuilding
 
         guard
             let id = app.bundleIdentifier,
@@ -86,6 +89,9 @@ class WakaTime {
             args.append("--category")
             args.append("building")
         }
+
+        NSLog("Sending heartbeat with: \(args)")
+
         process.arguments = args
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
