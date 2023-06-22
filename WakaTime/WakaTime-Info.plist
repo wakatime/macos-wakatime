@@ -12,6 +12,8 @@
 	<string>YES</string>
 	<key>SUEnableAutomaticChecks</key>
 	<string>YES</string>
+	<key>SUAutomaticallyUpdate</key>
+	<string>YES</string>
 	<key>LSUIElement</key>
 	<true/>
 	<key>CFBundleURLTypes</key>
