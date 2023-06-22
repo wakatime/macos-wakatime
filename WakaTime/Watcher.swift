@@ -111,11 +111,13 @@ class Watcher: NSObject {
             observer.addToRunLoop()
             self.observer = observer
             self.observingElement = element
-            let activeWindow = element.getValue(for: kAXFocusedWindowAttribute) as! AXUIElement
-            if let currentPath = getCurrentPath(window: activeWindow, refcon: this) {
-                self.documentPath = currentPath
+            if let activeWindow = element.getValue(for: kAXFocusedWindowAttribute) {
+                let activeWindow = activeWindow as! AXUIElement
+                if let currentPath = getCurrentPath(window: activeWindow, refcon: this) {
+                    self.documentPath = currentPath
+                }
+                observeActivityText(activeWindow: activeWindow)
             }
-            observeActivityText(activeWindow: activeWindow)
             // NSLog("Watching for file changes on \(app.localizedName ?? "nil")")
         } catch {
             NSLog("Failed to setup AXObserver: \(error.localizedDescription)")
