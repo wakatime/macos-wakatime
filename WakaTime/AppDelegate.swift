@@ -10,7 +10,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var wakaTime: WakaTime?
     var updaterController: SPUStandardUpdaterController!
 
-    let update_notification_identifier = "UpdateCheck"
+    let updateNotificationIdentifier = "UpdateCheck"
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: self, userDriverDelegate: self)
@@ -120,7 +120,7 @@ extension AppDelegate: SPUStandardUserDriverDelegate {
                 content.title = "A new update is available"
                 content.body = "Version \(update.displayVersionString) is now available"
 
-                let request = UNNotificationRequest(identifier: update_notification_identifier, content: content, trigger: nil)
+                let request = UNNotificationRequest(identifier: updateNotificationIdentifier, content: content, trigger: nil)
 
                 UNUserNotificationCenter.current().add(request)
             }
@@ -130,7 +130,7 @@ extension AppDelegate: SPUStandardUserDriverDelegate {
     func standardUserDriverDidReceiveUserAttention(forUpdate update: SUAppcastItem) {
         NSApp.dockTile.badgeLabel = ""
 
-        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [update_notification_identifier])
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [updateNotificationIdentifier])
     }
 
     func standardUserDriverWillFinishUpdateSession() {
@@ -146,7 +146,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        if response.notification.request.identifier == update_notification_identifier
+        if response.notification.request.identifier == updateNotificationIdentifier
             && response.actionIdentifier == UNNotificationDefaultActionIdentifier {
             updaterController.checkForUpdates(nil)
         }
