@@ -1,5 +1,6 @@
 import Cocoa
 import Sparkle
+import UserNotifications
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var window: NSWindow!
@@ -7,9 +8,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var settingsWindowController = SettingsWindowController()
     var monitoredAppsWindowController = MonitoredAppsWindowController()
     var wakaTime: WakaTime?
-    var updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+    var updaterController: SPUStandardUpdaterController!
+
+    let update_notification_identifier = "UpdateCheck"
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: self, userDriverDelegate: self)
+
         wakaTime = WakaTime()
 
         // Handle deep links
@@ -35,6 +40,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(withTitle: "Quit", action: #selector(AppDelegate.quitClicked(_:)), keyEquivalent: "")
 
         statusBarItem.menu = menu
+
+        UNUserNotificationCenter.current().delegate = self
     }
 
     @objc func handleGetURL(_ event: NSAppleEventDescriptor, withReplyEvent replyEvent: NSAppleEventDescriptor) {
@@ -79,5 +86,71 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func showMonitoredApps() {
         NSApp.activate(ignoringOtherApps: true)
         monitoredAppsWindowController.showWindow(self)
+    }
+}
+
+// MARK: - SPUUpdaterDelegate
+
+extension AppDelegate: SPUUpdaterDelegate {
+    func updater(_ updater: SPUUpdater, willScheduleUpdateCheckAfterDelay delay: TimeInterval) {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.badge, .alert, .sound]) { _, _ in }
+    }
+}
+
+// MARK: - SPUStandardUserDriverDelegate
+
+extension AppDelegate: SPUStandardUserDriverDelegate {
+    // Declares that we support gentle scheduled update reminders to Sparkle's standard user driver
+    var supportsGentleScheduledUpdateReminders: Bool {
+        true
+    }
+
+    func standardUserDriverWillHandleShowingUpdate(
+        _ handleShowingUpdate: Bool,
+        forUpdate update: SUAppcastItem,
+        state: SPUUserUpdateState
+    ) {
+        NSApp.setActivationPolicy(.regular)
+
+        if !state.userInitiated {
+            NSApp.dockTile.badgeLabel = "1"
+
+            do {
+                let content = UNMutableNotificationContent()
+                content.title = "A new update is available"
+                content.body = "Version \(update.displayVersionString) is now available"
+
+                let request = UNNotificationRequest(identifier: update_notification_identifier, content: content, trigger: nil)
+
+                UNUserNotificationCenter.current().add(request)
+            }
+        }
+    }
+
+    func standardUserDriverDidReceiveUserAttention(forUpdate update: SUAppcastItem) {
+        NSApp.dockTile.badgeLabel = ""
+
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [update_notification_identifier])
+    }
+
+    func standardUserDriverWillFinishUpdateSession() {
+        NSApp.setActivationPolicy(.accessory)
+    }
+}
+
+// MARK: - UNUserNotificationCenterDelegate
+
+extension AppDelegate: UNUserNotificationCenterDelegate {
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        if response.notification.request.identifier == update_notification_identifier
+            && response.actionIdentifier == UNNotificationDefaultActionIdentifier {
+            updaterController.checkForUpdates(nil)
+        }
+
+        completionHandler()
     }
 }
