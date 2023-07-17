@@ -98,7 +98,11 @@ jobs:
         run: xcodegen
       -
         name: Build app
-        run: xcodebuild -scheme WakaTime
+        id: build
+        run: |
+          xcodebuild -scheme WakaTime -configuration Release
+          directory=`find . -name WakaTime.app | dirname`
+          echo "directory=$directory" >> $GITHUB_OUTPUT
       -
         name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v1
@@ -110,7 +114,7 @@ jobs:
       -
         name: Codesign
         run: |
-          codesign -v --force --deep --timestamp -s "WakaTime" --options runtime build/Debug/WakaTime.app
+          codesign -v --force --deep --timestamp -s "WakaTime" --options runtime ${{ steps.build.outputs.directory }}/WakaTime.app
       -
         name: Store Credentials
         env:
@@ -121,18 +125,18 @@ jobs:
       -
         name: Notarize Helper
         run: |
-          ditto -c -k --keepParent "build/Debug/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app" helper.zip
+          ditto -c -k --keepParent "${{ steps.build.outputs.directory }}/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app" helper.zip
           xcrun notarytool submit helper.zip --keychain-profile "notarytool-profile" --wait
-          xcrun stapler staple "build/Debug/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app"
+          xcrun stapler staple "${{ steps.build.outputs.directory }}/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app"
       -
         name: Notarize App
         run: |
-          ditto -c -k --keepParent build/Debug/WakaTime.app main.zip
+          ditto -c -k --keepParent ${{ steps.build.outputs.directory }}/WakaTime.app main.zip
           xcrun notarytool submit main.zip --keychain-profile "notarytool-profile" --wait
-          xcrun stapler staple build/Debug/WakaTime.app
+          xcrun stapler staple ${{ steps.build.outputs.directory }}/WakaTime.app
       -
         name: Zip
-        run: ditto -c -k --sequesterRsrc --keepParent build/Debug/WakaTime.app WakaTime.zip
+        run: ditto -c -k --sequesterRsrc --keepParent ${{ steps.build.outputs.directory }}/WakaTime.app WakaTime.zip
       -
         name: Upload artifacts
         uses: actions/upload-artifact@v3
