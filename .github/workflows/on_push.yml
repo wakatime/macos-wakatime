@@ -23,7 +23,7 @@ jobs:
         run: xcodegen
       -
         name: Build app to run linters
-        run: xcodebuild
+        run: xcodebuild -scheme WakaTime
 
   version:
     name: Version
@@ -98,7 +98,7 @@ jobs:
         run: xcodegen
       -
         name: Build app
-        run: xcodebuild -configuration Release
+        run: xcodebuild -scheme WakaTime
       -
         name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v1
@@ -110,7 +110,7 @@ jobs:
       -
         name: Codesign
         run: |
-          codesign -v --force --deep --timestamp -s "WakaTime" --options runtime build/Release/WakaTime.app
+          codesign -v --force --deep --timestamp -s "WakaTime" --options runtime build/Debug/WakaTime.app
       -
         name: Store Credentials
         env:
@@ -121,18 +121,18 @@ jobs:
       -
         name: Notarize Helper
         run: |
-          ditto -c -k --keepParent "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app" helper.zip
+          ditto -c -k --keepParent "build/Debug/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app" helper.zip
           xcrun notarytool submit helper.zip --keychain-profile "notarytool-profile" --wait
-          xcrun stapler staple "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app"
+          xcrun stapler staple "build/Debug/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app"
       -
         name: Notarize App
         run: |
-          ditto -c -k --keepParent build/Release/WakaTime.app main.zip
+          ditto -c -k --keepParent build/Debug/WakaTime.app main.zip
           xcrun notarytool submit main.zip --keychain-profile "notarytool-profile" --wait
-          xcrun stapler staple build/Release/WakaTime.app
+          xcrun stapler staple build/Debug/WakaTime.app
       -
         name: Zip
-        run: ditto -c -k --sequesterRsrc --keepParent build/Release/WakaTime.app WakaTime.zip
+        run: ditto -c -k --sequesterRsrc --keepParent build/Debug/WakaTime.app WakaTime.zip
       -
         name: Upload artifacts
         uses: actions/upload-artifact@v3
