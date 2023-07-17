@@ -21,11 +21,8 @@ class SettingsManager {
             !loginItemRegistered(),
             PropertiesManager.shouldLaunchOnLogin
         else { return false }
-#if DEBUG
-        return false
-#else
-        return true
-#endif
+
+        return Bundle.main.version != "local-build"
     }
 
     static func registerAsLoginItem() {

@@ -23,7 +23,7 @@ jobs:
         run: xcodegen
       -
         name: Build app to run linters
-        run: xcodebuild
+        run: xcodebuild -scheme WakaTime
 
   version:
     name: Version
@@ -98,7 +98,14 @@ jobs:
         run: xcodegen
       -
         name: Build app
-        run: xcodebuild -configuration Release
+        id: build
+        run: |
+          xcodebuild -scheme WakaTime -configuration Release
+          app=`find /Users/runner/Library/Developer/Xcode/DerivedData/ -name WakaTime.app`
+          echo "$app"
+          directory=`dirname $app`
+          echo "$directory"
+          echo "directory=$directory" >> $GITHUB_OUTPUT
       -
         name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v1
@@ -110,7 +117,7 @@ jobs:
       -
         name: Codesign
         run: |
-          codesign -v --force --deep --timestamp -s "WakaTime" --options runtime build/Release/WakaTime.app
+          codesign -v --force --deep --timestamp -s "WakaTime" --options runtime ${{ steps.build.outputs.directory }}/WakaTime.app
       -
         name: Store Credentials
         env:
@@ -121,18 +128,18 @@ jobs:
       -
         name: Notarize Helper
         run: |
-          ditto -c -k --keepParent "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app" helper.zip
+          ditto -c -k --keepParent "${{ steps.build.outputs.directory }}/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app" helper.zip
           xcrun notarytool submit helper.zip --keychain-profile "notarytool-profile" --wait
-          xcrun stapler staple "build/Release/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app"
+          xcrun stapler staple "${{ steps.build.outputs.directory }}/WakaTime.app/Contents/Library/LoginItems/WakaTime Helper.app"
       -
         name: Notarize App
         run: |
-          ditto -c -k --keepParent build/Release/WakaTime.app main.zip
+          ditto -c -k --keepParent ${{ steps.build.outputs.directory }}/WakaTime.app main.zip
           xcrun notarytool submit main.zip --keychain-profile "notarytool-profile" --wait
-          xcrun stapler staple build/Release/WakaTime.app
+          xcrun stapler staple ${{ steps.build.outputs.directory }}/WakaTime.app
       -
         name: Zip
-        run: ditto -c -k --sequesterRsrc --keepParent build/Release/WakaTime.app WakaTime.zip
+        run: ditto -c -k --sequesterRsrc --keepParent ${{ steps.build.outputs.directory }}/WakaTime.app WakaTime.zip
       -
         name: Upload artifacts
         uses: actions/upload-artifact@v3
