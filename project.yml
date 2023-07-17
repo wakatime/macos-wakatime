@@ -31,12 +31,6 @@ targets:
     postCompileScripts:
       - script: ./Scripts/Lint/swiftlint lint --quiet
         name: Swiftlint
-    postBuildScripts:
-      - script: Scripts/Firebase/upload-dSYM.sh
-        name: Firebase
-        inputFiles:
-          - ${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}
-          - $(SRCROOT)/$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)
     dependencies:
       - target: WakaTime Helper
       - package: Sparkle
