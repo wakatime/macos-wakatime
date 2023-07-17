@@ -101,7 +101,8 @@ jobs:
         id: build
         run: |
           xcodebuild -scheme WakaTime -configuration Release
-          directory=`find . -name WakaTime.app | dirname`
+          app=`find . -name WakaTime.app`
+          directory=`dirname $app`
           echo "directory=$directory" >> $GITHUB_OUTPUT
       -
         name: Import Code-Signing Certificates
