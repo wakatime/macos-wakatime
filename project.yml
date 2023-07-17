@@ -8,6 +8,9 @@ packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
     from: 2.0.0
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: 10.0.0
 
 targets:
   WakaTime:
@@ -28,9 +31,17 @@ targets:
     postCompileScripts:
       - script: ./Scripts/Lint/swiftlint lint --quiet
         name: Swiftlint
+    postBuildScripts:
+      - script: Scripts/Firebase/upload-dSYM.sh
+        name: Firebase
+        inputFiles:
+          - ${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}
+          - $(SRCROOT)/$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)
     dependencies:
       - target: WakaTime Helper
       - package: Sparkle
+      - package: Firebase
+        product: FirebaseCrashlytics
     postBuildScripts:
       - script: |
           LOGIN_ITEMS_DIR="$BUILT_PRODUCTS_DIR/$PRODUCT_NAME.app/Contents/Library/LoginItems"
@@ -38,6 +49,11 @@ targets:
           mkdir -p "$LOGIN_ITEMS_DIR"
           mv "$BUILT_PRODUCTS_DIR/$PRODUCT_NAME.app/Contents/Resources/WakaTime Helper.app" "$LOGIN_ITEMS_DIR/"
         name: Move "WakaTime Helper.app" to LoginItems
+      - script: Scripts/Firebase/upload-dSYM.sh
+        name: Firebase
+        inputFiles:
+          - ${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}
+          - $(SRCROOT)/$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)
   WakaTime Helper:
     type: application
     platform: macOS
