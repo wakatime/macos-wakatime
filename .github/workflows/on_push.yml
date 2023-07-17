@@ -23,7 +23,7 @@ jobs:
         run: xcodegen
       -
         name: Build app to run linters
-        run: xcodebuild -scheme WakaTime
+        run: xcodebuild
 
   version:
     name: Version
@@ -98,7 +98,7 @@ jobs:
         run: xcodegen
       -
         name: Build app
-        run: xcodebuild -scheme WakaTime -configuration Release
+        run: xcodebuild -configuration Release
       -
         name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v1
