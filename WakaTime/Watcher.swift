@@ -1,4 +1,3 @@
-//import EonilFSEvents
 import Foundation
 import AppKit
 
@@ -53,7 +52,6 @@ class Watcher: NSObject {
 
     deinit {
         NSWorkspace.shared.notificationCenter.removeObserver(self) // needed prior macOS 11 only
-        //EonilFSEvents.stopWatching(for: ObjectIdentifier(self))
     }
 
     @objc private func appChanged(_ notification: Notification) {
