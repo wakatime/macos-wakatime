@@ -76,7 +76,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 alert.addButton(withTitle: "OK")
                 alert.runModal()
             } else {
-                print(error)
+                print(String(describing: error))
+                NSLog(String(describing: error))
                 let alert = NSAlert()
                 alert.messageText = "Error"
                 alert.informativeText = error.localizedDescription
