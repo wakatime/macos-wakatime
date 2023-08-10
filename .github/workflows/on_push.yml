@@ -230,17 +230,6 @@ jobs:
           mkdir release
           mv ./WakaTime.zip release/
       -
-        name: Update appcast
-        env:
-          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
-        run: |
-          echo "$SPARKLE_PRIVATE_KEY" | ./bin/sparkle/generate_appcast \
-            --ed-key-file - \
-            --link https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/releases \
-            --download-url-prefix https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/releases/download/${{ needs.version.outputs.semver_tag }}/ \
-            -o release/appcast.xml \
-            release/
-      -
         name: "Create release"
         uses: softprops/action-gh-release@master
         with:
@@ -252,7 +241,6 @@ jobs:
           draft: false
           files: |
             ./release/WakaTime.zip
-            ./release/appcast.xml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       -
