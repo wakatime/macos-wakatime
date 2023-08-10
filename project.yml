@@ -5,9 +5,9 @@ options:
   createIntermediateGroups: true
 
 packages:
-  Sparkle:
-    url: https://github.com/sparkle-project/Sparkle
-    from: 2.5.0-beta.1
+  AppUpdater:
+    url: https://github.com/mxcl/AppUpdater
+    from: 1.1.1
   Firebase:
     url: https://github.com/firebase/firebase-ios-sdk
     from: 10.0.0
@@ -33,7 +33,7 @@ targets:
         name: Swiftlint
     dependencies:
       - target: WakaTime Helper
-      - package: Sparkle
+      - package: AppUpdater
       - package: Firebase
         product: FirebaseCrashlytics
     postBuildScripts:
