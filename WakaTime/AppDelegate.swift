@@ -6,6 +6,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
     var window: NSWindow!
     var statusBarItem: NSStatusItem!
     var statusBarA11yItem: NSMenuItem!
+    var statusBarA11ySeparator: NSMenuItem!
     var statusBarA11yStatus: Bool = true
     var settingsWindowController = SettingsWindowController()
     var monitoredAppsWindowController = MonitoredAppsWindowController()
@@ -34,6 +35,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
             keyEquivalent: "")
         statusBarA11yItem.isHidden = true
         menu.addItem(statusBarA11yItem)
+        statusBarA11ySeparator = NSMenuItem.separator()
+        menu.addItem(statusBarA11ySeparator)
+        statusBarA11ySeparator.isHidden = true
         menu.addItem(withTitle: "Dashboard", action: #selector(AppDelegate.dashboardClicked(_:)), keyEquivalent: "")
         menu.addItem(withTitle: "Settings", action: #selector(AppDelegate.settingsClicked(_:)), keyEquivalent: "")
         menu.addItem(withTitle: "Monitored Apps", action: #selector(AppDelegate.monitoredAppsClicked(_:)), keyEquivalent: "")
@@ -118,6 +122,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
             statusBarItem.button?.image = NSImage(named: NSImage.Name("WakaTimeDisabled"))
         }
         statusBarA11yItem.isHidden = hasPermission
+        statusBarA11ySeparator.isHidden = hasPermission
     }
 
     private func showSettings() {
