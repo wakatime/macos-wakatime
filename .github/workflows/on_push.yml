@@ -47,6 +47,7 @@ jobs:
         id: semver-tag
         uses: wakatime/semver-action@master
         with:
+          prefix: ""
           prerelease_id: alpha
           develop_branch_name: main
           main_branch_name: release
