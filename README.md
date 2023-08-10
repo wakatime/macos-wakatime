@@ -4,7 +4,7 @@ Mac system tray app for automatic time tracking and metrics generated from your 
 
 ## Install
 
-1. Download the [latest release](https://github.com/wakatime/macos-wakatime/releases/latest/download/WakaTime.zip).
+1. Download the [latest release](https://github.com/wakatime/macos-wakatime/releases/latest/download/macos-wakatime.zip).
 2. Move `WakaTime.app` into your `Applications` folder, and run `WakaTime.app`.
 3. Enter your [WakaTime API Key][api key], then press `Save`.
 4. Use Xcode like normal and your coding activity will be displayed on your [WakaTime dashboard][dashboard]
