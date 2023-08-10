@@ -47,7 +47,7 @@ jobs:
         id: semver-tag
         uses: wakatime/semver-action@master
         with:
-          prefix: ""
+          prefix: v
           prerelease_id: alpha
           develop_branch_name: main
           main_branch_name: release
@@ -229,7 +229,7 @@ jobs:
         id: prepare
         run: |
           mkdir release
-          mv ./WakaTime.zip release/
+          mv ./WakaTime.zip "release/wakatime-${{ needs.version.outputs.semver_tag }}.zip"
       -
         name: "Create release"
         uses: softprops/action-gh-release@master
@@ -241,7 +241,7 @@ jobs:
           target_commitish: ${{ github.sha }}
           draft: false
           files: |
-            ./release/WakaTime.zip
+            "./release/wakatime-${{ needs.version.outputs.semver_tag }}.zip"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       -
