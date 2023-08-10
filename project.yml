@@ -6,8 +6,8 @@ options:
 
 packages:
   AppUpdater:
-    url: https://github.com/mxcl/AppUpdater
-    from: 1.1.1
+    url: https://github.com/alanhamlett/AppUpdater
+    branch: master
   Firebase:
     url: https://github.com/firebase/firebase-ios-sdk
     from: 10.0.0
