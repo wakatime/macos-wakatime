@@ -69,9 +69,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func checkForUpdatesClicked(_ sender: AnyObject) {
         updater.check().catch(policy: .allErrors) { error in
             if error.isCancelled {
-                // promise is cancelled if we are already up-to-date
+                let alert = NSAlert()
+                alert.messageText = "Up to date"
+                alert.informativeText = "You have the latest version."
+                alert.alertStyle = NSAlert.Style.warning
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
             } else {
-                // show alert for this error
+                print(error)
+                let alert = NSAlert()
+                alert.messageText = "Error"
+                alert.informativeText = error.localizedDescription
+                alert.alertStyle = NSAlert.Style.warning
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
             }
         }
     }
