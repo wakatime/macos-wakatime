@@ -6,6 +6,7 @@ class WakaTime {
     // MARK: Watcher
 
     let watcher = Watcher()
+    let delegate: StatusBarDelegate
 
     // MARK: Watcher State
 
@@ -24,14 +25,19 @@ class WakaTime {
 
     // MARK: Initialization and Setup
 
-    init() {
+    init(_ delegate: StatusBarDelegate) {
+        self.delegate = delegate
+
         Dependencies.installDependencies()
         if SettingsManager.shouldRegisterAsLoginItem() { SettingsManager.registerAsLoginItem() }
-        Accessibility.requestA11yPermission()
+        if !Accessibility.requestA11yPermission() {
+            delegate.a11yStatusChanged(false)
+        }
 
         configureFirebase()
         checkForApiKey()
         watcher.eventHandler = handleEvent
+        watcher.statusBarDelegate = delegate
     }
 
     private func configureFirebase() {
@@ -114,4 +120,8 @@ class WakaTime {
             print("Failed to run wakatime-cli: \(error)")
         }
     }
+}
+
+protocol StatusBarDelegate {
+    func a11yStatusChanged(_ hasPermission: Bool) -> Void
 }

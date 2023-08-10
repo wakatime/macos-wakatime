@@ -2,9 +2,11 @@ import AppUpdater
 import Cocoa
 import UserNotifications
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
     var window: NSWindow!
     var statusBarItem: NSStatusItem!
+    var statusBarA11yItem: NSMenuItem!
+    var statusBarA11yStatus: Bool = true
     var settingsWindowController = SettingsWindowController()
     var monitoredAppsWindowController = MonitoredAppsWindowController()
     var wakaTime: WakaTime?
@@ -12,9 +14,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let updater = AppUpdater(owner: "wakatime", repo: "macos-wakatime")
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-
-        wakaTime = WakaTime()
-
         // Handle deep links
         let eventManager = NSAppleEventManager.shared()
         eventManager.setEventHandler(
@@ -29,6 +28,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let menu = NSMenu()
 
+        statusBarA11yItem = NSMenuItem(
+            title: "* A11y permission needed *",
+            action: #selector(AppDelegate.a11yClicked(_:)),
+            keyEquivalent: "")
+        statusBarA11yItem.isHidden = true
+        menu.addItem(statusBarA11yItem)
         menu.addItem(withTitle: "Dashboard", action: #selector(AppDelegate.dashboardClicked(_:)), keyEquivalent: "")
         menu.addItem(withTitle: "Settings", action: #selector(AppDelegate.settingsClicked(_:)), keyEquivalent: "")
         menu.addItem(withTitle: "Monitored Apps", action: #selector(AppDelegate.monitoredAppsClicked(_:)), keyEquivalent: "")
@@ -38,6 +43,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(withTitle: "Quit", action: #selector(AppDelegate.quitClicked(_:)), keyEquivalent: "")
 
         statusBarItem.menu = menu
+
+        wakaTime = WakaTime(self)
     }
 
     @objc func handleGetURL(_ event: NSAppleEventDescriptor, withReplyEvent replyEvent: NSAppleEventDescriptor) {
@@ -93,8 +100,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    @objc func a11yClicked(_ sender: AnyObject) {
+        a11yStatusChanged(Accessibility.requestA11yPermission())
+    }
+
     @objc func quitClicked(_ sender: AnyObject) {
         NSApplication.shared.terminate(self)
+    }
+
+    func a11yStatusChanged(_ hasPermission: Bool) {
+        guard statusBarA11yStatus != hasPermission else { return }
+
+        statusBarA11yStatus = hasPermission
+        if hasPermission {
+            statusBarItem.button?.image = NSImage(named: NSImage.Name("WakaTime"))
+        } else {
+            statusBarItem.button?.image = NSImage(named: NSImage.Name("WakaTimeDisabled"))
+        }
+        statusBarA11yItem.isHidden = hasPermission
     }
 
     private func showSettings() {

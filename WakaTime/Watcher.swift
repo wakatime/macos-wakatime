@@ -8,6 +8,7 @@ class Watcher: NSObject {
 
     var appVersions: [String: String] = [:]
     var eventHandler: ((_ app: NSRunningApplication, _ path: URL, _ isWrite: Bool, _ isBuilding: Bool) -> Void)?
+    var statusBarDelegate: StatusBarDelegate?
     var isBuilding = false
     var activeApp: NSRunningApplication?
     private var observer: AXObserver?
@@ -117,8 +118,10 @@ class Watcher: NSObject {
                 observeActivityText(activeWindow: activeWindow)
             }
             // NSLog("Watching for file changes on \(app.localizedName ?? "nil")")
+            self.statusBarDelegate?.a11yStatusChanged(true)
         } catch {
             NSLog("Failed to setup AXObserver: \(error.localizedDescription)")
+            self.statusBarDelegate?.a11yStatusChanged(false)
         }
     }
 
