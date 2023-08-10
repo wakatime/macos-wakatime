@@ -5,36 +5,11 @@ class SettingsView: NSView, NSTextFieldDelegate {
 
     var apiKey: String = ""
 
-    var automaticallyDownloadUpdates: Bool {
-        get {
-            PropertiesManager.shouldAutomaticallyDownloadUpdates
-        }
-
-        set {
-            PropertiesManager.shouldAutomaticallyDownloadUpdates = newValue
-
-            guard let appDelegate = NSApplication.shared.delegate as? AppDelegate else { return }
-
-            appDelegate.updaterController.updater.automaticallyDownloadsUpdates = newValue
-        }
-    }
-
     // MARK: Controls
 
     lazy var launchAtLoginCheckbox: NSButton = {
         let checkbox = NSButton(checkboxWithTitle: "Launch at login", target: self, action: #selector(launchAtLoginCheckboxClicked))
         checkbox.state = PropertiesManager.shouldLaunchOnLogin ? .on : .off
-        checkbox.translatesAutoresizingMaskIntoConstraints = false
-        return checkbox
-    }()
-
-    lazy var automaticallyDownloadUpdatesCheckbox: NSButton = {
-        let checkbox = NSButton(
-            checkboxWithTitle: "Automatically download updates",
-            target: self,
-            action: #selector(automaticallyDownloadUpdatesClicked)
-        )
-        checkbox.state = automaticallyDownloadUpdates ? .on : .off
         checkbox.translatesAutoresizingMaskIntoConstraints = false
         return checkbox
     }()
@@ -86,7 +61,6 @@ class SettingsView: NSView, NSTextFieldDelegate {
         super.init(frame: .zero)
 
         addSubview(launchAtLoginCheckbox)
-        addSubview(automaticallyDownloadUpdatesCheckbox)
         addSubview(apiKeyLabel)
         addSubview(textField)
         addSubview(stackView)
@@ -112,10 +86,6 @@ class SettingsView: NSView, NSTextFieldDelegate {
         }
     }
 
-    @objc func automaticallyDownloadUpdatesClicked() {
-        automaticallyDownloadUpdates = automaticallyDownloadUpdatesCheckbox.state == .on
-    }
-
     @objc func saveButtonClicked() {
         ConfigFile.setSetting(section: "settings", key: "api_key", val: textField.stringValue)
         self.window?.close()
@@ -134,10 +104,7 @@ class SettingsView: NSView, NSTextFieldDelegate {
             launchAtLoginCheckbox.topAnchor.constraint(equalTo: topAnchor, constant: 20),
             launchAtLoginCheckbox.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
 
-            automaticallyDownloadUpdatesCheckbox.topAnchor.constraint(equalTo: launchAtLoginCheckbox.bottomAnchor, constant: 20),
-            automaticallyDownloadUpdatesCheckbox.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-
-            apiKeyLabel.topAnchor.constraint(equalTo: automaticallyDownloadUpdatesCheckbox.bottomAnchor, constant: 20),
+            apiKeyLabel.topAnchor.constraint(equalTo: launchAtLoginCheckbox.bottomAnchor, constant: 20),
             apiKeyLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
 
             textField.topAnchor.constraint(equalTo: apiKeyLabel.bottomAnchor, constant: 10),
