@@ -1,5 +1,5 @@
+import AppUpdater
 import Cocoa
-import Sparkle
 import UserNotifications
 
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -8,12 +8,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var settingsWindowController = SettingsWindowController()
     var monitoredAppsWindowController = MonitoredAppsWindowController()
     var wakaTime: WakaTime?
-    var updaterController: SPUStandardUpdaterController!
 
-    let updateNotificationIdentifier = "UpdateCheck"
+    let updater = AppUpdater(owner: "wakatime", repo: "macos-wakatime")
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: self, userDriverDelegate: self)
 
         wakaTime = WakaTime()
 
@@ -40,8 +38,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(withTitle: "Quit", action: #selector(AppDelegate.quitClicked(_:)), keyEquivalent: "")
 
         statusBarItem.menu = menu
-
-        UNUserNotificationCenter.current().delegate = self
     }
 
     @objc func handleGetURL(_ event: NSAppleEventDescriptor, withReplyEvent replyEvent: NSAppleEventDescriptor) {
@@ -71,7 +67,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func checkForUpdatesClicked(_ sender: AnyObject) {
-        updaterController.checkForUpdates(sender)
+        updater.check().catch(policy: .allErrors) { error in
+            if error.isCancelled {
+                // promise is cancelled if we are already up-to-date
+            } else {
+                // show alert for this error
+            }
+        }
     }
 
     @objc func quitClicked(_ sender: AnyObject) {
@@ -86,71 +88,5 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func showMonitoredApps() {
         NSApp.activate(ignoringOtherApps: true)
         monitoredAppsWindowController.showWindow(self)
-    }
-}
-
-// MARK: - SPUUpdaterDelegate
-
-extension AppDelegate: SPUUpdaterDelegate {
-    func updater(_ updater: SPUUpdater, willScheduleUpdateCheckAfterDelay delay: TimeInterval) {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.badge, .alert, .sound]) { _, _ in }
-    }
-}
-
-// MARK: - SPUStandardUserDriverDelegate
-
-extension AppDelegate: SPUStandardUserDriverDelegate {
-    // Declares that we support gentle scheduled update reminders to Sparkle's standard user driver
-    var supportsGentleScheduledUpdateReminders: Bool {
-        true
-    }
-
-    func standardUserDriverWillHandleShowingUpdate(
-        _ handleShowingUpdate: Bool,
-        forUpdate update: SUAppcastItem,
-        state: SPUUserUpdateState
-    ) {
-        NSApp.setActivationPolicy(.regular)
-
-        if !state.userInitiated {
-            NSApp.dockTile.badgeLabel = "1"
-
-            do {
-                let content = UNMutableNotificationContent()
-                content.title = "A new update is available"
-                content.body = "Version \(update.displayVersionString) is now available"
-
-                let request = UNNotificationRequest(identifier: updateNotificationIdentifier, content: content, trigger: nil)
-
-                UNUserNotificationCenter.current().add(request)
-            }
-        }
-    }
-
-    func standardUserDriverDidReceiveUserAttention(forUpdate update: SUAppcastItem) {
-        NSApp.dockTile.badgeLabel = ""
-
-        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [updateNotificationIdentifier])
-    }
-
-    func standardUserDriverWillFinishUpdateSession() {
-        NSApp.setActivationPolicy(.accessory)
-    }
-}
-
-// MARK: - UNUserNotificationCenterDelegate
-
-extension AppDelegate: UNUserNotificationCenterDelegate {
-    func userNotificationCenter(
-        _ center: UNUserNotificationCenter,
-        didReceive response: UNNotificationResponse,
-        withCompletionHandler completionHandler: @escaping () -> Void
-    ) {
-        if response.notification.request.identifier == updateNotificationIdentifier
-            && response.actionIdentifier == UNNotificationDefaultActionIdentifier {
-            updaterController.checkForUpdates(nil)
-        }
-
-        completionHandler()
     }
 }
