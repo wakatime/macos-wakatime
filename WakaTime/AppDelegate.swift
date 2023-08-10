@@ -71,7 +71,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if error.isCancelled {
                 let alert = NSAlert()
                 alert.messageText = "Up to date"
-                alert.informativeText = "You have the latest version."
+                alert.informativeText = "You have the latest version (\(Bundle.main.version))."
                 alert.alertStyle = NSAlert.Style.warning
                 alert.addButton(withTitle: "OK")
                 alert.runModal()
@@ -80,7 +80,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 NSLog(String(describing: error))
                 let alert = NSAlert()
                 alert.messageText = "Error"
-                alert.informativeText = error.localizedDescription
+                let max = 200
+                if error.localizedDescription.count <= max {
+                    alert.informativeText = error.localizedDescription
+                } else {
+                    alert.informativeText = String(error.localizedDescription.prefix(max).appending("…"))
+                }
                 alert.alertStyle = NSAlert.Style.warning
                 alert.addButton(withTitle: "OK")
                 alert.runModal()
