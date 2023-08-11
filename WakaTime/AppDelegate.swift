@@ -8,6 +8,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
     var statusBarA11yItem: NSMenuItem!
     var statusBarA11ySeparator: NSMenuItem!
     var statusBarA11yStatus: Bool = true
+    var notificationsEnabled: Bool = false
     var settingsWindowController = SettingsWindowController()
     var monitoredAppsWindowController = MonitoredAppsWindowController()
     var wakaTime: WakaTime?
@@ -49,6 +50,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
         statusBarItem.menu = menu
 
         wakaTime = WakaTime(self)
+
+        // request notifications permission
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
+            guard granted else {
+                if let msg = error?.localizedDescription {
+                    NSLog(msg)
+                    print(msg)
+                }
+                return
+            }
+            self.notificationsEnabled = true
+        }
     }
 
     @objc func handleGetURL(_ event: NSAppleEventDescriptor, withReplyEvent replyEvent: NSAppleEventDescriptor) {
@@ -79,7 +92,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
 
     @objc func checkForUpdatesClicked(_ sender: AnyObject) {
         updater.check {
-            self.sendNotification(title: "Updating to latest release")
+            if self.notificationsEnabled {
+                self.sendNotification(title: "Updating to latest release")
+            }
         }.catch(policy: .allErrors) { error in
             if error.isCancelled {
                 let alert = NSAlert()
@@ -151,7 +166,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
         content: content, trigger: nil)
 
         let notificationCenter = UNUserNotificationCenter.current()
-        notificationCenter.requestAuthorization(options: [.alert, .sound]) { _, _ in }
-        notificationCenter.add(request)
+        notificationCenter.requestAuthorization(options: [.alert, .sound]) { granted, _ in
+            guard granted else { return }
+
+            notificationCenter.add(request)
+        }
     }
 }
