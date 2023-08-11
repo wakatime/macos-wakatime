@@ -9,6 +9,7 @@ class Watcher: NSObject {
     var appVersions: [String: String] = [:]
     var eventHandler: ((_ app: NSRunningApplication, _ path: URL, _ isWrite: Bool, _ isBuilding: Bool) -> Void)?
     var statusBarDelegate: StatusBarDelegate?
+    var lastCheckedA11y = Date()
     var isBuilding = false
     var activeApp: NSRunningApplication?
     private var observer: AXObserver?
@@ -121,7 +122,10 @@ class Watcher: NSObject {
             self.statusBarDelegate?.a11yStatusChanged(true)
         } catch {
             NSLog("Failed to setup AXObserver: \(error.localizedDescription)")
-            self.statusBarDelegate?.a11yStatusChanged(false)
+            if lastCheckedA11y.timeIntervalSinceNow > 60 {
+                lastCheckedA11y = Date()
+                self.statusBarDelegate?.a11yStatusChanged(Accessibility.requestA11yPermission())
+            }
         }
     }
 
