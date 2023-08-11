@@ -1,6 +1,6 @@
-import Foundation
 import AppKit
 import Firebase
+import Foundation
 
 class WakaTime: HeartbeatEventHandler {
     // MARK: Watcher
@@ -133,10 +133,10 @@ enum EntityType: String {
     case app
 }
 
-protocol StatusBarDelegate {
-    func a11yStatusChanged(_ hasPermission: Bool) -> Void
+protocol StatusBarDelegate: AnyObject {
+    func a11yStatusChanged(_ hasPermission: Bool)
 }
 
 protocol HeartbeatEventHandler {
-    func handleHeartbeatEvent(app: NSRunningApplication, entity: String, entityType: EntityType, isWrite: Bool, isBuilding: Bool) -> Void
+    func handleHeartbeatEvent(app: NSRunningApplication, entity: String, entityType: EntityType, isWrite: Bool, isBuilding: Bool)
 }
