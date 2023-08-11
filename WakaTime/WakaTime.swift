@@ -1,6 +1,6 @@
-import Foundation
 import AppKit
 import Firebase
+import Foundation
 
 class WakaTime: HeartbeatEventHandler {
     // MARK: Watcher
