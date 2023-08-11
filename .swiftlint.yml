@@ -20,7 +20,6 @@ opt_in_rules:
   - closure_spacing
   - contains_over_first_not_nil
   - empty_count
-  - explicit_enum_raw_value
   - explicit_init
   - fatal_error_message
   - first_where
