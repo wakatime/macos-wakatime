@@ -14,6 +14,12 @@ class AppInfo {
             ?? appBundle.object(forInfoDictionaryKey: "CFBundleName") as? String
     }
 
+    static func getAppName(_ app: NSRunningApplication) -> String? {
+        guard let bundleId = app.bundleIdentifier else { return nil }
+
+        return getAppName(bundleId: bundleId)
+    }
+
     static func getIcon(file path: String) -> NSImage? {
         guard
             FileManager.default.fileExists(atPath: path)

@@ -1,3 +1,4 @@
+import Cocoa
 import Foundation
 import AppKit
 
@@ -7,7 +8,7 @@ class Watcher: NSObject {
     private let monitorQueue = DispatchQueue(label: "com.WakaTime.Watcher.monitorQueue", qos: .utility)
 
     var appVersions: [String: String] = [:]
-    var eventHandler: ((_ app: NSRunningApplication, _ path: URL, _ isWrite: Bool, _ isBuilding: Bool) -> Void)?
+    var heartbeatEventHandler: HeartbeatEventHandler?
     var statusBarDelegate: StatusBarDelegate?
     var lastCheckedA11y = Date()
     var isBuilding = false
@@ -65,12 +66,11 @@ class Watcher: NSObject {
     private func handleAppChanged(_ app: NSRunningApplication) {
         if app != activeApp {
             NSLog("App changed from \(activeApp?.localizedName ?? "nil") to \(app.localizedName ?? "nil")")
-            if let newAppID = app.bundleIdentifier, MonitoringManager.isAppMonitored(for: newAppID) {
-                watch(app: app)
-            } else if let oldApp = activeApp {
-                unwatch(app: oldApp)
-            }
+            if let oldApp = activeApp { unwatch(app: oldApp) }
             activeApp = app
+            if let bundleId = app.bundleIdentifier, MonitoringManager.isAppMonitored(for: bundleId) {
+                watch(app: app)
+            }
         }
 
         setAppVersion(app)
@@ -102,12 +102,61 @@ class Watcher: NSObject {
         setAppVersion(app)
 
         do {
+            if MonitoringManager.isAppElectron(app) {
+                let pid = app.processIdentifier
+                let axApp = AXUIElementCreateApplication(pid)
+                let result = AXUIElementSetAttributeValue(axApp, "AXManualAccessibility" as CFString, true as CFTypeRef)
+                if result.rawValue != 0 {
+                    let appName = app.localizedName ?? "UnknownApp"
+                    print("Setting AXManualAccessibility on \(appName) failed (\(result.rawValue))")
+                    NSLog("Setting AXManualAccessibility on \(appName) failed (\(result.rawValue))")
+                }
+            }
+
             let observer = try AXObserver.create(appID: app.processIdentifier, callback: observerCallback)
             let this = Unmanaged.passUnretained(self).toOpaque()
             let element = AXUIElementCreateApplication(app.processIdentifier)
+
             try observer.add(notification: kAXFocusedUIElementChangedNotification, element: element, refcon: this)
             try observer.add(notification: kAXFocusedWindowChangedNotification, element: element, refcon: this)
             try observer.add(notification: kAXSelectedTextChangedNotification, element: element, refcon: this)
+
+            if MonitoringManager.isAppElectron(app) {
+                try observer.add(notification: kAXValueChangedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXMainWindowChangedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXApplicationActivatedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXApplicationDeactivatedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXApplicationHiddenNotification, element: element, refcon: this)
+                try observer.add(notification: kAXApplicationShownNotification, element: element, refcon: this)
+                try observer.add(notification: kAXWindowCreatedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXWindowMovedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXWindowResizedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXWindowMiniaturizedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXWindowDeminiaturizedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXDrawerCreatedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXSheetCreatedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXHelpTagCreatedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXElementBusyChangedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXMenuOpenedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXMenuClosedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXMenuItemSelectedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXRowCountChangedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXRowExpandedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXRowCollapsedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXSelectedCellsChangedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXUnitsChangedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXSelectedChildrenMovedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXSelectedChildrenChangedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXResizedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXMovedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXCreatedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXSelectedRowsChangedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXSelectedColumnsChangedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXTitleChangedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXLayoutChangedNotification, element: element, refcon: this)
+                try observer.add(notification: kAXAnnouncementRequestedNotification, element: element, refcon: this)
+            }
+
             observer.addToRunLoop()
             self.observer = observer
             self.observingElement = element
@@ -122,6 +171,9 @@ class Watcher: NSObject {
             self.statusBarDelegate?.a11yStatusChanged(true)
         } catch {
             NSLog("Failed to setup AXObserver: \(error.localizedDescription)")
+
+            // TODO: App could be still launching, retry setting AXObserver in 20 seconds for this app
+
             if lastCheckedA11y.timeIntervalSinceNow > 60 {
                 lastCheckedA11y = Date()
                 self.statusBarDelegate?.a11yStatusChanged(Accessibility.requestA11yPermission())
@@ -134,9 +186,43 @@ class Watcher: NSObject {
             observer.removeFromRunLoop()
             guard let observingElement else { fatalError("observingElement should not be nil here") }
 
+            try? observer.remove(notification: kAXMainWindowChangedNotification, element: observingElement)
+            try? observer.remove(notification: kAXFocusedWindowChangedNotification, element: observingElement)
             try? observer.remove(notification: kAXFocusedUIElementChangedNotification, element: observingElement)
-            try? observer.remove(notification: kAXSelectedTextChangedNotification, element: observingElement)
+            try? observer.remove(notification: kAXApplicationActivatedNotification, element: observingElement)
+            try? observer.remove(notification: kAXApplicationDeactivatedNotification, element: observingElement)
+            try? observer.remove(notification: kAXApplicationHiddenNotification, element: observingElement)
+            try? observer.remove(notification: kAXApplicationShownNotification, element: observingElement)
+            try? observer.remove(notification: kAXWindowCreatedNotification, element: observingElement)
+            try? observer.remove(notification: kAXWindowMovedNotification, element: observingElement)
+            try? observer.remove(notification: kAXWindowResizedNotification, element: observingElement)
+            try? observer.remove(notification: kAXWindowMiniaturizedNotification, element: observingElement)
+            try? observer.remove(notification: kAXWindowDeminiaturizedNotification, element: observingElement)
+            try? observer.remove(notification: kAXDrawerCreatedNotification, element: observingElement)
+            try? observer.remove(notification: kAXSheetCreatedNotification, element: observingElement)
+            try? observer.remove(notification: kAXHelpTagCreatedNotification, element: observingElement)
             try? observer.remove(notification: kAXValueChangedNotification, element: observingElement)
+            try? observer.remove(notification: kAXElementBusyChangedNotification, element: observingElement)
+            try? observer.remove(notification: kAXMenuOpenedNotification, element: observingElement)
+            try? observer.remove(notification: kAXMenuClosedNotification, element: observingElement)
+            try? observer.remove(notification: kAXMenuItemSelectedNotification, element: observingElement)
+            try? observer.remove(notification: kAXRowCountChangedNotification, element: observingElement)
+            try? observer.remove(notification: kAXRowExpandedNotification, element: observingElement)
+            try? observer.remove(notification: kAXRowCollapsedNotification, element: observingElement)
+            try? observer.remove(notification: kAXSelectedCellsChangedNotification, element: observingElement)
+            try? observer.remove(notification: kAXUnitsChangedNotification, element: observingElement)
+            try? observer.remove(notification: kAXSelectedChildrenMovedNotification, element: observingElement)
+            try? observer.remove(notification: kAXSelectedChildrenChangedNotification, element: observingElement)
+            try? observer.remove(notification: kAXResizedNotification, element: observingElement)
+            try? observer.remove(notification: kAXMovedNotification, element: observingElement)
+            try? observer.remove(notification: kAXCreatedNotification, element: observingElement)
+            try? observer.remove(notification: kAXSelectedRowsChangedNotification, element: observingElement)
+            try? observer.remove(notification: kAXSelectedColumnsChangedNotification, element: observingElement)
+            try? observer.remove(notification: kAXSelectedTextChangedNotification, element: observingElement)
+            try? observer.remove(notification: kAXTitleChangedNotification, element: observingElement)
+            try? observer.remove(notification: kAXLayoutChangedNotification, element: observingElement)
+            try? observer.remove(notification: kAXAnnouncementRequestedNotification, element: observingElement)
+
             self.observingElement = nil
             self.observer = nil
             // NSLog("Stopped watching \(app.localizedName ?? "nil")")
@@ -196,7 +282,13 @@ class Watcher: NSObject {
         callbackQueue.async {
             guard let app = self.activeApp else { return }
 
-            self.eventHandler?(app, path, isWrite, self.isBuilding)
+            self.heartbeatEventHandler?.handleHeartbeatEvent(
+                app: app,
+                entity: path.formatted(),
+                entityType: EntityType.file,
+                isWrite: isWrite,
+                isBuilding: self.isBuilding
+            )
         }
     }
 }
@@ -209,18 +301,36 @@ private func observerCallback(
 ) {
     guard let refcon = refcon else { return }
 
-    let axNotification = AXUIElementNotification.notificationFrom(string: notification as String)
     let this = Unmanaged<Watcher>.fromOpaque(refcon).takeUnretainedValue()
 
     guard let app = this.activeApp else { return }
 
+    if MonitoringManager.isAppElectron(app) {
+        // print(notification)
+        if let title = MonitoringManager.entityFromWindowTitle(app, element: element) {
+            this.heartbeatEventHandler?.handleHeartbeatEvent(
+                app: app,
+                entity: title,
+                entityType: EntityType.app,
+                isWrite: false,
+                isBuilding: this.isBuilding)
+        }
+        return
+    }
+
+    let axNotification = AXUIElementNotification.notificationFrom(string: notification as String)
     switch axNotification {
         case .selectedTextChanged:
             guard
-                let currentPath = getCurrentPath(element: element, refcon: refcon),
-                !element.selectedText.isEmpty
+                !element.selectedText.isEmpty,
+                let currentPath = getCurrentPath(element: element, refcon: refcon)
             else { return }
-            this.eventHandler?(app, currentPath, false, this.isBuilding)
+            this.heartbeatEventHandler?.handleHeartbeatEvent(
+                app: app,
+                entity: currentPath.formatted(),
+                entityType: EntityType.file,
+                isWrite: false,
+                isBuilding: this.isBuilding)
         case .focusedUIElementChanged:
             guard let currentPath = getCurrentPath(element: element, refcon: refcon) else { return }
             this.documentPath = currentPath
