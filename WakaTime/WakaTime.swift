@@ -2,7 +2,7 @@ import Foundation
 import AppKit
 import Firebase
 
-class WakaTime {
+class WakaTime: HeartbeatEventHandler {
     // MARK: Watcher
 
     let watcher = Watcher()
@@ -10,10 +10,10 @@ class WakaTime {
 
     // MARK: Watcher State
 
-    // Note: The lastFile and lastTime member vars are read and written on a worker thread.
+    // Note: The lastEntity and lastTime member vars are read and written on a worker thread.
     // To ensure that they can be accessed concurrently from other threads without issues,
     // they are declared atomic here
-    @Atomic var lastFile = ""
+    @Atomic var lastEntity = ""
     @Atomic var lastTime = 0
     @Atomic var lastIsBuilding = false
 
@@ -36,7 +36,7 @@ class WakaTime {
 
         configureFirebase()
         checkForApiKey()
-        watcher.eventHandler = handleEvent
+        watcher.heartbeatEventHandler = self
         watcher.statusBarDelegate = delegate
     }
 
@@ -63,42 +63,48 @@ class WakaTime {
 
     // MARK: Watcher Event Handling
 
-    private func shouldSendHeartbeat(file: URL, time: Int, isWrite: Bool, isBuilding: Bool) -> Bool {
+    private func shouldSendHeartbeat(entity: String, time: Int, isWrite: Bool, isBuilding: Bool) -> Bool {
         guard
             !isWrite,
             isBuilding == lastIsBuilding,
-            file.formatted() == lastFile,
+            entity == lastEntity,
             lastTime + 120 > time
         else { return true }
 
         return false
     }
 
-    public func handleEvent(app: NSRunningApplication, file: URL, isWrite: Bool, isBuilding: Bool) {
+    public func handleHeartbeatEvent(app: NSRunningApplication, entity: String, entityType: EntityType, isWrite: Bool, isBuilding: Bool) {
         let time = Int(NSDate().timeIntervalSince1970)
-        guard shouldSendHeartbeat(file: file, time: time, isWrite: isWrite, isBuilding: isBuilding) else { return }
+        guard shouldSendHeartbeat(entity: entity, time: time, isWrite: isWrite, isBuilding: isBuilding) else { return }
 
-        lastFile = file.formatted()
+        lastEntity = entity
         lastTime = time
         lastIsBuilding = isBuilding
-
-        guard
-            let id = app.bundleIdentifier,
-            let appName = AppInfo.getAppName(bundleId: id),
-            let appVersion = watcher.getAppVersion(app)
-        else { return }
 
         // make sure we should be tracking this app to avoid race condition bugs
         // do this after shouldSendHeartbeat for better performance because handleEvent may
         // be called frequently
-        guard MonitoringManager.isAppMonitored(for: id) else { return }
+        guard MonitoringManager.isAppMonitored(app) else { return }
+
+        guard
+            let appName = AppInfo.getAppName(app),
+            let appVersion = watcher.getAppVersion(app)
+        else { return }
 
         let cli = NSString.path(
             withComponents: ConfigFile.resourcesFolder + ["wakatime-cli"]
         )
         let process = Process()
         process.launchPath = cli
-        var args = ["--entity", file.formatted(), "--plugin", "\(appName)/\(appVersion) macos-wakatime/" + Bundle.main.version]
+        var args = [
+            "--entity",
+            entity,
+            "--entity-type",
+            entityType.rawValue,
+            "--plugin",
+            "\(appName)/\(appVersion) macos-wakatime/" + Bundle.main.version,
+        ]
         if isWrite {
             args.append("--write")
         }
@@ -122,6 +128,15 @@ class WakaTime {
     }
 }
 
+enum EntityType: String {
+    case file
+    case app
+}
+
 protocol StatusBarDelegate {
     func a11yStatusChanged(_ hasPermission: Bool) -> Void
+}
+
+protocol HeartbeatEventHandler {
+    func handleHeartbeatEvent(app: NSRunningApplication, entity: String, entityType: EntityType, isWrite: Bool, isBuilding: Bool) -> Void
 }
