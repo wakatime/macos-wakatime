@@ -39,7 +39,7 @@ class MonitoringManager {
     }
 
     static func isAppElectron(for bundleId: String) -> Bool {
-        return electronAppIds.contains(bundleId)
+        electronAppIds.contains(bundleId)
     }
 
     static func isAppElectron(_ app: NSRunningApplication) -> Bool {
