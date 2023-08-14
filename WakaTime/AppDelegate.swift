@@ -56,7 +56,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
             guard granted else {
                 if let msg = error?.localizedDescription {
                     NSLog(msg)
-                    print(msg)
                 }
                 return
             }
@@ -104,7 +103,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
                 alert.addButton(withTitle: "OK")
                 alert.runModal()
             } else {
-                print(String(describing: error))
                 NSLog(String(describing: error))
                 let alert = NSAlert()
                 alert.messageText = "Error"
