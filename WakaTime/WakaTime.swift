@@ -15,7 +15,7 @@ class WakaTime: HeartbeatEventHandler {
     // they are declared atomic here
     @Atomic var lastEntity = ""
     @Atomic var lastTime = 0
-    @Atomic var lastIsBuilding = false
+    @Atomic var lastCategory = Category.coding
 
     // MARK: Constants
 
@@ -63,10 +63,10 @@ class WakaTime: HeartbeatEventHandler {
 
     // MARK: Watcher Event Handling
 
-    private func shouldSendHeartbeat(entity: String, time: Int, isWrite: Bool, isBuilding: Bool) -> Bool {
+    private func shouldSendHeartbeat(entity: String, time: Int, isWrite: Bool, category: Category) -> Bool {
         guard
             !isWrite,
-            isBuilding == lastIsBuilding,
+            category == lastCategory,
             entity == lastEntity,
             lastTime + 120 > time
         else { return true }
@@ -74,13 +74,21 @@ class WakaTime: HeartbeatEventHandler {
         return false
     }
 
-    public func handleHeartbeatEvent(app: NSRunningApplication, entity: String, entityType: EntityType, isWrite: Bool, isBuilding: Bool) {
+    public func handleHeartbeatEvent(
+        app: NSRunningApplication,
+        entity: String,
+        entityType: EntityType,
+        language: String?,
+        category: Category?,
+        isWrite: Bool)
+    {
         let time = Int(NSDate().timeIntervalSince1970)
-        guard shouldSendHeartbeat(entity: entity, time: time, isWrite: isWrite, isBuilding: isBuilding) else { return }
+        let category = category ?? Category.coding
+        guard shouldSendHeartbeat(entity: entity, time: time, isWrite: isWrite, category: category) else { return }
 
         lastEntity = entity
         lastTime = time
-        lastIsBuilding = isBuilding
+        lastCategory = category
 
         // make sure we should be tracking this app to avoid race condition bugs
         // do this after shouldSendHeartbeat for better performance because handleEvent may
@@ -102,15 +110,17 @@ class WakaTime: HeartbeatEventHandler {
             entity,
             "--entity-type",
             entityType.rawValue,
+            "--category",
+            category.rawValue,
             "--plugin",
             "\(appName)/\(appVersion) macos-wakatime/" + Bundle.main.version,
         ]
         if isWrite {
             args.append("--write")
         }
-        if isBuilding {
-            args.append("--category")
-            args.append("building")
+        if let language = language {
+            args.append("--language")
+            args.append(language)
         }
 
         NSLog("Sending heartbeat with: \(args)")
@@ -133,10 +143,22 @@ enum EntityType: String {
     case app
 }
 
+enum Category: String {
+    case coding
+    case building
+    case designing
+}
+
 protocol StatusBarDelegate: AnyObject {
     func a11yStatusChanged(_ hasPermission: Bool)
 }
 
 protocol HeartbeatEventHandler {
-    func handleHeartbeatEvent(app: NSRunningApplication, entity: String, entityType: EntityType, isWrite: Bool, isBuilding: Bool)
+    func handleHeartbeatEvent(
+        app: NSRunningApplication,
+        entity: String,
+        entityType: EntityType,
+        language: String?,
+        category: Category?,
+        isWrite: Bool)
 }

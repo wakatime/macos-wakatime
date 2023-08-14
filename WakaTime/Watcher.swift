@@ -286,8 +286,9 @@ class Watcher: NSObject {
                 app: app,
                 entity: path.formatted(),
                 entityType: EntityType.file,
-                isWrite: isWrite,
-                isBuilding: self.isBuilding
+                language: nil,
+                category: self.isBuilding ? Category.building : Category.coding,
+                isWrite: isWrite
             )
         }
     }
@@ -307,13 +308,14 @@ private func observerCallback(
 
     if MonitoringManager.isAppElectron(app) {
         // print(notification)
-        if let title = MonitoringManager.entityFromWindowTitle(app, element: element) {
+        if let heartbeat = MonitoringManager.heartbeatData(app, element: element) {
             this.heartbeatEventHandler?.handleHeartbeatEvent(
                 app: app,
-                entity: title,
+                entity: heartbeat.entity,
                 entityType: EntityType.app,
-                isWrite: false,
-                isBuilding: this.isBuilding)
+                language: heartbeat.language,
+                category: heartbeat.category,
+                isWrite: false)
         }
         return
     }
@@ -329,8 +331,9 @@ private func observerCallback(
                 app: app,
                 entity: currentPath.formatted(),
                 entityType: EntityType.file,
-                isWrite: false,
-                isBuilding: this.isBuilding)
+                language: nil,
+                category: this.isBuilding ? Category.building : Category.coding,
+                isWrite: false)
         case .focusedUIElementChanged:
             guard let currentPath = getCurrentPath(element: element, refcon: refcon) else { return }
             this.documentPath = currentPath
