@@ -33,37 +33,30 @@ extension AXUIElement {
     var rawTitle: String? {
         guard let ref = getValue(for: kAXTitleAttribute) else { return nil }
         // swiftlint:disable force_cast
-        let title = ref as! String
+        return (ref as! String)
         // swiftlint:enable force_cast
-        if let title = stripped(title, separator: " – ") {
-            return title
-        }
-        if let title = stripped(title, separator: " - ") {
-            return title
-        }
-        if let title = stripped(title, separator: " | ") {
-            return title
-        }
-        return nil
     }
 
     func title(for app: MonitoredApp) -> String? {
-        guard let title = rawTitle else { return nil }
-
         switch app {
             case .figma:
                 guard
+                    let title = stripped(rawTitle, separator: " – "),
                     title != "Figma",
                     title != "Drafts"
                 else { return nil }
 
                 return title
             case .postman:
-                guard title != "Postman" else { return nil }
+                guard
+                    let title = stripped(rawTitle, separator: " | "),
+                    title != "Postman"
+                else { return nil }
 
                 return title
             case .canva:
                 guard
+                    let title = stripped(rawTitle, separator: " - "),
                     title != "Canva",
                     title != "Home"
                 else { return nil }
@@ -141,7 +134,9 @@ extension AXUIElement {
         }
     }
 
-    private func stripped(_ str: String, separator: String) -> String? {
+    private func stripped(_ str: String?, separator: String) -> String? {
+        guard let str = str else { return nil }
+
         let parts = str.components(separatedBy: separator)
         if parts.count > 1 && parts[0].trimmingCharacters(in: .whitespacesAndNewlines) != "" {
             return parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
