@@ -286,8 +286,9 @@ class Watcher: NSObject {
                 app: app,
                 entity: path.formatted(),
                 entityType: EntityType.file,
-                isWrite: isWrite,
-                isBuilding: self.isBuilding
+                language: nil,
+                category: self.isBuilding ? Category.building : Category.coding,
+                isWrite: isWrite
             )
         }
     }
@@ -307,13 +308,14 @@ private func observerCallback(
 
     if MonitoringManager.isAppElectron(app) {
         // print(notification)
-        if let title = MonitoringManager.entityFromWindowTitle(app, element: element) {
+        if let heartbeat = MonitoringManager.heartbeatData(app, element: element) {
             this.heartbeatEventHandler?.handleHeartbeatEvent(
                 app: app,
-                entity: title,
+                entity: heartbeat.entity,
                 entityType: EntityType.app,
-                isWrite: false,
-                isBuilding: this.isBuilding)
+                language: heartbeat.language,
+                category: heartbeat.category,
+                isWrite: false)
         }
         return
     }
@@ -329,8 +331,9 @@ private func observerCallback(
                 app: app,
                 entity: currentPath.formatted(),
                 entityType: EntityType.file,
-                isWrite: false,
-                isBuilding: this.isBuilding)
+                language: nil,
+                category: this.isBuilding ? Category.building : Category.coding,
+                isWrite: false)
         case .focusedUIElementChanged:
             guard let currentPath = getCurrentPath(element: element, refcon: refcon) else { return }
             this.documentPath = currentPath
@@ -368,136 +371,5 @@ private func getCurrentPath(window: AXUIElement, refcon: UnsafeMutableRawPointer
     }
 
     return nil
-}
-
-extension AXObserver {
-    static func create(appID: pid_t, callback: AXObserverCallback) throws -> AXObserver {
-        var observer: AXObserver?
-        let error = AXObserverCreate(appID, callback, &observer)
-
-        guard error == .success else { throw AXObserverError.createFailed(error) }
-        guard let observer else { throw AXObserverError.createFailed(error) }
-
-        return observer
-    }
-
-    func add(notification: String, element: AXUIElement, refcon: UnsafeMutableRawPointer?) throws {
-        let error = AXObserverAddNotification(self, element, notification as CFString, refcon)
-        guard error == .success else {
-            NSLog("Add notification \(notification) failed: \(error.rawValue)")
-            throw AXObserverError.addNotificationFailed(error)
-        }
-
-        // NSLog("Added notification \(notification) to observer \(self)")
-    }
-
-    func remove(notification: String, element: AXUIElement) throws {
-        let error = AXObserverRemoveNotification(self, element, notification as CFString)
-        guard error == .success else {
-            NSLog("Remove notification \(notification) failed: \(error.rawValue)")
-            throw AXObserverError.removeNotificationFailed(error)
-        }
-
-        // NSLog("Removed notification \(notification) from observer \(self)")
-    }
-
-    func addToRunLoop(mode: CFRunLoopMode = .defaultMode) {
-        CFRunLoopAddSource(RunLoop.current.getCFRunLoop(), AXObserverGetRunLoopSource(self), mode)
-        // NSLog("Added observer \(self) to run loop")
-    }
-
-    func removeFromRunLoop(mode: CFRunLoopMode = .defaultMode) {
-        CFRunLoopRemoveSource(RunLoop.current.getCFRunLoop(), AXObserverGetRunLoopSource(self), mode)
-        // NSLog("Removed observer \(self) from run loop")
-    }
-}
-
-private enum AXObserverError: Error {
-    case createFailed(AXError)
-    case addNotificationFailed(AXError)
-    case removeNotificationFailed(AXError)
-}
-
-extension AXUIElement {
-    var selectedText: String? {
-        rawValue(for: kAXSelectedTextAttribute) as? String
-    }
-
-    func rawValue(for attribute: String) -> AnyObject? {
-        var rawValue: AnyObject?
-        let error = AXUIElementCopyAttributeValue(self, attribute as CFString, &rawValue)
-        return error == .success ? rawValue : nil
-    }
-
-    func getValue(for attribute: String) -> CFTypeRef? {
-        var result: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(self, attribute as CFString, &result) == .success else { return nil }
-        return result
-    }
-
-    var children: [AXUIElement]? {
-        guard let rawChildren = rawValue(for: kAXChildrenAttribute) else { return nil }
-        return rawChildren as? [AXUIElement]
-    }
-
-    // Traverses the element's subtree (breadth-first) until visitor() returns false or traversal is completed
-    func traverse(visitor: (AXUIElement) -> Bool, element: AXUIElement? = nil) {
-        let element = element ?? self
-        if let children = element.children {
-            for child in children {
-                if !visitor(child) { return }
-                traverse(visitor: visitor, element: child)
-            }
-        }
-    }
-}
-
-class FileMonitor {
-    private let fileURL: URL
-    private var dispatchObject: DispatchSourceFileSystemObject?
-
-    public var fileChangedEventHandler: (() -> Void)?
-
-    init?(filePath: URL, queue: DispatchQueue) {
-        self.fileURL = filePath
-        let folderURL = fileURL.deletingLastPathComponent() // monitor enclosing folder to track changes by Xcode
-        let descriptor = open(folderURL.path, O_EVTONLY)
-        guard descriptor >= -1 else { NSLog("open failed: \(descriptor)"); return nil }
-        dispatchObject = DispatchSource.makeFileSystemObjectSource(fileDescriptor: descriptor, eventMask: .write, queue: queue)
-        dispatchObject?.setEventHandler { [weak self] in
-            self?.fileChangedEventHandler?()
-        }
-        dispatchObject?.setCancelHandler {
-            close(descriptor)
-        }
-        dispatchObject?.activate()
-    }
-
-    deinit {
-        dispatchObject?.cancel()
-    }
-}
-
-enum AXUIElementNotification {
-    case selectedTextChanged
-    case focusedUIElementChanged
-    case focusedWindowChanged
-    case valueChanged
-    case uknown
-
-    static func notificationFrom(string notification: String) -> AXUIElementNotification {
-        switch notification {
-            case "AXSelectedTextChanged":
-                return .selectedTextChanged
-            case "AXFocusedUIElementChanged":
-                return .focusedUIElementChanged
-            case "AXFocusedWindowChanged":
-                return .focusedWindowChanged
-            case "AXValueChanged":
-                return .valueChanged
-            default:
-                return .uknown
-        }
-    }
 }
 // swiftlint:enable force_cast
