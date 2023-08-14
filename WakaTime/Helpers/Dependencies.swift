@@ -92,7 +92,7 @@ class Dependencies {
             do {
                 try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true, attributes: nil)
             } catch {
-                print(error.localizedDescription)
+                NSLog(error.localizedDescription)
             }
         }
 
@@ -105,7 +105,7 @@ class Dependencies {
             do {
                 try FileManager.default.removeItem(atPath: zipFile)
             } catch {
-                print(error.localizedDescription)
+                NSLog(error.localizedDescription)
                 return
             }
         }
@@ -121,7 +121,7 @@ class Dependencies {
                     do {
                         try FileManager.default.removeItem(atPath: cliReal)
                     } catch {
-                        print(error.localizedDescription)
+                        NSLog(error.localizedDescription)
                         return
                     }
                 }
@@ -145,7 +145,7 @@ class Dependencies {
                 try! FileManager.default.createSymbolicLink(atPath: cli, withDestinationPath: cliReal)
 
             } catch {
-                print(error.localizedDescription)
+                NSLog(error.localizedDescription)
             }
         }.resume()
     }
