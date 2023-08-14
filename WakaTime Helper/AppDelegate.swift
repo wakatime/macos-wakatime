@@ -17,13 +17,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 path = path.deletingLastPathComponent as NSString
             }
             let fileURL = URL(fileURLWithPath: path as String)
-            print("Opening", fileURL.absoluteString)
+            NSLog("Opening", fileURL.absoluteString)
             NSWorkspace.shared.openApplication(
                 at: fileURL,
                 configuration: NSWorkspace.OpenConfiguration()
             ) { _, error in
                 if let error {
-                    print(error.localizedDescription)
+                    NSLog(error.localizedDescription)
                 }
             }
         }

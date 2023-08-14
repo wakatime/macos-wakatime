@@ -25,7 +25,7 @@ class MonitoredAppsView: NSView {
     }
 
     func buildView(stackView: NSStackView) {
-        for (index, bundleId) in MonitoringManager.appIDsToWatch.enumerated() {
+        for (index, bundleId) in MonitoredApp.allBundleIds.enumerated() {
             guard
                 let image = AppInfo.getIcon(bundleId: bundleId),
                 let appName = AppInfo.getAppName(bundleId: bundleId)
@@ -75,7 +75,7 @@ class MonitoredAppsView: NSView {
 
     @objc func switchToggled(_ sender: NSSwitch) {
         let index = sender.tag
-        let bundleId = MonitoringManager.appIDsToWatch[index]
+        let bundleId = MonitoredApp.allBundleIds[index]
 
         MonitoringManager.set(monitoringState: sender.state == .on ? .on : .off, for: bundleId)
     }

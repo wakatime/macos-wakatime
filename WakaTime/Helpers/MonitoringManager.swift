@@ -1,24 +1,14 @@
 import Cocoa
 import Foundation
 
-enum App: String, CaseIterable {
-    case xcode = "com.apple.dt.Xcode"
-    case figma = "com.figma.Desktop"
-    case postman = "com.postmanlabs.mac"
-    case canva = "com.canva.CanvaDesktop"
-}
-
 class MonitoringManager {
     enum MonitoringState {
         case on
         case off
     }
 
-    public static let appIDsToWatch = App.allCases.map { $0.rawValue }
-    static let electronAppIds = [App.postman.rawValue, App.figma.rawValue, App.canva.rawValue]
-
     static func isAppMonitored(for bundleId: String) -> Bool {
-        guard appIDsToWatch.contains(bundleId) else { return false }
+        guard MonitoredApp.allBundleIds.contains(bundleId) else { return false }
 
         let isMonitoredKey = monitoredKey(bundleId: bundleId)
 
@@ -39,7 +29,7 @@ class MonitoringManager {
     }
 
     static func isAppElectron(for bundleId: String) -> Bool {
-        electronAppIds.contains(bundleId)
+        MonitoredApp.electronAppIds.contains(bundleId)
     }
 
     static func isAppElectron(_ app: NSRunningApplication) -> Bool {
@@ -48,66 +38,43 @@ class MonitoringManager {
         return isAppElectron(for: bundleId)
     }
 
-    static func heartbeatData(_ app: NSRunningApplication, element: AXUIElement) -> HeartbeatData? {
-        guard let bundleId = app.bundleIdentifier else { return nil }
+    static func isAppXcode(_ app: NSRunningApplication) -> Bool {
+        guard let bundleId = app.bundleIdentifier else { return false }
 
-        var windowTitle: AnyObject?
-        AXUIElementCopyAttributeValue(element, kAXTitleAttribute as CFString, &windowTitle)
+        return bundleId == MonitoredApp.xcode.rawValue
+    }
+
+    static func heartbeatData(_ app: NSRunningApplication, element: AXUIElement) -> HeartbeatData? {
         guard
-            let title = windowTitle as? String,
-            title != ""
+            let monitoredApp = app.monitoredApp,
+            let title = element.title(for: monitoredApp)
         else { return nil }
 
-        switch bundleId {
-            case App.figma.rawValue:
-                guard title.trimmingCharacters(in: .whitespacesAndNewlines) != "Figma" else { return nil }
-                let parts = title.components(separatedBy: " – ")
-                if parts.count > 1 && parts[0].trimmingCharacters(in: .whitespacesAndNewlines) != "" {
-                    return HeartbeatData(
-                        entity: parts[0].trimmingCharacters(in: .whitespacesAndNewlines),
-                        language: "Figma Design",
-                        category: .designing)
-                }
-            case App.postman.rawValue:
-                guard title.trimmingCharacters(in: .whitespacesAndNewlines) != "Postman" else { return nil }
-                let parts = title.components(separatedBy: " | ")
-                if parts.count > 1 && parts[0].trimmingCharacters(in: .whitespacesAndNewlines) != "" {
-                    return HeartbeatData(
-                        entity: parts[0].trimmingCharacters(in: .whitespacesAndNewlines),
-                        language: "HTTP Request",
-                        category: .designing)
-                }
-            case App.canva.rawValue:
-                guard
-                    title.contains("Canva"),
-                    title != "Home - Canva",
-                    title.trimmingCharacters(in: .whitespacesAndNewlines) != "Canva"
-                else { return nil }
-                let parts = title.components(separatedBy: " - ")
-                if parts.count > 1 && parts[0].trimmingCharacters(in: .whitespacesAndNewlines) != "" {
-                    return HeartbeatData(
-                        entity: parts[0].trimmingCharacters(in: .whitespacesAndNewlines),
-                        language: "Canva Design",
-                        category: .designing)
-                }
-            default:
-                let parts = title.components(separatedBy: " - ")
-                if parts.count > 1 && parts[0].trimmingCharacters(in: .whitespacesAndNewlines) != "" {
-                    return HeartbeatData(entity: parts[0].trimmingCharacters(in: .whitespacesAndNewlines))
-                }
-                let partsByPipe = title.components(separatedBy: " | ")
-                if partsByPipe.count > 1 && partsByPipe[0].trimmingCharacters(in: .whitespacesAndNewlines) != "" {
-                    return HeartbeatData(entity: parts[0].trimmingCharacters(in: .whitespacesAndNewlines))
-                }
+        switch monitoredApp {
+            case .figma:
+                return HeartbeatData(
+                    entity: title,
+                    language: "Figma Design",
+                    category: .designing)
+            case .postman:
+                return HeartbeatData(
+                    entity: title,
+                    language: "HTTP Request",
+                    category: .debugging)
+            case .canva:
+                return HeartbeatData(
+                    entity: title,
+                    language: "Canva Design",
+                    category: .designing)
+            case .xcode:
+                fatalError("Xcode should never use window title")
         }
-
-        return HeartbeatData(entity: title)
     }
 
     static func set(monitoringState: MonitoringState, for bundleId: String) {
         UserDefaults.standard.set(monitoringState == .on, forKey: monitoredKey(bundleId: bundleId))
         UserDefaults.standard.synchronize()
-        // print("Monitoring \(monitoringState == .on ? "enabled" : "disabled") for \(AppInfo.getAppName(bundleId: bundleId) ?? "")")
+        // NSLog("Monitoring \(monitoringState == .on ? "enabled" : "disabled") for \(AppInfo.getAppName(bundleId: bundleId) ?? "")")
     }
 
     static func monitoredKey(bundleId: String) -> String {

@@ -80,8 +80,7 @@ class WakaTime: HeartbeatEventHandler {
         entityType: EntityType,
         language: String?,
         category: Category?,
-        isWrite: Bool)
-    {
+        isWrite: Bool) {
         let time = Int(NSDate().timeIntervalSince1970)
         let category = category ?? Category.coding
         guard shouldSendHeartbeat(entity: entity, time: time, isWrite: isWrite, category: category) else { return }
@@ -133,7 +132,7 @@ class WakaTime: HeartbeatEventHandler {
             // with ObjC exception bridging on macOS 12 or earlier and Process.run() on macOS 13 or newer.
             try process.execute()
         } catch {
-            print("Failed to run wakatime-cli: \(error)")
+            NSLog("Failed to run wakatime-cli: \(error)")
         }
     }
 }
@@ -146,6 +145,7 @@ enum EntityType: String {
 enum Category: String {
     case coding
     case building
+    case debugging
     case designing
 }
 
