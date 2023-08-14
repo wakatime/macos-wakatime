@@ -3,22 +3,14 @@ import Cocoa
 enum MonitoredApp: String, CaseIterable {
     case xcode = "com.apple.dt.Xcode"
     case figma = "com.figma.Desktop"
-    case postman = "com.postmanlabs.mac"
     case canva = "com.canva.CanvaDesktop"
+    case postman = "com.postmanlabs.mac"
 
     init?(from bundleId: String) {
-        switch bundleId {
-            case MonitoredApp.xcode.rawValue:
-                self = .xcode
-            case MonitoredApp.figma.rawValue:
-                self = .figma
-            case MonitoredApp.canva.rawValue:
-                self = .canva
-            case MonitoredApp.postman.rawValue:
-                self = .postman
-            default:
-                return nil
+        if let app = MonitoredApp(rawValue: bundleId) {
+            self = app
         }
+        return nil
     }
 
     static var allBundleIds: [String] {
