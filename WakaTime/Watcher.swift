@@ -124,6 +124,43 @@ class Watcher: NSObject {
                 try observer.add(notification: kAXValueChangedNotification, element: axApp, refcon: this)
             }
 
+            /*
+            if app.monitoredApp == .iterm2 {
+                try observer.add(notification: kAXValueChangedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXMainWindowChangedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXApplicationActivatedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXApplicationDeactivatedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXApplicationHiddenNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXApplicationShownNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXWindowCreatedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXWindowMovedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXWindowResizedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXWindowMiniaturizedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXWindowDeminiaturizedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXDrawerCreatedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXSheetCreatedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXHelpTagCreatedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXElementBusyChangedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXMenuOpenedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXMenuClosedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXMenuItemSelectedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXRowCountChangedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXRowExpandedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXRowCollapsedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXSelectedCellsChangedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXUnitsChangedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXSelectedChildrenMovedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXSelectedChildrenChangedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXResizedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXMovedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXCreatedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXSelectedRowsChangedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXSelectedColumnsChangedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXTitleChangedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXLayoutChangedNotification, element: axApp, refcon: this)
+                try observer.add(notification: kAXAnnouncementRequestedNotification, element: axApp, refcon: this)
+            }*/
+
             observer.addToRunLoop()
             self.observer = observer
             self.observingElement = axApp
@@ -220,7 +257,7 @@ class Watcher: NSObject {
 
             self.heartbeatEventHandler?.handleHeartbeatEvent(
                 app: app,
-                entity: path.formatted(),
+                entity: path.path,
                 entityType: EntityType.file,
                 language: nil,
                 category: self.isBuilding ? Category.building : Category.coding,
@@ -253,7 +290,7 @@ private func observerCallback(
                 else { return }
                 this.heartbeatEventHandler?.handleHeartbeatEvent(
                     app: app,
-                    entity: currentPath.formatted(),
+                    entity: currentPath.path,
                     entityType: EntityType.file,
                     language: nil,
                     category: this.isBuilding ? Category.building : Category.coding,
