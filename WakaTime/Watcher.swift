@@ -257,7 +257,7 @@ class Watcher: NSObject {
 
             self.heartbeatEventHandler?.handleHeartbeatEvent(
                 app: app,
-                entity: path.formatted(),
+                entity: path.path,
                 entityType: EntityType.file,
                 language: nil,
                 category: self.isBuilding ? Category.building : Category.coding,
@@ -290,7 +290,7 @@ private func observerCallback(
                 else { return }
                 this.heartbeatEventHandler?.handleHeartbeatEvent(
                     app: app,
-                    entity: currentPath.formatted(),
+                    entity: currentPath.path,
                     entityType: EntityType.file,
                     language: nil,
                     category: this.isBuilding ? Category.building : Category.coding,
