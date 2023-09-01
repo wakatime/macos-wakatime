@@ -1,10 +1,6 @@
 import AppKit
 
 class SettingsView: NSView, NSTextFieldDelegate {
-    // MARK: State
-
-    var apiKey: String = ""
-
     // MARK: Controls
 
     lazy var launchAtLoginCheckbox: NSButton = {
@@ -28,28 +24,6 @@ class SettingsView: NSView, NSTextFieldDelegate {
         return textField
     }()
 
-    lazy var saveButton: NSButton = {
-        let saveButton = NSButton(title: "Save", target: self, action: #selector(saveButtonClicked))
-        saveButton.translatesAutoresizingMaskIntoConstraints = false
-        saveButton.keyEquivalent = "\r"
-        return saveButton
-    }()
-
-    lazy var cancelButton: NSButton = {
-        let cancelButton = NSButton(title: "Cancel", target: self, action: #selector(cancelButtonClicked))
-        cancelButton.translatesAutoresizingMaskIntoConstraints = false
-        cancelButton.keyEquivalent = "\u{1b}"
-        return cancelButton
-    }()
-
-    lazy var stackView: NSStackView = {
-        let stackView = NSStackView(views: [saveButton, cancelButton])
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        stackView.orientation = .horizontal
-        stackView.spacing = 10
-        return stackView
-    }()
-
     lazy var versionLabel: NSTextField = {
         let versionString = "Version: \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")"
         let versionLabel = NSTextField(labelWithString: versionString)
@@ -63,7 +37,6 @@ class SettingsView: NSView, NSTextFieldDelegate {
         addSubview(launchAtLoginCheckbox)
         addSubview(apiKeyLabel)
         addSubview(textField)
-        addSubview(stackView)
         addSubview(versionLabel)
 
         setupConstraints()
@@ -71,10 +44,6 @@ class SettingsView: NSView, NSTextFieldDelegate {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-
-    override func viewDidMoveToWindow() {
-        window?.defaultButtonCell = saveButton.cell as? NSButtonCell
     }
 
     @objc func launchAtLoginCheckboxClicked() {
@@ -86,17 +55,8 @@ class SettingsView: NSView, NSTextFieldDelegate {
         }
     }
 
-    @objc func saveButtonClicked() {
-        ConfigFile.setSetting(section: "settings", key: "api_key", val: textField.stringValue)
-        self.window?.close()
-    }
-
-    @objc func cancelButtonClicked() {
-        self.window?.close()
-    }
-
     func controlTextDidChange(_ obj: Notification) {
-        apiKey = textField.stringValue
+        ConfigFile.setSetting(section: "settings", key: "api_key", val: textField.stringValue)
     }
 
     private func setupConstraints() {
@@ -111,12 +71,7 @@ class SettingsView: NSView, NSTextFieldDelegate {
             textField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             textField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
 
-            stackView.topAnchor.constraint(equalTo: textField.bottomAnchor, constant: 4),
-            stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
-            stackView.heightAnchor.constraint(equalToConstant: 40),
-
-            versionLabel.topAnchor.constraint(equalTo: stackView.bottomAnchor, constant: 10),
+            versionLabel.topAnchor.constraint(equalTo: textField.bottomAnchor, constant: 10),
             versionLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             versionLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
             versionLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -20)
