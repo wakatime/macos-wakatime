@@ -41,7 +41,7 @@ extension AXUIElement {
         switch app {
             case .figma:
                 guard
-                    let title = stripped(rawTitle, separator: " – "),
+                    let title = extractPrefix(rawTitle, separator: " – "),
                     title != "Figma",
                     title != "Drafts"
                 else { return nil }
@@ -49,14 +49,14 @@ extension AXUIElement {
                 return title
             case .postman:
                 guard
-                    let title = stripped(rawTitle, separator: " | "),
+                    let title = extractPrefix(rawTitle, separator: " - ", fullTitle: true),
                     title != "Postman"
                 else { return nil }
 
                 return title
             case .canva:
                 guard
-                    let title = stripped(rawTitle, separator: " - "),
+                    let title = extractPrefix(rawTitle, separator: " - ", minCount: 2),
                     title != "Canva",
                     title != "Home"
                 else { return nil }
@@ -134,11 +134,19 @@ extension AXUIElement {
         }
     }
 
-    private func stripped(_ str: String?, separator: String) -> String? {
+    private func extractPrefix(_ str: String?, separator: String, minCount: Int? = nil, fullTitle: Bool = false) -> String? {
         guard let str = str else { return nil }
 
         let parts = str.components(separatedBy: separator)
-        if parts.count > 1 && parts[0].trimmingCharacters(in: .whitespacesAndNewlines) != "" {
+
+        if let minCount = minCount, minCount > 0, parts.count < minCount {
+            return nil
+        }
+
+        if !parts.isEmpty && parts[0].trimmingCharacters(in: .whitespacesAndNewlines) != "" {
+            if fullTitle {
+                return str.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
             return parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
         }
         return nil
