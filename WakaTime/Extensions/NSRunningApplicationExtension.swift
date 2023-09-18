@@ -9,8 +9,9 @@ enum MonitoredApp: String, CaseIterable {
     init?(from bundleId: String) {
         if let app = MonitoredApp(rawValue: bundleId) {
             self = app
+        } else {
+            return nil
         }
-        return nil
     }
 
     static var allBundleIds: [String] {
