@@ -29,6 +29,9 @@ class Dependencies {
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else { return nil }
 
+        let now = Int(NSDate().timeIntervalSince1970)
+        ConfigFile.setSetting(section: "internal", key: "cli_version_last_accessed", val: String(now), internalConfig: true)
+
         if httpResponse.statusCode == 304 {
             // Current version is still the latest version available
             return currentVersion
@@ -72,6 +75,17 @@ class Dependencies {
         } else {
             version = nil
         }
+
+        let accessed = ConfigFile.getSetting(section: "internal", key: "cli_version_last_accessed", internalConfig: true)
+        if let accessed, let accessed = Int(accessed) {
+            let now = Int(NSDate().timeIntervalSince1970)
+            let fourHours = 4 * 3600
+            if accessed + fourHours > now {
+                NSLog("Skip checking for wakatime-cli updates because recently checked \(now - accessed) seconds ago")
+                return true
+            }
+        }
+
         let remoteVersion = try? await getLatestVersion()
         guard let remoteVersion else {
             // Could not retrieve remote version
