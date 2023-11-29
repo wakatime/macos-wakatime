@@ -154,12 +154,13 @@ enum EntityType: String {
 }
 
 enum Category: String {
-    case coding
+    case browsing
     case building
+    case coding
+    case communicating
     case debugging
     case designing
-    case communicating
-    case browsing
+    case meeting
 }
 
 protocol StatusBarDelegate: AnyObject {
