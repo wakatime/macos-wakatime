@@ -54,16 +54,51 @@ extension AXUIElement {
                 else { return nil }
 
                 return title
+            case .warp:
+                guard
+                    let title = extractPrefix(rawTitle, separator: " - ", fullTitle: true),
+                    title != "Warp"
+                else { return nil }
+                return title
+            case .slack:
+                guard let title = extractPrefix(rawTitle, separator: " - ", fullTitle: true) else { return nil }
+                return title
+            case .safari:
+                guard
+                    let title = extractPrefix(rawTitle, separator: " - ", fullTitle: true),
+                    title != "Safari"
+                else { return nil }
+                return title
+            case .imessage:
+                guard let title = extractPrefix(rawTitle, separator: " - ", fullTitle: true) else { return nil }
+                return title
             case .canva:
                 guard
                     let title = extractPrefix(rawTitle, separator: " - ", minCount: 2),
                     title != "Canva",
                     title != "Home"
                 else { return nil }
-
                 return title
             case .xcode:
-                return nil
+                fatalError("Xcode should never use window title as entity")
+            case .chrome:
+                guard
+                    let title = extractPrefix(rawTitle, separator: " - ", fullTitle: true),
+                    title != "Chrome"
+                else { return nil }
+                return title
+            case .arcbrowser:
+                guard
+                    let title = extractPrefix(rawTitle, separator: " - ", fullTitle: true),
+                    title != "Arc"
+                else { return nil }
+                return title
+            case .whatsapp:
+                guard let title = extractPrefix(rawTitle, separator: " - ", fullTitle: true) else { return nil }
+                return title
+            case .zoom:
+                guard let title = extractPrefix(rawTitle, separator: " - ", fullTitle: true) else { return nil }
+                return title
         }
     }
 

@@ -61,11 +61,43 @@ class MonitoringManager {
                     entity: title,
                     language: "HTTP Request",
                     category: .debugging)
+            case .warp:
+                return HeartbeatData(
+                    entity: title,
+                    category: .coding)
+            case .slack:
+                return HeartbeatData(
+                    entity: title,
+                    category: .communicating)
+            case .safari:
+                return HeartbeatData(
+                    entity: title,
+                    category: .browsing)
+            case .chrome:
+                return HeartbeatData(
+                    entity: title,
+                    category: .browsing)
+            case .arcbrowser:
+                return HeartbeatData(
+                    entity: title,
+                    category: .browsing)
+            case .imessage:
+                return HeartbeatData(
+                    entity: title,
+                    category: .communicating)
             case .canva:
                 return HeartbeatData(
                     entity: title,
                     language: "Canva Design",
                     category: .designing)
+            case .whatsapp:
+                return HeartbeatData(
+                    entity: title,
+                    category: .meeting)
+            case .zoom:
+                return HeartbeatData(
+                    entity: title,
+                    category: .meeting)
             case .xcode:
                 fatalError("Xcode should never use window title")
         }
