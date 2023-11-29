@@ -5,6 +5,10 @@ enum MonitoredApp: String, CaseIterable {
     case figma = "com.figma.Desktop"
     case canva = "com.canva.CanvaDesktop"
     case postman = "com.postmanlabs.mac"
+    case warp = "dev.warp.Warp-Stable"
+    case slack = "com.tinyspeck.slackmacgap"
+    case safari = "com.apple.Safari"
+    case imessage = "com.apple.MobileSMS"
 
     init?(from bundleId: String) {
         if let app = MonitoredApp(rawValue: bundleId) {
@@ -18,7 +22,10 @@ enum MonitoredApp: String, CaseIterable {
         MonitoredApp.allCases.map { $0.rawValue }
     }
 
-    static let electronAppIds = [MonitoredApp.postman.rawValue, MonitoredApp.figma.rawValue, MonitoredApp.canva.rawValue]
+    static let electronAppIds = [MonitoredApp.postman.rawValue, MonitoredApp.figma.rawValue,
+                                 MonitoredApp.canva.rawValue, MonitoredApp.warp.rawValue,
+                                 MonitoredApp.slack.rawValue, MonitoredApp.safari.rawValue,
+                                 MonitoredApp.imessage.rawValue]
 }
 
 extension NSRunningApplication {

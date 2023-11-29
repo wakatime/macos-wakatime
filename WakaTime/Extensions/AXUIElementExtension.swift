@@ -54,6 +54,30 @@ extension AXUIElement {
                 else { return nil }
 
                 return title
+            case .warp:
+                guard
+                    let title = extractPrefix(rawTitle, separator: " - ", fullTitle: true),
+                    title != "Warp"
+                else { return nil }
+                return title
+            case .slack:
+                guard
+                    let title = extractPrefix(rawTitle, separator: " - ", fullTitle: true),
+                    title != "Slack"
+                else { return nil }
+                return title
+            case .safari:
+                guard
+                    let title = extractPrefix(rawTitle, separator: " - ", fullTitle: true),
+                    title != "Safari"
+                else { return nil }
+                return title
+            case .imessage:
+                guard
+                    let title = extractPrefix(rawTitle, separator: " - ", fullTitle: true),
+                    title != "iMessage"
+                else { return nil }
+                return title
             case .canva:
                 guard
                     let title = extractPrefix(rawTitle, separator: " - ", minCount: 2),

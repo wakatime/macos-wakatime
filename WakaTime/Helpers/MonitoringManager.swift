@@ -61,6 +61,26 @@ class MonitoringManager {
                     entity: title,
                     language: "HTTP Request",
                     category: .debugging)
+            case .warp:
+                return HeartbeatData(
+                    entity: title,
+                    language: "Warp Activity",
+                    category: .coding)
+            case .slack:
+                return HeartbeatData(
+                    entity: title,
+                    language: "Slack Activity",
+                    category: .coding)
+            case .safari:
+                return HeartbeatData(
+                    entity: title,
+                    language: "Safari Activity",
+                    category: .coding)
+            case .imessage:
+                return HeartbeatData(
+                    entity: title,
+                    language: "iMessage Activity",
+                    category: .coding)
             case .canva:
                 return HeartbeatData(
                     entity: title,
