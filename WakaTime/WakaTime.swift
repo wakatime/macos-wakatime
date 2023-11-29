@@ -158,7 +158,8 @@ enum Category: String {
     case building
     case debugging
     case designing
-    case messaging
+    case communicating
+    case browsing
 }
 
 protocol StatusBarDelegate: AnyObject {
