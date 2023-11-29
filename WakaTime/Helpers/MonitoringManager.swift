@@ -70,17 +70,27 @@ class MonitoringManager {
                 return HeartbeatData(
                     entity: title,
                     language: "Slack Activity",
-                    category: .coding)
+                    category: .communicating)
             case .safari:
                 return HeartbeatData(
                     entity: title,
                     language: "Safari Activity",
-                    category: .coding)
+                    category: .browsing)
+            case .chrome:
+                return HeartbeatData(
+                    entity: title,
+                    language: "Chrome Activity",
+                    category: .browsing)
+            case .arcbrowser:
+                return HeartbeatData(
+                    entity: title,
+                    language: "Arc Browser Activity",
+                    category: .browsing)
             case .imessage:
                 return HeartbeatData(
                     entity: title,
                     language: "iMessage Activity",
-                    category: .coding)
+                    category: .communicating)
             case .canva:
                 return HeartbeatData(
                     entity: title,

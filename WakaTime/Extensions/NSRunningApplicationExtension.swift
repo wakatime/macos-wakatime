@@ -9,6 +9,8 @@ enum MonitoredApp: String, CaseIterable {
     case slack = "com.tinyspeck.slackmacgap"
     case safari = "com.apple.Safari"
     case imessage = "com.apple.MobileSMS"
+    case chrome = "com.google.Chrome"
+    case arcbrowser = "company.thebrowser.Browser"
 
     init?(from bundleId: String) {
         if let app = MonitoredApp(rawValue: bundleId) {
@@ -25,7 +27,8 @@ enum MonitoredApp: String, CaseIterable {
     static let electronAppIds = [MonitoredApp.postman.rawValue, MonitoredApp.figma.rawValue,
                                  MonitoredApp.canva.rawValue, MonitoredApp.warp.rawValue,
                                  MonitoredApp.slack.rawValue, MonitoredApp.safari.rawValue,
-                                 MonitoredApp.imessage.rawValue]
+                                 MonitoredApp.imessage.rawValue, MonitoredApp.chrome.rawValue,
+                                 MonitoredApp.arcbrowser.rawValue]
 }
 
 extension NSRunningApplication {
