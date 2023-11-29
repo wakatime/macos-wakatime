@@ -20,6 +20,11 @@ class AppInfo {
         return getAppName(bundleId: bundleId)
     }
 
+    static func getAppNameForHeartbeat(_ app: NSRunningApplication) -> String? {
+        guard let appName = getAppName(app) else { return nil }
+        return appName.filter { !$0.isWhitespace }
+    }
+
     static func getIcon(file path: String) -> NSImage? {
         guard
             FileManager.default.fileExists(atPath: path)

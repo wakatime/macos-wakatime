@@ -106,7 +106,7 @@ class WakaTime: HeartbeatEventHandler {
         guard MonitoringManager.isAppMonitored(app) else { return }
 
         guard
-            let appName = AppInfo.getAppName(app),
+            let appName = AppInfo.getAppNameForHeartbeat(app),
             let appVersion = watcher.getAppVersion(app)
         else { return }
 
