@@ -90,8 +90,7 @@ class Watcher: NSObject {
             let bundle = Bundle(url: url)
         else { return }
 
-        let version = "\(bundle.version)-\(bundle.build)"
-        appVersions[id] = version
+        appVersions[id] = "\(bundle.version)-\(bundle.build)".filter { !$0.isWhitespace }
     }
 
     public func getAppVersion(_ app: NSRunningApplication) -> String? {
