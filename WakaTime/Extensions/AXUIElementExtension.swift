@@ -84,7 +84,8 @@ extension AXUIElement {
             case .chrome:
                 guard
                     let title = extractPrefix(rawTitle, separator: " - "),
-                    title != "Chrome"
+                    title != "Chrome",
+                    title != "New Tab"
                 else { return nil }
                 return title
             case .arcbrowser:
