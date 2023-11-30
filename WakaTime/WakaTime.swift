@@ -29,7 +29,7 @@ class WakaTime: HeartbeatEventHandler {
         }
 
         configureFirebase()
-        checkForApiKeyOrNewApps()
+        checkForApiKey()
         watcher.heartbeatEventHandler = self
         watcher.statusBarDelegate = delegate
 
@@ -57,25 +57,11 @@ class WakaTime: HeartbeatEventHandler {
         FirebaseApp.configure()
     }
 
-    private func checkForApiKeyOrNewApps() {
+    private func checkForApiKey() {
         let apiKey = ConfigFile.getSetting(section: "settings", key: "api_key")
         if apiKey.isEmpty {
             openSettingsDeeplink()
-        } else {
-            checkForNewlySupportedApps()
         }
-    }
-
-    private func checkForNewlySupportedApps() {
-        guard PropertiesManager.hasLaunchedBefore else { return }
-
-        let newApps = MonitoringManager.newlySupportedApps
-        guard !newApps.isEmpty else { return }
-
-        openMonitoredAppsDeeplink()
-
-        let plural = newApps.count == 1 ? "" : "s"
-        delegate.toastNotification("Review \(newApps.count) new app\(plural)")
     }
 
     private func openSettingsDeeplink() {
