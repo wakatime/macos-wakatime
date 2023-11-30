@@ -8,7 +8,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
     var statusBarA11yItem: NSMenuItem!
     var statusBarA11ySeparator: NSMenuItem!
     var statusBarA11yStatus: Bool = true
-    var notificationsEnabled: Bool = false
     var settingsWindowController = SettingsWindowController()
     var monitoredAppsWindowController = MonitoredAppsWindowController()
     var wakaTime: WakaTime?
@@ -59,7 +58,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
                 }
                 return
             }
-            self.notificationsEnabled = true
         }
     }
 
@@ -153,8 +151,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
     }
 
     internal func toastNotification(_ title: String) {
-        guard notificationsEnabled else { return }
-
         let content = UNMutableNotificationContent()
         content.title = title
 
