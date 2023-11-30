@@ -17,12 +17,6 @@ class WakaTime: HeartbeatEventHandler {
     @Atomic var lastTime = 0
     @Atomic var lastCategory = Category.coding
 
-    // MARK: Constants
-
-    enum Constants {
-        static let settingsDeepLink: String = "wakatime://settings"
-    }
-
     // MARK: Initialization and Setup
 
     init(_ delegate: StatusBarDelegate) {
@@ -35,7 +29,7 @@ class WakaTime: HeartbeatEventHandler {
         }
 
         configureFirebase()
-        checkForApiKey()
+        checkForApiKeyOrNewApps()
         watcher.heartbeatEventHandler = self
         watcher.statusBarDelegate = delegate
 
@@ -59,17 +53,32 @@ class WakaTime: HeartbeatEventHandler {
         FirebaseApp.configure()
     }
 
-    private func checkForApiKey() {
+    private func checkForApiKeyOrNewApps() {
         let apiKey = ConfigFile.getSetting(section: "settings", key: "api_key")
         if apiKey.isEmpty {
             openSettingsDeeplink()
+        } else {
+            checkForNewlySupportedApps()
         }
     }
 
+    private func checkForNewlySupportedApps() {
+        let newApps = MonitoringManager.newlySupportedApps()
+        guard !newApps.isEmpty else { return }
+
+        openMonitoredAppsDeeplink()
+    }
+
     private func openSettingsDeeplink() {
-        if let url = URL(string: Constants.settingsDeepLink) {
-            NSWorkspace.shared.open(url)
-        }
+        guard let url = DeepLink.settings.url else { return }
+
+        NSWorkspace.shared.open(url)
+    }
+
+    private func openMonitoredAppsDeeplink() {
+        guard let url = DeepLink.monitoredApps.url else { return }
+
+        NSWorkspace.shared.open(url)
     }
 
     // MARK: Watcher Event Handling
@@ -146,6 +155,13 @@ class WakaTime: HeartbeatEventHandler {
             NSLog("Failed to run wakatime-cli: \(error)")
         }
     }
+}
+
+enum DeepLink: String {
+    case settings
+    case monitoredApps
+
+    var url: URL? { URL(string: "wakatime://\(self)") }
 }
 
 enum EntityType: String {

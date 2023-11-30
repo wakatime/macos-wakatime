@@ -28,6 +28,27 @@ class MonitoringManager {
         return isAppMonitored(for: bundleId)
     }
 
+    static func isAppNewlySupported(for bundleId: String) -> Bool {
+        guard MonitoredApp.allBundleIds.contains(bundleId) else { return false }
+
+        let isMonitoredKey = monitoredKey(bundleId: bundleId)
+
+        return UserDefaults.standard.string(forKey: isMonitoredKey) == nil
+    }
+
+    static func newlySupportedApps() -> [String] {
+        var newApps: [String] = []
+        for bundleId in MonitoredApp.allBundleIds {
+            guard
+                AppInfo.getIcon(bundleId: bundleId) != nil,
+                AppInfo.getAppName(bundleId: bundleId) != nil,
+                isAppNewlySupported(for: bundleId)
+            else { continue }
+            newApps.append(bundleId)
+        }
+        return newApps
+    }
+
     static func isAppElectron(for bundleId: String) -> Bool {
         MonitoredApp.electronAppIds.contains(bundleId)
     }

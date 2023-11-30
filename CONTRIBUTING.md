@@ -52,4 +52,8 @@ If you have trouble building off `main` branch, try:
 * Open the project in Xcode
 * Under `Signing & Capabilities`, set your `Team`
 
+To read local user preferences, run:
+
+    defaults read macos-wakatime.WakaTime
+
 Any question join us on [Slack](https://wakaslack.herokuapp.com/).

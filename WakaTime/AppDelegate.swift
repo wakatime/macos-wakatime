@@ -67,11 +67,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
         // Handle deep links
         guard let urlString = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue,
               let url = URL(string: urlString),
-              url.scheme == "wakatime"
+              url.scheme == "wakatime",
+              let link = DeepLink(rawValue: url.host ?? "")
         else { return }
 
-        if url.host == "settings" {
-            showSettings()
+        switch link {
+            case .settings:
+                showSettings()
+            case .monitoredApps:
+                showMonitoredApps()
         }
     }
 
