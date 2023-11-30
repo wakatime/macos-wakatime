@@ -69,7 +69,7 @@ class WakaTime: HeartbeatEventHandler {
     private func checkForNewlySupportedApps() {
         guard PropertiesManager.hasLaunchedBefore else { return }
 
-        let newApps = MonitoringManager.newlySupportedApps()
+        let newApps = MonitoringManager.newlySupportedApps
         guard !newApps.isEmpty else { return }
 
         openMonitoredAppsDeeplink()
