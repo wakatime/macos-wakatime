@@ -16,6 +16,10 @@ class MonitoringManager {
             let isMonitored = UserDefaults.standard.bool(forKey: isMonitoredKey)
             return isMonitored
         } else {
+
+            // make sure newly supported apps are cached before we set defaults
+            assert(newlySupportedApps.count > -1)
+
             UserDefaults.standard.set(true, forKey: isMonitoredKey)
             UserDefaults.standard.synchronize()
         }
@@ -36,7 +40,8 @@ class MonitoringManager {
         return UserDefaults.standard.string(forKey: isMonitoredKey) == nil
     }
 
-    static func newlySupportedApps() -> [String] {
+    static var newlySupportedApps: [String] = {
+        // cache newly supported apps
         var newApps: [String] = []
         for bundleId in MonitoredApp.allBundleIds {
             guard
@@ -47,7 +52,7 @@ class MonitoringManager {
             newApps.append(bundleId)
         }
         return newApps
-    }
+    }()
 
     static func isAppElectron(for bundleId: String) -> Bool {
         MonitoredApp.electronAppIds.contains(bundleId)
