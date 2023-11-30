@@ -43,6 +43,10 @@ class WakaTime: HeartbeatEventHandler {
             }
             print("********* End Running Applications *********")
         }
+
+        if !PropertiesManager.hasLaunchedBefore {
+            PropertiesManager.hasLaunchedBefore = true
+        }
     }
 
     private func configureFirebase() {
@@ -63,10 +67,15 @@ class WakaTime: HeartbeatEventHandler {
     }
 
     private func checkForNewlySupportedApps() {
+        guard PropertiesManager.hasLaunchedBefore else { return }
+
         let newApps = MonitoringManager.newlySupportedApps()
         guard !newApps.isEmpty else { return }
 
         openMonitoredAppsDeeplink()
+
+        let plural = newApps.count == 1 ? "" : "s"
+        delegate.toastNotification("Review \(newApps.count) new app\(plural)")
     }
 
     private func openSettingsDeeplink() {
@@ -181,6 +190,7 @@ enum Category: String {
 
 protocol StatusBarDelegate: AnyObject {
     func a11yStatusChanged(_ hasPermission: Bool)
+    func toastNotification(_ title: String)
 }
 
 protocol HeartbeatEventHandler {

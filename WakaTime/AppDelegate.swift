@@ -95,9 +95,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
 
     @objc func checkForUpdatesClicked(_ sender: AnyObject) {
         updater.check {
-            if self.notificationsEnabled {
-                self.sendNotification(title: "Updating to latest release")
-            }
+            self.toastNotification("Updating to latest release")
         }.catch(policy: .allErrors) { error in
             if error.isCancelled {
                 let alert = NSAlert()
@@ -154,13 +152,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
         monitoredAppsWindowController.showWindow(self)
     }
 
-    private func sendNotification(title: String, body: String = "") {
+    internal func toastNotification(_ title: String) {
+        guard notificationsEnabled else { return }
+
         let content = UNMutableNotificationContent()
         content.title = title
-
-        if !body.isEmpty {
-            content.body = body
-        }
 
         let uuidString = UUID().uuidString
         let request = UNNotificationRequest(
