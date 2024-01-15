@@ -13,6 +13,7 @@ enum MonitoredApp: String, CaseIterable {
     case whatsapp = "net.whatsapp.WhatsApp"
     case xcode = "com.apple.dt.Xcode"
     case zoom = "us.zoom.xos"
+    case zoom = "com.alacritty.app"
 
     init?(from bundleId: String) {
         if let app = MonitoredApp(rawValue: bundleId) {
@@ -30,7 +31,7 @@ enum MonitoredApp: String, CaseIterable {
                                  MonitoredApp.canva.rawValue, MonitoredApp.warp.rawValue,
                                  MonitoredApp.slack.rawValue, MonitoredApp.safari.rawValue,
                                  MonitoredApp.imessage.rawValue, MonitoredApp.chrome.rawValue,
-                                 MonitoredApp.arcbrowser.rawValue]
+                                 MonitoredApp.arcbrowser.rawValue, MonitoredApp.alacritty.rawValue]
 }
 
 extension NSRunningApplication {
