@@ -73,6 +73,10 @@ class MonitoringManager {
                 return HeartbeatData(
                     entity: title,
                     category: .browsing)
+            case .safaripreview:
+                return HeartbeatData(
+                    entity: title,
+                    category: .browsing)
             case .chrome:
                 return HeartbeatData(
                     entity: title,
