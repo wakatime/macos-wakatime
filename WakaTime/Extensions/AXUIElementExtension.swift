@@ -69,6 +69,13 @@ extension AXUIElement {
                     title != "Safari"
                 else { return nil }
                 return title
+            case .safaripreview:
+                guard
+                    let title = extractPrefix(rawTitle, separator: " - "),
+                    title != "Safari",
+                    title != "Safari Technology Preview"
+                else { return nil }
+                return title
             case .imessage:
                 guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
                 return title

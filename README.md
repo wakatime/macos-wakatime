@@ -27,6 +27,10 @@ To uninstall, move `WakaTime.app` into your mac Trash.
 
 If you don’t use any other WakaTime plugins, run `rm -r ~/.wakatime*`.
 
+## Supported Apps
+
+Before requesting support for a new app, first check the [list of supported apps][supported apps].
+
 ## SwiftLint
 
 To fix linter warning(s), run `swiftlint --fix`.
@@ -51,3 +55,4 @@ Made with :heart: by the WakaTime Team.
 [dashboard]: https://wakatime.com/
 [contributing]: CONTRIBUTING.md
 [authors]: AUTHORS
+[supported apps]: https://github.com/wakatime/macos-wakatime/blob/main/WakaTime/Extensions/NSRunningApplicationExtension.swift#L3
