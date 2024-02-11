@@ -51,20 +51,37 @@ class MonitoringManager {
         else { return nil }
 
         switch monitoredApp {
+            case .arcbrowser:
+                return HeartbeatData(
+                    entity: title,
+                    category: .browsing)
+            case .canva:
+                return HeartbeatData(
+                    entity: title,
+                    language: "Canva Design",
+                    category: .designing)
+            case .chrome:
+                return HeartbeatData(
+                    entity: title,
+                    category: .browsing)
             case .figma:
                 return HeartbeatData(
                     entity: title,
                     language: "Figma Design",
                     category: .designing)
+            case .imessage:
+                return HeartbeatData(
+                    entity: title,
+                    category: .communicating)
+            case .iterm2:
+                return HeartbeatData(
+                    entity: title,
+                    category: .coding)
             case .postman:
                 return HeartbeatData(
                     entity: title,
                     language: "HTTP Request",
                     category: .debugging)
-            case .warp:
-                return HeartbeatData(
-                    entity: title,
-                    category: .coding)
             case .slack:
                 return HeartbeatData(
                     entity: title,
@@ -77,37 +94,24 @@ class MonitoringManager {
                 return HeartbeatData(
                     entity: title,
                     category: .browsing)
-            case .chrome:
-                return HeartbeatData(
-                    entity: title,
-                    category: .browsing)
-            case .arcbrowser:
-                return HeartbeatData(
-                    entity: title,
-                    category: .browsing)
-            case .imessage:
-                return HeartbeatData(
-                    entity: title,
-                    category: .communicating)
-            case .iterm2:
+            case .terminal:
                 return HeartbeatData(
                     entity: title,
                     category: .coding)
-            case .canva:
+            case .warp:
                 return HeartbeatData(
                     entity: title,
-                    language: "Canva Design",
-                    category: .designing)
+                    category: .coding)
             case .whatsapp:
-                return HeartbeatData(
-                    entity: title,
-                    category: .meeting)
-            case .zoom:
                 return HeartbeatData(
                     entity: title,
                     category: .meeting)
             case .xcode:
                 fatalError("Xcode should never use window title")
+            case .zoom:
+                return HeartbeatData(
+                    entity: title,
+                    category: .meeting)
         }
     }
 
