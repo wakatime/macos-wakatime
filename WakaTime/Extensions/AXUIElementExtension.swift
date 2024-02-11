@@ -79,6 +79,9 @@ extension AXUIElement {
             case .imessage:
                 guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
                 return title
+            case .iterm2:
+                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
+                return title
             case .canva:
                 guard
                     let title = extractPrefix(rawTitle, separator: " - ", minCount: 2),

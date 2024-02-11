@@ -89,6 +89,10 @@ class MonitoringManager {
                 return HeartbeatData(
                     entity: title,
                     category: .communicating)
+            case .iterm2:
+                return HeartbeatData(
+                    entity: title,
+                    category: .coding)
             case .canva:
                 return HeartbeatData(
                     entity: title,

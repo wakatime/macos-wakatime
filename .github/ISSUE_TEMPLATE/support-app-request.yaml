@@ -1,0 +1,19 @@
+name: Support app request
+description: Suggest a new app for tracking
+title: "Support new app: XXX"
+labels: enhancement
+body:
+  - type: input
+    id: bundleid
+    attributes:
+      label: BundleId of the app
+      description: Build this app in Xcode and it prints bundleIds of all running apps in the output window
+    validations:
+      required: true
+  - type: textarea
+    id: titles
+    attributes:
+      label: Example window titles
+      description: List some example window titles of the app, which is used to parse the filename for your dashboard
+    validations:
+      required: true
