@@ -6,6 +6,7 @@ enum MonitoredApp: String, CaseIterable {
     case chrome = "com.google.Chrome"
     case figma = "com.figma.Desktop"
     case imessage = "com.apple.MobileSMS"
+    case iterm2 = "com.googlecode.iterm2"
     case postman = "com.postmanlabs.mac"
     case safari = "com.apple.Safari"
     case safaripreview = "com.apple.SafariTechnologyPreview"
@@ -27,12 +28,19 @@ enum MonitoredApp: String, CaseIterable {
         MonitoredApp.allCases.map { $0.rawValue }
     }
 
-    static let electronAppIds = [MonitoredApp.postman.rawValue, MonitoredApp.figma.rawValue,
-                                 MonitoredApp.canva.rawValue, MonitoredApp.warp.rawValue,
-                                 MonitoredApp.slack.rawValue, MonitoredApp.safari.rawValue,
-                                 MonitoredApp.safaripreview.rawValue,
-                                 MonitoredApp.imessage.rawValue, MonitoredApp.chrome.rawValue,
-                                 MonitoredApp.arcbrowser.rawValue]
+    static let electronAppIds = [
+        MonitoredApp.postman.rawValue,
+        MonitoredApp.figma.rawValue,
+        MonitoredApp.canva.rawValue,
+        MonitoredApp.warp.rawValue,
+        MonitoredApp.slack.rawValue,
+        MonitoredApp.safari.rawValue,
+        MonitoredApp.safaripreview.rawValue,
+        MonitoredApp.imessage.rawValue,
+        MonitoredApp.iterm2.rawValue,
+        MonitoredApp.chrome.rawValue,
+        MonitoredApp.arcbrowser.rawValue,
+    ]
 }
 
 extension NSRunningApplication {
