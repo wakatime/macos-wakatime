@@ -125,7 +125,7 @@ class WakaTime: HeartbeatEventHandler {
             "--entity-type",
             entityType.rawValue,
             "--category",
-            category.rawValue,
+            category.rawValue.replacingOccurrences(of: "_", with: " "),
             "--plugin",
             "\(appName)/\(appVersion) macos-wakatime/" + Bundle.main.version,
         ]
@@ -167,11 +167,21 @@ enum EntityType: String {
 enum Category: String {
     case browsing
     case building
+    case codereviewing = "code reviewing"
     case coding
     case communicating
     case debugging
     case designing
+    case indexing
+    case learning
+    case manualtesting = "manual testing"
     case meeting
+    case planning
+    case researching
+    case runningtests = "running tests"
+    case translating
+    case writingdocs = "writing docs"
+    case writingtests = "writing tests"
 }
 
 protocol StatusBarDelegate: AnyObject {

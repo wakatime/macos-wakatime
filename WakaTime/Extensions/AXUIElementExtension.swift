@@ -39,13 +39,38 @@ extension AXUIElement {
 
     func title(for app: MonitoredApp) -> String? {
         switch app {
+            case .arcbrowser:
+                guard
+                    let title = extractPrefix(rawTitle, separator: " - "),
+                    title != "Arc"
+                else { return nil }
+                return title
+            case .canva:
+                guard
+                    let title = extractPrefix(rawTitle, separator: " - ", minCount: 2),
+                    title != "Canva",
+                    title != "Home"
+                else { return nil }
+                return title
+            case .chrome:
+                guard
+                    let title = extractPrefix(rawTitle, separator: " - "),
+                    title != "Chrome",
+                    title != "New Tab"
+                else { return nil }
+                return title
             case .figma:
                 guard
                     let title = extractPrefix(rawTitle, separator: " – "),
                     title != "Figma",
                     title != "Drafts"
                 else { return nil }
-
+                return title
+            case .imessage:
+                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
+                return title
+            case .iterm2:
+                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
                 return title
             case .postman:
                 guard
@@ -53,12 +78,6 @@ extension AXUIElement {
                     title != "Postman"
                 else { return nil }
 
-                return title
-            case .warp:
-                guard
-                    let title = extractPrefix(rawTitle, separator: " - "),
-                    title != "Warp"
-                else { return nil }
                 return title
             case .slack:
                 guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
@@ -76,37 +95,20 @@ extension AXUIElement {
                     title != "Safari Technology Preview"
                 else { return nil }
                 return title
-            case .imessage:
+            case .terminal:
                 guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
                 return title
-            case .iterm2:
-                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
-                return title
-            case .canva:
-                guard
-                    let title = extractPrefix(rawTitle, separator: " - ", minCount: 2),
-                    title != "Canva",
-                    title != "Home"
-                else { return nil }
-                return title
-            case .xcode:
-                fatalError("Xcode should never use window title as entity")
-            case .chrome:
+            case .warp:
                 guard
                     let title = extractPrefix(rawTitle, separator: " - "),
-                    title != "Chrome",
-                    title != "New Tab"
-                else { return nil }
-                return title
-            case .arcbrowser:
-                guard
-                    let title = extractPrefix(rawTitle, separator: " - "),
-                    title != "Arc"
+                    title != "Warp"
                 else { return nil }
                 return title
             case .whatsapp:
                 guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
                 return title
+            case .xcode:
+                fatalError("Xcode should never use window title as entity")
             case .zoom:
                 guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
                 return title

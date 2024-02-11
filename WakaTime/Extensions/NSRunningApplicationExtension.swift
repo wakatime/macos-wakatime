@@ -11,6 +11,7 @@ enum MonitoredApp: String, CaseIterable {
     case safari = "com.apple.Safari"
     case safaripreview = "com.apple.SafariTechnologyPreview"
     case slack = "com.tinyspeck.slackmacgap"
+    case terminal = "com.apple.Terminal"
     case warp = "dev.warp.Warp-Stable"
     case whatsapp = "net.whatsapp.WhatsApp"
     case xcode = "com.apple.dt.Xcode"
@@ -29,17 +30,18 @@ enum MonitoredApp: String, CaseIterable {
     }
 
     static let electronAppIds = [
-        MonitoredApp.postman.rawValue,
-        MonitoredApp.figma.rawValue,
+        MonitoredApp.arcbrowser.rawValue,
         MonitoredApp.canva.rawValue,
-        MonitoredApp.warp.rawValue,
+        MonitoredApp.chrome.rawValue,
+        MonitoredApp.figma.rawValue,
+        MonitoredApp.imessage.rawValue,
+        MonitoredApp.iterm2.rawValue,
+        MonitoredApp.postman.rawValue,
         MonitoredApp.slack.rawValue,
         MonitoredApp.safari.rawValue,
         MonitoredApp.safaripreview.rawValue,
-        MonitoredApp.imessage.rawValue,
-        MonitoredApp.iterm2.rawValue,
-        MonitoredApp.chrome.rawValue,
-        MonitoredApp.arcbrowser.rawValue,
+        MonitoredApp.terminal.rawValue,
+        MonitoredApp.warp.rawValue,
     ]
 }
 
