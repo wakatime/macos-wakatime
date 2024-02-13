@@ -37,6 +37,7 @@ extension AXUIElement {
         // swiftlint:enable force_cast
     }
 
+    // swiftlint:disable cyclomatic_complexity
     func title(for app: MonitoredApp) -> String? {
         switch app {
             case .arcbrowser:
@@ -117,6 +118,7 @@ extension AXUIElement {
                 return title
         }
     }
+    // swiftlint:enable cyclomatic_complexity
 
     var document: String? {
         guard let ref = getValue(for: kAXDocumentAttribute) else { return nil }

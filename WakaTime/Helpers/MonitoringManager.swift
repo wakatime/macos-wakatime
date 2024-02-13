@@ -8,7 +8,10 @@ class MonitoringManager {
     }
 
     static func isAppMonitored(for bundleId: String) -> Bool {
-        guard MonitoredApp.allBundleIds.contains(bundleId) else { return false }
+        guard
+            MonitoredApp.allBundleIds.contains(bundleId),
+            MonitoredApp.allBundleIds.contains(bundleId.replacingOccurrences(of: "-setapp$", with: "", options: .regularExpression))
+        else { return false }
 
         let isMonitoredKey = monitoredKey(bundleId: bundleId)
 
