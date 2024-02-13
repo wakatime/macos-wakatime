@@ -21,6 +21,8 @@ enum MonitoredApp: String, CaseIterable {
     init?(from bundleId: String) {
         if let app = MonitoredApp(rawValue: bundleId) {
             self = app
+        } else if let app = MonitoredApp(rawValue: bundleId.replacingOccurrences(of: "-setapp$", with: "", options: .regularExpression)) {
+            self = app
         } else {
             return nil
         }
