@@ -11,6 +11,7 @@ enum MonitoredApp: String, CaseIterable {
     case safari = "com.apple.Safari"
     case safaripreview = "com.apple.SafariTechnologyPreview"
     case slack = "com.tinyspeck.slackmacgap"
+    case tableplus = "com.tinyapp.TablePlus"
     case terminal = "com.apple.Terminal"
     case warp = "dev.warp.Warp-Stable"
     case whatsapp = "net.whatsapp.WhatsApp"
@@ -40,6 +41,7 @@ enum MonitoredApp: String, CaseIterable {
         MonitoredApp.slack.rawValue,
         MonitoredApp.safari.rawValue,
         MonitoredApp.safaripreview.rawValue,
+        MonitoredApp.tableplus.rawValue,
         MonitoredApp.terminal.rawValue,
         MonitoredApp.warp.rawValue,
     ]

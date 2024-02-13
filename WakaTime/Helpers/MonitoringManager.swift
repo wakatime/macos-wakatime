@@ -94,6 +94,10 @@ class MonitoringManager {
                 return HeartbeatData(
                     entity: title,
                     category: .browsing)
+            case .tableplus:
+                return HeartbeatData(
+                    entity: title,
+                    category: .debugging)
             case .terminal:
                 return HeartbeatData(
                     entity: title,

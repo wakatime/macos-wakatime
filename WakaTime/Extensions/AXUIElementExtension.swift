@@ -95,6 +95,9 @@ extension AXUIElement {
                     title != "Safari Technology Preview"
                 else { return nil }
                 return title
+            case .tableplus:
+                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
+                return title
             case .terminal:
                 guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
                 return title
