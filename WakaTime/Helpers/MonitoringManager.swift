@@ -8,7 +8,10 @@ class MonitoringManager {
     }
 
     static func isAppMonitored(for bundleId: String) -> Bool {
-        guard MonitoredApp.allBundleIds.contains(bundleId) else { return false }
+        guard
+            MonitoredApp.allBundleIds.contains(bundleId),
+            MonitoredApp.allBundleIds.contains(bundleId.replacingOccurrences(of: "-setapp$", with: "", options: .regularExpression))
+        else { return false }
 
         let isMonitoredKey = monitoredKey(bundleId: bundleId)
 
@@ -51,20 +54,37 @@ class MonitoringManager {
         else { return nil }
 
         switch monitoredApp {
+            case .arcbrowser:
+                return HeartbeatData(
+                    entity: title,
+                    category: .browsing)
+            case .canva:
+                return HeartbeatData(
+                    entity: title,
+                    language: "Canva Design",
+                    category: .designing)
+            case .chrome:
+                return HeartbeatData(
+                    entity: title,
+                    category: .browsing)
             case .figma:
                 return HeartbeatData(
                     entity: title,
                     language: "Figma Design",
                     category: .designing)
+            case .imessage:
+                return HeartbeatData(
+                    entity: title,
+                    category: .communicating)
+            case .iterm2:
+                return HeartbeatData(
+                    entity: title,
+                    category: .coding)
             case .postman:
                 return HeartbeatData(
                     entity: title,
                     language: "HTTP Request",
                     category: .debugging)
-            case .warp:
-                return HeartbeatData(
-                    entity: title,
-                    category: .coding)
             case .slack:
                 return HeartbeatData(
                     entity: title,
@@ -77,33 +97,28 @@ class MonitoringManager {
                 return HeartbeatData(
                     entity: title,
                     category: .browsing)
-            case .chrome:
+            case .tableplus:
                 return HeartbeatData(
                     entity: title,
-                    category: .browsing)
-            case .arcbrowser:
+                    category: .debugging)
+            case .terminal:
                 return HeartbeatData(
                     entity: title,
-                    category: .browsing)
-            case .imessage:
+                    category: .coding)
+            case .warp:
                 return HeartbeatData(
                     entity: title,
-                    category: .communicating)
-            case .canva:
-                return HeartbeatData(
-                    entity: title,
-                    language: "Canva Design",
-                    category: .designing)
+                    category: .coding)
             case .whatsapp:
-                return HeartbeatData(
-                    entity: title,
-                    category: .meeting)
-            case .zoom:
                 return HeartbeatData(
                     entity: title,
                     category: .meeting)
             case .xcode:
                 fatalError("Xcode should never use window title")
+            case .zoom:
+                return HeartbeatData(
+                    entity: title,
+                    category: .meeting)
         }
     }
 

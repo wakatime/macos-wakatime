@@ -6,10 +6,13 @@ enum MonitoredApp: String, CaseIterable {
     case chrome = "com.google.Chrome"
     case figma = "com.figma.Desktop"
     case imessage = "com.apple.MobileSMS"
+    case iterm2 = "com.googlecode.iterm2"
     case postman = "com.postmanlabs.mac"
     case safari = "com.apple.Safari"
     case safaripreview = "com.apple.SafariTechnologyPreview"
     case slack = "com.tinyspeck.slackmacgap"
+    case tableplus = "com.tinyapp.TablePlus"
+    case terminal = "com.apple.Terminal"
     case warp = "dev.warp.Warp-Stable"
     case whatsapp = "net.whatsapp.WhatsApp"
     case xcode = "com.apple.dt.Xcode"
@@ -17,6 +20,8 @@ enum MonitoredApp: String, CaseIterable {
 
     init?(from bundleId: String) {
         if let app = MonitoredApp(rawValue: bundleId) {
+            self = app
+        } else if let app = MonitoredApp(rawValue: bundleId.replacingOccurrences(of: "-setapp$", with: "", options: .regularExpression)) {
             self = app
         } else {
             return nil
@@ -27,12 +32,21 @@ enum MonitoredApp: String, CaseIterable {
         MonitoredApp.allCases.map { $0.rawValue }
     }
 
-    static let electronAppIds = [MonitoredApp.postman.rawValue, MonitoredApp.figma.rawValue,
-                                 MonitoredApp.canva.rawValue, MonitoredApp.warp.rawValue,
-                                 MonitoredApp.slack.rawValue, MonitoredApp.safari.rawValue,
-                                 MonitoredApp.safaripreview.rawValue,
-                                 MonitoredApp.imessage.rawValue, MonitoredApp.chrome.rawValue,
-                                 MonitoredApp.arcbrowser.rawValue]
+    static let electronAppIds = [
+        MonitoredApp.arcbrowser.rawValue,
+        MonitoredApp.canva.rawValue,
+        MonitoredApp.chrome.rawValue,
+        MonitoredApp.figma.rawValue,
+        MonitoredApp.imessage.rawValue,
+        MonitoredApp.iterm2.rawValue,
+        MonitoredApp.postman.rawValue,
+        MonitoredApp.slack.rawValue,
+        MonitoredApp.safari.rawValue,
+        MonitoredApp.safaripreview.rawValue,
+        MonitoredApp.tableplus.rawValue,
+        MonitoredApp.terminal.rawValue,
+        MonitoredApp.warp.rawValue,
+    ]
 }
 
 extension NSRunningApplication {
