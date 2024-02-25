@@ -80,6 +80,18 @@ class MonitoringManager {
                 return HeartbeatData(
                     entity: title,
                     category: .coding)
+            case .linear:
+                return HeartbeatData(
+                    entity: title,
+                    category: .planning)
+            case .notes:
+                return HeartbeatData(
+                    entity: title,
+                    category: .learning)
+            case .notion:
+                return HeartbeatData(
+                    entity: title,
+                    category: .learning)
             case .postman:
                 return HeartbeatData(
                     entity: title,
@@ -109,12 +121,16 @@ class MonitoringManager {
                 return HeartbeatData(
                     entity: title,
                     category: .coding)
+            case .wecom:
+                return HeartbeatData(
+                    entity: title,
+                    category: .communicating)
             case .whatsapp:
                 return HeartbeatData(
                     entity: title,
                     category: .meeting)
             case .xcode:
-                fatalError("Xcode should never use window title")
+                fatalError("\(monitoredApp.rawValue) should never use window title")
             case .zoom:
                 return HeartbeatData(
                     entity: title,

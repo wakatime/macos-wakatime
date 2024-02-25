@@ -7,6 +7,9 @@ enum MonitoredApp: String, CaseIterable {
     case figma = "com.figma.Desktop"
     case imessage = "com.apple.MobileSMS"
     case iterm2 = "com.googlecode.iterm2"
+    case linear = "com.linear"
+    case notes = "com.apple.Notes"
+    case notion = "notion.id"
     case postman = "com.postmanlabs.mac"
     case safari = "com.apple.Safari"
     case safaripreview = "com.apple.SafariTechnologyPreview"
@@ -14,6 +17,7 @@ enum MonitoredApp: String, CaseIterable {
     case tableplus = "com.tinyapp.TablePlus"
     case terminal = "com.apple.Terminal"
     case warp = "dev.warp.Warp-Stable"
+    case wecom = "com.tencent.WeWorkMac"
     case whatsapp = "net.whatsapp.WhatsApp"
     case xcode = "com.apple.dt.Xcode"
     case zoom = "us.zoom.xos"
@@ -39,6 +43,9 @@ enum MonitoredApp: String, CaseIterable {
         MonitoredApp.figma.rawValue,
         MonitoredApp.imessage.rawValue,
         MonitoredApp.iterm2.rawValue,
+        MonitoredApp.linear.rawValue,
+        MonitoredApp.notes.rawValue,
+        MonitoredApp.notion.rawValue,
         MonitoredApp.postman.rawValue,
         MonitoredApp.slack.rawValue,
         MonitoredApp.safari.rawValue,
