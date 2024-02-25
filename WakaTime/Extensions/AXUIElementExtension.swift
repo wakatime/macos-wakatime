@@ -73,6 +73,15 @@ extension AXUIElement {
             case .iterm2:
                 guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
                 return title
+            case .linear:
+                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
+                return title
+            case .notes:
+                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
+                return title
+            case .notion:
+                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
+                return title
             case .postman:
                 guard
                     let title = extractPrefix(rawTitle, separator: " - ", fullTitle: true),
@@ -108,11 +117,14 @@ extension AXUIElement {
                     title != "Warp"
                 else { return nil }
                 return title
+            case .wecom:
+                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
+                return title
             case .whatsapp:
                 guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
                 return title
             case .xcode:
-                fatalError("Xcode should never use window title as entity")
+                fatalError("\(app.rawValue) should never use window title as entity")
             case .zoom:
                 guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
                 return title
