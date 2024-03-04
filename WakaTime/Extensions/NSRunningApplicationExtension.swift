@@ -54,6 +54,13 @@ enum MonitoredApp: String, CaseIterable {
         MonitoredApp.terminal.rawValue,
         MonitoredApp.warp.rawValue,
     ]
+
+    // list apps which we aren't yet able to track, so they're hidden from the Monitored Apps menu
+    static let unsuportedAppIds = [
+        MonitoredApp.linear.rawValue,
+        MonitoredApp.notes.rawValue,
+        MonitoredApp.notion.rawValue,
+    ]
 }
 
 extension NSRunningApplication {
