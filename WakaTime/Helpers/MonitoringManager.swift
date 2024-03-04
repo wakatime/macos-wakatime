@@ -9,7 +9,8 @@ class MonitoringManager {
 
     static func isAppMonitored(for bundleId: String) -> Bool {
         guard
-            MonitoredApp.allBundleIds.contains(bundleId) || MonitoredApp.allBundleIds.contains(bundleId.replacingOccurrences(of: "-setapp$", with: "", options: .regularExpression))
+            MonitoredApp.allBundleIds.contains(bundleId) ||
+            MonitoredApp.allBundleIds.contains(bundleId.replacingOccurrences(of: "-setapp$", with: "", options: .regularExpression))
         else { return false }
 
         guard
