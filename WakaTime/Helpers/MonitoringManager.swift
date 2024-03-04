@@ -13,6 +13,11 @@ class MonitoringManager {
             MonitoredApp.allBundleIds.contains(bundleId.replacingOccurrences(of: "-setapp$", with: "", options: .regularExpression))
         else { return false }
 
+        guard
+            !MonitoredApp.unsuportedAppIds.contains(bundleId),
+            !MonitoredApp.unsuportedAppIds.contains(bundleId.replacingOccurrences(of: "-setapp$", with: "", options: .regularExpression))
+        else { return false }
+
         let isMonitoredKey = monitoredKey(bundleId: bundleId)
 
         if UserDefaults.standard.string(forKey: isMonitoredKey) != nil {
