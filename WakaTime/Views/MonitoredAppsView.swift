@@ -25,11 +25,12 @@ class MonitoredAppsView: NSView {
     }
 
     func buildView(stackView: NSStackView) {
-        for bundleId in MonitoredApp.allBundleIds {
+        for (index, bundleId) in MonitoredApp.allBundleIds.enumerated() {
             guard !MonitoredApp.unsuportedAppIds.contains(bundleId) else { continue }
 
-            buildViewForApp(stackView: stackView, bundleId: bundleId)
+            buildViewForApp(index: index * 2, stackView: stackView, bundleId: bundleId)
             buildViewForApp(
+                index: (index * 2) + 1,
                 stackView: stackView,
                 bundleId: bundleId.appending("-setapp"))
         }
@@ -37,7 +38,7 @@ class MonitoredAppsView: NSView {
         stackView.addArrangedSubview(NSView())
     }
 
-    func buildViewForApp(stackView: NSStackView, bundleId: String) {
+    func buildViewForApp(index: Int, stackView: NSStackView, bundleId: String) {
         guard
             let image = AppInfo.getIcon(bundleId: bundleId),
             let appName = AppInfo.getAppName(bundleId: bundleId)
@@ -60,6 +61,7 @@ class MonitoredAppsView: NSView {
         let switchControl = NSSwitch()
         switchControl.state = MonitoringManager.isAppMonitored(for: bundleId) ? .on : .off
         switchControl.target = self
+        switchControl.tag = index
         switchControl.action = #selector(switchToggled(_:))
 
         currentStackView.addArrangedSubview(nameLabel)
@@ -82,8 +84,13 @@ class MonitoredAppsView: NSView {
     }
 
     @objc func switchToggled(_ sender: NSSwitch) {
-        let index = sender.tag
-        let bundleId = MonitoredApp.allBundleIds[index]
+        let isSetApp = !sender.tag.isMultiple(of: 2)
+        let index = (isSetApp ? sender.tag - 1 : sender.tag) / 2
+        var bundleId = MonitoredApp.allBundleIds[index]
+
+        if isSetApp {
+            bundleId = bundleId.appending("-setapp")
+        }
 
         MonitoringManager.set(monitoringState: sender.state == .on ? .on : .off, for: bundleId)
     }

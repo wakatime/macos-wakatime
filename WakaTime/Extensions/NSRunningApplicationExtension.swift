@@ -55,6 +55,19 @@ enum MonitoredApp: String, CaseIterable {
         MonitoredApp.warp.rawValue,
     ]
 
+    // list apps which are enabled by default on first run
+    static let defaultEnabledApps = [
+        MonitoredApp.canva.rawValue,
+        MonitoredApp.figma.rawValue,
+        MonitoredApp.linear.rawValue,
+        MonitoredApp.notes.rawValue,
+        MonitoredApp.notion.rawValue,
+        MonitoredApp.postman.rawValue,
+        MonitoredApp.tableplus.rawValue,
+        MonitoredApp.xcode.rawValue,
+        MonitoredApp.zoom.rawValue,
+    ]
+
     // list apps which we aren't yet able to track, so they're hidden from the Monitored Apps menu
     static let unsuportedAppIds = [
         MonitoredApp.linear.rawValue,
