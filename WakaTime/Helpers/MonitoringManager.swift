@@ -21,13 +21,12 @@ class MonitoringManager {
         let isMonitoredKey = monitoredKey(bundleId: bundleId)
 
         if UserDefaults.standard.string(forKey: isMonitoredKey) != nil {
-            let isMonitored = UserDefaults.standard.bool(forKey: isMonitoredKey)
-            return isMonitored
+            return UserDefaults.standard.bool(forKey: isMonitoredKey)
         } else {
             UserDefaults.standard.set(false, forKey: isMonitoredKey)
             UserDefaults.standard.synchronize()
+            return false
         }
-        return true
     }
 
     static func isAppMonitored(_ app: NSRunningApplication) -> Bool {
@@ -147,6 +146,16 @@ class MonitoringManager {
         UserDefaults.standard.set(monitoringState == .on, forKey: monitoredKey(bundleId: bundleId))
         UserDefaults.standard.synchronize()
         // NSLog("Monitoring \(monitoringState == .on ? "enabled" : "disabled") for \(AppInfo.getAppName(bundleId: bundleId) ?? "")")
+    }
+
+    static func enableByDefault(_ bundleId: String) {
+        if AppInfo.getIcon(bundleId: bundleId) != nil && AppInfo.getAppName(bundleId: bundleId) != nil {
+            MonitoringManager.set(monitoringState: .on, for: bundleId)
+        }
+        let setAppId = bundleId.appending("-setapp")
+        if AppInfo.getIcon(bundleId: setAppId) != nil && AppInfo.getAppName(bundleId: setAppId) != nil {
+            MonitoringManager.set(monitoringState: .on, for: setAppId)
+        }
     }
 
     static func monitoredKey(bundleId: String) -> String {

@@ -45,6 +45,9 @@ class WakaTime: HeartbeatEventHandler {
         }
 
         if !PropertiesManager.hasLaunchedBefore {
+            for bundleId in MonitoredApp.defaultEnabledApps {
+                MonitoringManager.enableByDefault(bundleId)
+            }
             PropertiesManager.hasLaunchedBefore = true
         }
     }
