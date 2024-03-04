@@ -66,7 +66,9 @@ class Watcher: NSObject {
 
     private func handleAppChanged(_ app: NSRunningApplication) {
         if app != activeApp {
-            NSLog("App changed from \(activeApp?.localizedName ?? "nil") to \(app.localizedName ?? "nil")")
+            // swiftlint:disable line_length
+            NSLog("App changed from \(activeApp?.localizedName ?? "nil") to \(app.localizedName ?? "nil") (\(app.bundleIdentifier ?? "nil"))")
+            // swiftlint:enable line_length
             if let oldApp = activeApp { unwatch(app: oldApp) }
             activeApp = app
             if let bundleId = app.bundleIdentifier, MonitoringManager.isAppMonitored(for: bundleId) {

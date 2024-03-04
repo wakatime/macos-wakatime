@@ -79,12 +79,10 @@ class WakaTime: HeartbeatEventHandler {
     // MARK: Watcher Event Handling
 
     private func shouldSendHeartbeat(entity: String, time: Int, isWrite: Bool, category: Category) -> Bool {
-        guard
-            !isWrite,
-            category == lastCategory,
-            entity == lastEntity,
-            lastTime + 120 > time
-        else { return true }
+        if isWrite { return true }
+        if category != lastCategory { return true }
+        if !entity.isEmpty && entity != lastEntity { return true }
+        if lastTime + 120 < time { return true }
 
         return false
     }
