@@ -7,19 +7,50 @@ class Watcher: NSObject {
     private let monitorQueue = DispatchQueue(label: "com.WakaTime.Watcher.monitorQueue", qos: .utility)
 
     var appVersions: [String: String] = [:]
+    var eventSourceObserver: EventSourceObserver?
     var heartbeatEventHandler: HeartbeatEventHandler?
     var statusBarDelegate: StatusBarDelegate?
     var lastCheckedA11y = Date()
     var isBuilding = false
     var activeApp: NSRunningApplication?
+
     private var observer: AXObserver?
     private var observingElement: AXUIElement?
     private var observingActivityTextElement: AXUIElement?
     private var fileMonitor: FileMonitor?
     private var selectedText: String?
+    private var lastValidHeartbeatForApp = [String: HeartbeatData]()
 
     override init() {
         super.init()
+
+        eventSourceObserver = EventSourceObserver(pollIntervalInSeconds: 5) { [weak self] in
+            self?.callbackQueue.async {
+                guard
+                    let app = self?.activeApp, MonitoringManager.isAppElectron(app),
+                    let bundleId = app.bundleIdentifier
+                else { return }
+
+                var heartbeat = MonitoringManager.heartbeatData(app)
+
+                if let heartbeat {
+                    self?.lastValidHeartbeatForApp[bundleId] = heartbeat
+                } else {
+                    heartbeat = self?.lastValidHeartbeatForApp[bundleId]
+                }
+
+                if let heartbeat {
+                    self?.heartbeatEventHandler?.handleHeartbeatEvent(
+                        app: app,
+                        entity: heartbeat.entity,
+                        entityType: EntityType.file,
+                        language: heartbeat.language,
+                        category: heartbeat.category,
+                        isWrite: false
+                    )
+                }
+            }
+        }
 
         NSWorkspace.shared.notificationCenter.addObserver(
             self,
@@ -280,7 +311,8 @@ private func observerCallback(
 
     guard let app = this.activeApp else { return }
 
-    // print(notification)
+    //print(notification)
+    //printElementInfo(element)
     let axNotification = AXUIElementNotification.notificationFrom(string: notification as String)
     switch axNotification {
         case .selectedTextChanged:
@@ -296,7 +328,7 @@ private func observerCallback(
                     language: nil,
                     category: this.isBuilding ? Category.building : Category.coding,
                     isWrite: false)
-            } else {
+            }/* else {
                 if let heartbeat = MonitoringManager.heartbeatData(app, element: element) {
                     this.heartbeatEventHandler?.handleHeartbeatEvent(
                         app: app,
@@ -306,13 +338,13 @@ private func observerCallback(
                         category: heartbeat.category,
                         isWrite: false)
                 }
-            }
+            }*/
         case .focusedUIElementChanged:
             if MonitoringManager.isAppXcode(app) {
                 guard let currentPath = element.currentPath else { return }
 
                 this.documentPath = currentPath
-            } else {
+            }/* else {
                 if let heartbeat = MonitoringManager.heartbeatData(app, element: element) {
                     this.heartbeatEventHandler?.handleHeartbeatEvent(
                         app: app,
@@ -322,11 +354,11 @@ private func observerCallback(
                         category: heartbeat.category,
                         isWrite: false)
                 }
-            }
+            }*/
         case .focusedWindowChanged:
             if MonitoringManager.isAppXcode(app) {
                 this.observeActivityText(activeWindow: element)
-            } else {
+            }/* else {
                 if let heartbeat = MonitoringManager.heartbeatData(app, element: element) {
                     this.heartbeatEventHandler?.handleHeartbeatEvent(
                         app: app,
@@ -336,7 +368,7 @@ private func observerCallback(
                         category: heartbeat.category,
                         isWrite: false)
                 }
-            }
+            }*/
         case .valueChanged:
             if MonitoringManager.isAppXcode(app) {
                 if let id = element.id, id == "Activity Text" {
@@ -345,7 +377,7 @@ private func observerCallback(
                         this.handleNotificationEvent(path: path, isWrite: false)
                     }
                 }
-            } else {
+            }/* else {
                 if let heartbeat = MonitoringManager.heartbeatData(app, element: element) {
                     this.heartbeatEventHandler?.handleHeartbeatEvent(
                         app: app,
@@ -355,8 +387,42 @@ private func observerCallback(
                         category: heartbeat.category,
                         isWrite: false)
                 }
-            }
+            }*/
         default:
             break
     }
+}
+
+func printElementInfo(_ element: AXUIElement) {
+    var error: AXError = .success
+    var role: CFTypeRef?
+    var title: CFTypeRef?
+    var position: CFTypeRef?
+    var size: CFTypeRef?
+
+    // Get the role of the element
+    error = AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &role)
+    if error == .success, let role = role as? String {
+        print("Role: \(role)")
+    }
+
+    // Get the title of the element
+    error = AXUIElementCopyAttributeValue(element, kAXTitleAttribute as CFString, &title)
+    if error == .success, let title = title as? String {
+        print("Title: \(title)")
+    }
+
+    // Get the position of the element
+    error = AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &position)
+    if error == .success, let position = position as? CGPoint {
+        print("Position: \(position)")
+    }
+
+    // Get the size of the element
+    error = AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &size)
+    if error == .success, let size = size as? CGSize {
+        print("Size: \(size)")
+    }
+
+    // Add more attributes to inspect as needed
 }

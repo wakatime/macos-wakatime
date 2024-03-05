@@ -51,7 +51,11 @@ class MonitoringManager {
         return bundleId == MonitoredApp.xcode.rawValue
     }
 
-    static func heartbeatData(_ app: NSRunningApplication, element: AXUIElement) -> HeartbeatData? {
+    static func heartbeatData(_ app: NSRunningApplication) -> HeartbeatData? {
+        let pid = app.processIdentifier
+        var element = AXUIElementCreateApplication(pid)
+        element = element.activeWindow ?? element
+
         guard
             let monitoredApp = app.monitoredApp,
             let title = element.title(for: monitoredApp)
@@ -89,9 +93,14 @@ class MonitoringManager {
                     entity: title,
                     category: .planning)
             case .notes:
-                return HeartbeatData(
-                    entity: title,
-                    category: .learning)
+                if element.rawTitle == "Notes" {
+                    return HeartbeatData(
+                        entity: title,
+                        category: .learning
+                    )
+                } else {
+                    return nil
+                }
             case .notion:
                 return HeartbeatData(
                     entity: title,
@@ -164,7 +173,7 @@ class MonitoringManager {
 }
 
 struct HeartbeatData {
-  var entity: String
-  var language: String?
-  var category: Category?
+    var entity: String
+    var language: String?
+    var category: Category?
 }
