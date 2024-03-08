@@ -22,7 +22,7 @@ class SettingsManager {
             PropertiesManager.shouldLaunchOnLogin
         else { return false }
 
-        return Bundle.main.version != "local-build"
+        return !Dependencies.isLocalDevBuild
     }
 
     static func registerAsLoginItem() {
