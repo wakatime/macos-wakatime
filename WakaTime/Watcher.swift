@@ -43,7 +43,7 @@ class Watcher: NSObject {
                     self?.heartbeatEventHandler?.handleHeartbeatEvent(
                         app: app,
                         entity: heartbeat.entity,
-                        entityType: EntityType.file,
+                        entityType: EntityType.app,
                         language: heartbeat.language,
                         category: heartbeat.category,
                         isWrite: false
