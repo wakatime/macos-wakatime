@@ -11,6 +11,10 @@ class Dependencies {
         }
     }
 
+    public static var isLocalDevBuild: Bool {
+        Bundle.main.version == "local-build"
+    }
+
     private static func getLatestVersion() async throws -> String? {
         struct Release: Decodable {
             let tagName: String
