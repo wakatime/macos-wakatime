@@ -27,7 +27,7 @@ class Watcher: NSObject {
         eventSourceObserver = EventSourceObserver(pollIntervalInSeconds: 1) { [weak self] in
             self?.callbackQueue.async {
                 guard
-                    let app = self?.activeApp, MonitoringManager.isAppElectron(app),
+                    let app = self?.activeApp, !MonitoringManager.isAppXcode(app),
                     let bundleId = app.bundleIdentifier
                 else { return }
 

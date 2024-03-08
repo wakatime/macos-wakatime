@@ -95,13 +95,13 @@ class MonitoringManager {
                 if element.rawTitle == "Notes" {
                     return HeartbeatData(
                         entity: title,
-                        category: .learning
+                        category: .writingdocs
                     )
                 }
             case .notion:
                 return HeartbeatData(
                     entity: title,
-                    category: .learning)
+                    category: .writingdocs)
             case .postman:
                 return HeartbeatData(
                     entity: title,

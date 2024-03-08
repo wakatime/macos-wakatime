@@ -37,22 +37,8 @@ enum MonitoredApp: String, CaseIterable {
     }
 
     static let electronAppIds = [
-        MonitoredApp.arcbrowser.rawValue,
-        MonitoredApp.canva.rawValue,
-        MonitoredApp.chrome.rawValue,
         MonitoredApp.figma.rawValue,
-        MonitoredApp.imessage.rawValue,
-        MonitoredApp.iterm2.rawValue,
-        MonitoredApp.linear.rawValue,
-        MonitoredApp.notes.rawValue,
-        MonitoredApp.notion.rawValue,
-        MonitoredApp.postman.rawValue,
         MonitoredApp.slack.rawValue,
-        MonitoredApp.safari.rawValue,
-        MonitoredApp.safaripreview.rawValue,
-        MonitoredApp.tableplus.rawValue,
-        MonitoredApp.terminal.rawValue,
-        MonitoredApp.warp.rawValue,
     ]
 
     // list apps which are enabled by default on first run
