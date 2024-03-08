@@ -17,7 +17,6 @@ class EventSourceObserver {
             let secondsSinceLastKeyPress = Self.checkForKeyPresses()
             let secondsSinceLastMouseMoved = Self.checkForMouseActivity()
             if secondsSinceLastKeyPress < pollIntervalInSeconds || secondsSinceLastMouseMoved < pollIntervalInSeconds {
-                NSLog("Activity detected")
                 activityDetected()
             }
         }

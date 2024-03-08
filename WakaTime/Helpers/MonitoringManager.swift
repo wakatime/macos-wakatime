@@ -14,8 +14,8 @@ class MonitoringManager {
         else { return false }
 
         guard
-            !MonitoredApp.unsuportedAppIds.contains(bundleId),
-            !MonitoredApp.unsuportedAppIds.contains(bundleId.replacingOccurrences(of: "-setapp$", with: "", options: .regularExpression))
+            !MonitoredApp.unsupportedAppIds.contains(bundleId),
+            !MonitoredApp.unsupportedAppIds.contains(bundleId.replacingOccurrences(of: "-setapp$", with: "", options: .regularExpression))
         else { return false }
 
         let isMonitoredKey = monitoredKey(bundleId: bundleId)
@@ -53,11 +53,10 @@ class MonitoringManager {
 
     static func heartbeatData(_ app: NSRunningApplication) -> HeartbeatData? {
         let pid = app.processIdentifier
-        var element = AXUIElementCreateApplication(pid)
-        element = element.activeWindow ?? element
 
         guard
             let monitoredApp = app.monitoredApp,
+            let element = AXUIElementCreateApplication(pid).activeWindow,
             let title = element.title(for: monitoredApp)
         else { return nil }
 
@@ -98,8 +97,6 @@ class MonitoringManager {
                         entity: title,
                         category: .learning
                     )
-                } else {
-                    return nil
                 }
             case .notion:
                 return HeartbeatData(
@@ -149,6 +146,8 @@ class MonitoringManager {
                     entity: title,
                     category: .meeting)
         }
+
+        return nil
     }
 
     static func set(monitoringState: MonitoringState, for bundleId: String) {

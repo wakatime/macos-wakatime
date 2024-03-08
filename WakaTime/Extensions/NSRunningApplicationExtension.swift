@@ -69,10 +69,8 @@ enum MonitoredApp: String, CaseIterable {
     ]
 
     // list apps which we aren't yet able to track, so they're hidden from the Monitored Apps menu
-    static let unsuportedAppIds = [
+    static let unsupportedAppIds = [
         MonitoredApp.linear.rawValue,
-        //MonitoredApp.notes.rawValue,
-        //MonitoredApp.notion.rawValue,
     ]
 }
 

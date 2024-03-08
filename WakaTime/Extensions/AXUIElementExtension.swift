@@ -91,9 +91,22 @@ extension AXUIElement {
                 guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
                 return title
             case .notes:
+                // There's apparently two text editor implementations in Apple Notes. One uses a web view,
+                // the other appears to be a native implementation based on the `ICTK2MacTextView` class.
                 let webAreaElement = firstDescendantWhere { $0.role == "AXWebArea" }
-                let titleElement = webAreaElement?.firstDescendantWhere { $0.role == kAXStaticTextRole }
-                return titleElement?.value
+                if let webAreaElement {
+                    // WebView-based implementation
+                    let titleElement = webAreaElement.firstDescendantWhere { $0.role == kAXStaticTextRole }
+                    return titleElement?.value
+                } else {
+                    // ICTK2MacTextView
+                    let textAreaElement = firstDescendantWhere { $0.role == kAXTextAreaRole }
+                    if let value = textAreaElement?.value {
+                        let title = extractPrefix(value, separator: "\n")
+                        return title
+                    }
+                    return nil
+                }
             case .notion:
                 guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
                 return title
