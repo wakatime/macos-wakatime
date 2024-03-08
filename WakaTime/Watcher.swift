@@ -7,19 +7,50 @@ class Watcher: NSObject {
     private let monitorQueue = DispatchQueue(label: "com.WakaTime.Watcher.monitorQueue", qos: .utility)
 
     var appVersions: [String: String] = [:]
+    var eventSourceObserver: EventSourceObserver?
     var heartbeatEventHandler: HeartbeatEventHandler?
     var statusBarDelegate: StatusBarDelegate?
     var lastCheckedA11y = Date()
     var isBuilding = false
     var activeApp: NSRunningApplication?
+
     private var observer: AXObserver?
     private var observingElement: AXUIElement?
     private var observingActivityTextElement: AXUIElement?
     private var fileMonitor: FileMonitor?
     private var selectedText: String?
+    private var lastValidHeartbeatForApp = [String: HeartbeatData]()
 
     override init() {
         super.init()
+
+        eventSourceObserver = EventSourceObserver(pollIntervalInSeconds: 1) { [weak self] in
+            self?.callbackQueue.async {
+                guard
+                    let app = self?.activeApp, !MonitoringManager.isAppXcode(app),
+                    let bundleId = app.bundleIdentifier
+                else { return }
+
+                var heartbeat = MonitoringManager.heartbeatData(app)
+
+                if let heartbeat {
+                    self?.lastValidHeartbeatForApp[bundleId] = heartbeat
+                } else {
+                    heartbeat = self?.lastValidHeartbeatForApp[bundleId]
+                }
+
+                if let heartbeat {
+                    self?.heartbeatEventHandler?.handleHeartbeatEvent(
+                        app: app,
+                        entity: heartbeat.entity,
+                        entityType: EntityType.file,
+                        language: heartbeat.language,
+                        category: heartbeat.category,
+                        isWrite: false
+                    )
+                }
+            }
+        }
 
         NSWorkspace.shared.notificationCenter.addObserver(
             self,
@@ -281,6 +312,7 @@ private func observerCallback(
     guard let app = this.activeApp else { return }
 
     // print(notification)
+    // element.debugPrint()
     let axNotification = AXUIElementNotification.notificationFrom(string: notification as String)
     switch axNotification {
         case .selectedTextChanged:
@@ -296,46 +328,16 @@ private func observerCallback(
                     language: nil,
                     category: this.isBuilding ? Category.building : Category.coding,
                     isWrite: false)
-            } else {
-                if let heartbeat = MonitoringManager.heartbeatData(app, element: element) {
-                    this.heartbeatEventHandler?.handleHeartbeatEvent(
-                        app: app,
-                        entity: heartbeat.entity,
-                        entityType: EntityType.app,
-                        language: heartbeat.language,
-                        category: heartbeat.category,
-                        isWrite: false)
-                }
             }
         case .focusedUIElementChanged:
             if MonitoringManager.isAppXcode(app) {
                 guard let currentPath = element.currentPath else { return }
 
                 this.documentPath = currentPath
-            } else {
-                if let heartbeat = MonitoringManager.heartbeatData(app, element: element) {
-                    this.heartbeatEventHandler?.handleHeartbeatEvent(
-                        app: app,
-                        entity: heartbeat.entity,
-                        entityType: EntityType.app,
-                        language: heartbeat.language,
-                        category: heartbeat.category,
-                        isWrite: false)
-                }
             }
         case .focusedWindowChanged:
             if MonitoringManager.isAppXcode(app) {
                 this.observeActivityText(activeWindow: element)
-            } else {
-                if let heartbeat = MonitoringManager.heartbeatData(app, element: element) {
-                    this.heartbeatEventHandler?.handleHeartbeatEvent(
-                        app: app,
-                        entity: heartbeat.entity,
-                        entityType: EntityType.app,
-                        language: heartbeat.language,
-                        category: heartbeat.category,
-                        isWrite: false)
-                }
             }
         case .valueChanged:
             if MonitoringManager.isAppXcode(app) {
@@ -344,16 +346,6 @@ private func observerCallback(
                     if let path = this.documentPath {
                         this.handleNotificationEvent(path: path, isWrite: false)
                     }
-                }
-            } else {
-                if let heartbeat = MonitoringManager.heartbeatData(app, element: element) {
-                    this.heartbeatEventHandler?.handleHeartbeatEvent(
-                        app: app,
-                        entity: heartbeat.entity,
-                        entityType: EntityType.app,
-                        language: heartbeat.language,
-                        category: heartbeat.category,
-                        isWrite: false)
                 }
             }
         default:

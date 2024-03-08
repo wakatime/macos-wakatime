@@ -14,8 +14,8 @@ class MonitoringManager {
         else { return false }
 
         guard
-            !MonitoredApp.unsuportedAppIds.contains(bundleId),
-            !MonitoredApp.unsuportedAppIds.contains(bundleId.replacingOccurrences(of: "-setapp$", with: "", options: .regularExpression))
+            !MonitoredApp.unsupportedAppIds.contains(bundleId),
+            !MonitoredApp.unsupportedAppIds.contains(bundleId.replacingOccurrences(of: "-setapp$", with: "", options: .regularExpression))
         else { return false }
 
         let isMonitoredKey = monitoredKey(bundleId: bundleId)
@@ -51,9 +51,12 @@ class MonitoringManager {
         return bundleId == MonitoredApp.xcode.rawValue
     }
 
-    static func heartbeatData(_ app: NSRunningApplication, element: AXUIElement) -> HeartbeatData? {
+    static func heartbeatData(_ app: NSRunningApplication) -> HeartbeatData? {
+        let pid = app.processIdentifier
+
         guard
             let monitoredApp = app.monitoredApp,
+            let element = AXUIElementCreateApplication(pid).activeWindow,
             let title = element.title(for: monitoredApp)
         else { return nil }
 
@@ -89,13 +92,16 @@ class MonitoringManager {
                     entity: title,
                     category: .planning)
             case .notes:
-                return HeartbeatData(
-                    entity: title,
-                    category: .learning)
+                if element.rawTitle == "Notes" {
+                    return HeartbeatData(
+                        entity: title,
+                        category: .writingdocs
+                    )
+                }
             case .notion:
                 return HeartbeatData(
                     entity: title,
-                    category: .learning)
+                    category: .writingdocs)
             case .postman:
                 return HeartbeatData(
                     entity: title,
@@ -140,6 +146,8 @@ class MonitoringManager {
                     entity: title,
                     category: .meeting)
         }
+
+        return nil
     }
 
     static func set(monitoringState: MonitoringState, for bundleId: String) {
@@ -164,7 +172,7 @@ class MonitoringManager {
 }
 
 struct HeartbeatData {
-  var entity: String
-  var language: String?
-  var category: Category?
+    var entity: String
+    var language: String?
+    var category: Category?
 }
