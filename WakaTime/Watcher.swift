@@ -142,6 +142,80 @@ class Watcher: NSObject {
                 if result.rawValue != 0 {
                     let appName = app.localizedName ?? "UnknownApp"
                     NSLog("Setting AXManualAccessibility on \(appName) failed (\(result.rawValue))")
+                } else {
+                    let appName = app.localizedName ?? "UnknownApp"
+                    NSLog("Successfully set AXManualAccessibility on \(appName)")
+                }
+                let window = axApp.activeWindow
+                let elem = window?.elementAtPositionRelativeToWindow(x: 100, y: 100)
+                // elem?.debugPrintAncestors()
+                elem?.debugPrint()
+                let webArea = elem?.firstAncestorWhere { $0.role == "AXWebArea" }
+
+                // title
+                // [1, 0, 0, 0, 2, 2, 1]
+
+                let titleElem = webArea?.elementAtIndexPath([1, 0, 0, 0, 2, 2, 1])
+                print("Title elem:")
+                titleElem?.debugPrint()
+
+                let searchPattern = AXPatternElement(
+                    role: "AXGroup",
+                    children: [
+                        AXPatternElement(role: "AXImage"),
+                        AXPatternElement(
+                            role: "AXGroup",
+                            children: [
+                                AXPatternElement(role: "AXStaticText", value: "Introduction")
+                            ]
+                        )
+                    ]
+                )
+
+                /* let searchPattern = AXPatternElement(
+                    role: "AXGroup",
+                    children: [
+                        AXPatternElement(
+                            role: "AXGroup",
+                            children: [
+                                AXPatternElement(
+                                    role: "AXGroup",
+                                    children: [
+                                        AXPatternElement(role: "AXImage"),
+                                        AXPatternElement(
+                                            role: "AXGroup",
+                                            children: [
+                                                AXPatternElement(role: "AXStaticText", value: "Introduction")
+                                            ]
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                ) */
+
+                let matchedElement = webArea?.findByPattern(searchPattern)
+                print("Matched element:")
+                matchedElement?.debugPrint()
+
+                /* let titleElem = webArea?.firstDescendantWhere { $0.value == "OSBK Material" }
+                if let titleElem, let indexPath = webArea?.indexPath(for: titleElem) {
+                    // webArea?.debugPrintSubtree(highlight: indexPath)
+                    print("\(indexPath)")
+                } */
+
+                // menu item?
+                // [1, 0, 0, 0, 8, 0, 1, 0, 3, 0, 0, 1, 0]
+                /* let sidebarElem = webArea?.elementAtIndexPath([1, 0, 0, 0])
+                print("Sidebar item subtree:")
+                sidebarElem?.debugPrintSubtree() */
+
+                let introElem2 = webArea?.firstDescendantWhere { $0.value == "Introduction" }
+
+                if let introElem2, let indexPath = webArea?.indexPath(for: introElem2) {
+                    webArea?.debugPrintSubtree(highlight: indexPath)
+                    print("\(indexPath)")
                 }
             }
 

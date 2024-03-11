@@ -1,5 +1,14 @@
 import AppKit
 
+struct AXPatternElement {
+    var role: String?
+    var subrole: String?
+    var identifier: String?
+    var title: String?
+    var value: String?
+    var children: [AXPatternElement] = []
+}
+
 extension AXUIElement {
     var selectedText: String? {
         getValue(for: kAXSelectedTextAttribute) as? String
@@ -21,6 +30,21 @@ extension AXUIElement {
         // swiftlint:disable force_cast
         return (ref as! AXUIElement)
         // swiftlint:enable force_cast
+    }
+
+    var windows: [AXUIElement]? {
+        getValue(for: kAXWindowsAttribute) as? [AXUIElement]
+    }
+
+    func listAttributes() -> [String]? {
+        var attributeNamesCFArray: CFArray?
+        let result = AXUIElementCopyAttributeNames(self, &attributeNamesCFArray)
+
+        guard result == .success, let attributeNames = attributeNamesCFArray as? [String] else {
+            return nil
+        }
+
+        return attributeNames
     }
 
     var id: String? {
@@ -46,6 +70,13 @@ extension AXUIElement {
 
     var subrole: String? {
         guard let ref = getValue(for: kAXSubroleAttribute) else { return nil }
+        // swiftlint:disable force_cast
+        return (ref as! String)
+        // swiftlint:enable force_cast
+    }
+
+    var identifier: String? {
+        guard let ref = getValue(for: kAXIdentifierAttribute) else { return nil }
         // swiftlint:disable force_cast
         return (ref as! String)
         // swiftlint:enable force_cast
@@ -251,22 +282,133 @@ extension AXUIElement {
         return matchingDescendant
     }
 
-    func debugPrintSubtree(element: AXUIElement? = nil, depth: Int = 0) {
+    func firstAncestorWhere(_ condition: (AXUIElement) -> Bool) -> AXUIElement? {
+        var matchingAncestor: AXUIElement?
+        traverseUp { element in
+            if condition(element) {
+                matchingAncestor = element
+                return false
+            }
+            return true
+        }
+        return matchingAncestor
+    }
+
+    // Index path of `element` relative to self
+    func indexPath(for element: AXUIElement) -> [Int] {
+        var path = [Int]()
+        var currentElement: AXUIElement? = element
+
+        while let current = currentElement, current != self {
+            if let parent = current.parent {
+                if let index = parent.children?.firstIndex(where: { $0 == current }) {
+                    path.insert(index, at: 0)
+                }
+                currentElement = parent
+            } else {
+                // No parent found, stop the loop
+                break
+            }
+        }
+
+        return path
+    }
+
+    // Finds the element at the given `indexPath`. `indexPath` must be relative to self.
+    // If no element with the given index path exists, returns nil.
+    func elementAtIndexPath(_ indexPath: [Int]) -> AXUIElement? {
+        var currentElement: AXUIElement = self
+        for index in indexPath {
+            currentElement.debugPrint()
+            guard let children = currentElement.children, index < children.count else {
+                // Index is out of bounds for the current element's children
+                return nil
+            }
+            currentElement = children[index]
+        }
+        return currentElement
+    }
+
+    func findByPattern(_ pattern: AXPatternElement, within element: AXUIElement? = nil) -> AXUIElement? {
+        let rootElement = element ?? self
+
+        func matchesPattern(element: AXUIElement, pattern: AXPatternElement) -> Bool {
+            let roleMatches = pattern.role == nil || element.role == pattern.role
+            let subroleMatches = pattern.subrole == nil || element.subrole == pattern.subrole
+            let titleMatches = pattern.title == nil || element.rawTitle == pattern.title
+            let valueMatches = pattern.value == nil || element.selectedText == pattern.value
+            let idMatches = pattern.identifier == nil || element.identifier == pattern.identifier
+
+            return roleMatches && subroleMatches && titleMatches && valueMatches && idMatches
+        }
+
+        func search(element: AXUIElement, pattern: AXPatternElement) -> AXUIElement? {
+            if matchesPattern(element: element, pattern: pattern) {
+                var currentElement = element
+                for childPattern in pattern.children {
+                    guard let children = currentElement.children else { return nil }
+
+                    var foundMatch = false
+                    for child in children {
+                        if let match = search(element: child, pattern: childPattern) {
+                            currentElement = match
+                            foundMatch = true
+                            break
+                        }
+                    }
+                    if !foundMatch {
+                        return nil
+                    }
+                }
+                return currentElement
+            } else {
+                guard let children = element.children else { return nil }
+
+                for child in children {
+                    if let match = search(element: child, pattern: pattern) {
+                        return match
+                    }
+                }
+            }
+            return nil
+        }
+
+        return search(element: rootElement, pattern: pattern)
+    }
+
+    func debugPrintSubtree(element: AXUIElement? = nil, depth: Int = 0, highlight indexPath: [Int] = [], currentPath: [Int] = []) {
         let element = element ?? self
         if let children = element.children {
-            for child in children {
+            for (index, child) in children.enumerated() {
                 let indentation = String(repeating: " ", count: depth)
                 let isMultiline = child.value?.contains("\n") ?? false
                 let displayValue = isMultiline ? "[multiple lines]" : (child.value?.components(separatedBy: .newlines).first ?? "?")
                 let ellipsedValue = displayValue.count > 50 ? String(displayValue.prefix(47)) + "..." : displayValue
+
+                // Check if the current path matches the ancestry path
+                let isOnIndexPath = currentPath + [index] == indexPath.prefix(currentPath.count + 1)
+                let highlightIndicator = isOnIndexPath ? "→ " : "  "
+
                 print(
-                    "\(indentation)Role: \(child.role ?? "?"), " +
-                    "Subrole: \(child.subrole ?? "?"), " +
-                    "Title: \(child.rawTitle ?? "?"), " +
-                    "Value: \(ellipsedValue)"
+                    "\(indentation)\(highlightIndicator)Role: \"\(child.role ?? "[undefined]")\", " +
+                    "Subrole: \(child.subrole ?? "<nil>"), " +
+                    "Id: \(identifier ?? "<nil>"), " +
+                    "Title: \(child.rawTitle ?? "<nil>"), " +
+                    "Value: \"\(ellipsedValue)\""
                 )
-                debugPrintSubtree(element: child, depth: depth + 1)
+
+                debugPrintSubtree(element: child, depth: depth + 1, highlight: indexPath, currentPath: currentPath + [index])
             }
+        }
+    }
+
+    func debugPrintAncestors() {
+        traverseUp { element in
+            let title = element.rawTitle ?? "<nil>"
+            let role = element.role ?? "<nil>"
+            let subrole = element.subrole ?? "<nil>"
+            print("Title: \(title), Role: \(role), Subrole: \(subrole)")
+            return true // Continue traversing up
         }
     }
 
@@ -275,10 +417,11 @@ extension AXUIElement {
         let displayValue = isMultiline ? "[multiple lines]" : (value?.components(separatedBy: .newlines).first ?? "?")
         let ellipsedValue = displayValue.count > 50 ? String(displayValue.prefix(47)) + "..." : displayValue
         print(
-            "Role: \(role ?? "?"), " +
-            "Subrole: \(subrole ?? "?"), " +
-            "Title: \(rawTitle ?? "?"), " +
-            "Value: \(ellipsedValue)"
+            "Role: \(role ?? "<nil>"), " +
+            "Subrole: \(subrole ?? "<nil>"), " +
+            "Id: \(identifier ?? "<nil>"), " +
+            "Title: \(rawTitle ?? "<nil>"), " +
+            "Value: \"\(ellipsedValue)\""
         )
     }
 
@@ -298,6 +441,43 @@ extension AXUIElement {
             return parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
         }
         return nil
+    }
+
+    func elementAtPosition(x: Float, y: Float) -> AXUIElement? {
+        var element: AXUIElement?
+        AXUIElementCopyElementAtPosition(self, x, y, &element)
+        return element
+    }
+
+    func elementAtPositionRelativeToWindow(x: CGFloat, y: CGFloat) -> AXUIElement? {
+        // swiftlint:disable force_unwrapping
+        let windowPositionData = getValue(for: kAXPositionAttribute)!
+        let windowSizeData = getValue(for: kAXSizeAttribute)!
+        // swiftlint:enable force_unwrapping
+
+        var windowPosition = CGPoint()
+        var windowSize = CGSize()
+
+        // swiftlint:disable force_cast
+        if !AXValueGetValue(windowPositionData as! AXValue, .cgPoint, &windowPosition) ||
+           !AXValueGetValue(windowSizeData as! AXValue, .cgSize, &windowSize) {
+            return nil
+        }
+        // swiftlint:enable force_cast
+
+        let globalX = windowPosition.x + x
+        let globalY = windowPosition.y + y
+
+        if globalX < windowPosition.x || globalX > windowPosition.x + windowSize.width ||
+           globalY < windowPosition.y || globalY > windowPosition.y + windowSize.height {
+            // Point is outside the window bounds
+            return nil
+        }
+
+        var element: AXUIElement?
+        let systemWideElement = AXUIElementCreateSystemWide()
+        AXUIElementCopyElementAtPosition(systemWideElement, Float(globalX), Float(globalY), &element)
+        return element
     }
 }
 
