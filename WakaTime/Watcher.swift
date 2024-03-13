@@ -76,11 +76,11 @@ class Watcher: NSObject {
                 paths: ["/"],
                 for: ObjectIdentifier(self),
                 with: { event in
-                    // NSLog(event)
+                    // Logging.default.log(event)
                 }
             )
         } catch {
-            NSLog("Failed to setup FSEvents: \(error.localizedDescription)")
+            Logging.default.log("Failed to setup FSEvents: \(error.localizedDescription)")
         }
         */
     }
@@ -98,7 +98,7 @@ class Watcher: NSObject {
     private func handleAppChanged(_ app: NSRunningApplication) {
         if app != activeApp {
             // swiftlint:disable line_length
-            NSLog("App changed from \(activeApp?.localizedName ?? "nil") to \(app.localizedName ?? "nil") (\(app.bundleIdentifier ?? "nil"))")
+            Logging.default.log("App changed from \(activeApp?.localizedName ?? "nil") to \(app.localizedName ?? "nil") (\(app.bundleIdentifier ?? "nil"))")
             // swiftlint:enable line_length
             if let oldApp = activeApp { unwatch(app: oldApp) }
             activeApp = app
@@ -141,7 +141,7 @@ class Watcher: NSObject {
                 let result = AXUIElementSetAttributeValue(axApp, "AXManualAccessibility" as CFString, true as CFTypeRef)
                 if result.rawValue != 0 {
                     let appName = app.localizedName ?? "UnknownApp"
-                    NSLog("Setting AXManualAccessibility on \(appName) failed (\(result.rawValue))")
+                    Logging.default.log("Setting AXManualAccessibility on \(appName) failed (\(result.rawValue))")
                 }
             }
 
@@ -168,7 +168,7 @@ class Watcher: NSObject {
                 observeActivityText(activeWindow: activeWindow)
             }
         } catch {
-            NSLog("Failed to setup AXObserver: \(error.localizedDescription)")
+            Logging.default.log("Failed to setup AXObserver: \(error.localizedDescription)")
 
             // TODO: App could be still launching, retry setting AXObserver in 20 seconds for this app
 
@@ -234,7 +234,7 @@ class Watcher: NSObject {
             if documentPath != oldValue {
                 guard let newPath = documentPath else { return }
 
-                NSLog("Document changed: \(newPath)")
+                Logging.default.log("Document changed: \(newPath)")
 
                 handleNotificationEvent(path: newPath, isWrite: false)
                 fileMonitor = nil
@@ -274,10 +274,6 @@ private func observerCallback(
 
     guard let app = this.activeApp else { return }
 
-    if Dependencies.isLocalDevBuild && !MonitoringManager.isAppXcode(app) {
-        // print(notification)
-        // element.debugPrint()
-    }
     let axNotification = AXUIElementNotification.notificationFrom(string: notification as String)
     switch axNotification {
         case .selectedTextChanged:

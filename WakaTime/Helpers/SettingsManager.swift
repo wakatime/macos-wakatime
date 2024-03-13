@@ -33,15 +33,15 @@ class SettingsManager {
         if #available(macOS 13.0, *), !simulateOldMacOS {
             do {
                 try SMAppService.mainApp.register()
-                NSLog("Registered for login")
+                Logging.default.log("Registered for login")
             } catch let error {
-                NSLog(error.localizedDescription)
+                Logging.default.log(error.localizedDescription)
             }
         } else {
             if SMLoginItemSetEnabled("macos-wakatime.WakaTimeHelper" as CFString, true) {
-                NSLog("Login item enabled successfully.")
+                Logging.default.log("Login item enabled successfully.")
             } else {
-                NSLog("Failed to enable login item.")
+                Logging.default.log("Failed to enable login item.")
             }
         }
     }
@@ -52,15 +52,15 @@ class SettingsManager {
         if #available(macOS 13.0, *), !simulateOldMacOS {
             do {
                 try SMAppService.mainApp.unregister()
-                NSLog("Unregistered for login")
+                Logging.default.log("Unregistered for login")
             } catch let error {
-                NSLog(error.localizedDescription)
+                Logging.default.log(error.localizedDescription)
             }
         } else {
             if SMLoginItemSetEnabled("macos-wakatime.WakaTimeHelper" as CFString, false) {
-                NSLog("Login item disabled successfully.")
+                Logging.default.log("Login item disabled successfully.")
             } else {
-                NSLog("Failed to disable login item.")
+                Logging.default.log("Failed to disable login item.")
             }
         }
     }
