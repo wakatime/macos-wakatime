@@ -15,6 +15,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
     let updater = AppUpdater(owner: "wakatime", repo: "macos-wakatime")
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        // Configure logging to a log file if activated by the user
+        if PropertiesManager.shouldLogToFile {
+            Logging.default.activateLoggingToFile()
+        }
+
+        Logging.default.log("Starting WakaTime")
+
         // Handle deep links
         let eventManager = NSAppleEventManager.shared()
         eventManager.setEventHandler(
@@ -54,11 +61,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
             guard granted else {
                 if let msg = error?.localizedDescription {
-                    NSLog(msg)
+                    Logging.default.log(msg)
                 }
                 return
             }
         }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        Logging.default.log("WakaTime will terminate")
     }
 
     @objc func handleGetURL(_ event: NSAppleEventDescriptor, withReplyEvent replyEvent: NSAppleEventDescriptor) {
@@ -103,7 +114,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
                 alert.addButton(withTitle: "OK")
                 alert.runModal()
             } else {
-                NSLog(String(describing: error))
+                Logging.default.log(String(describing: error))
                 let alert = NSAlert()
                 alert.messageText = "Error"
                 let max = 200

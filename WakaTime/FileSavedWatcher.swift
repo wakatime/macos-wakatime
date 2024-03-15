@@ -8,7 +8,7 @@ class FileMonitor {
         self.fileURL = filePath
         let folderURL = fileURL.deletingLastPathComponent() // monitor enclosing folder to track changes by Xcode
         let descriptor = open(folderURL.path, O_EVTONLY)
-        guard descriptor >= -1 else { NSLog("open failed: \(descriptor)"); return nil }
+        guard descriptor >= -1 else { Logging.default.log("open failed: \(descriptor)"); return nil }
         dispatchObject = DispatchSource.makeFileSystemObjectSource(fileDescriptor: descriptor, eventMask: .write, queue: queue)
         dispatchObject?.setEventHandler { [weak self] in
             self?.fileChangedEventHandler?()

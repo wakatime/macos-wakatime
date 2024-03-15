@@ -7,7 +7,7 @@ class SettingsWindowController: NSWindowController, NSTextFieldDelegate {
         self.init(window: nil)
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 150),
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 190),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false

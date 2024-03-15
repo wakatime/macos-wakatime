@@ -259,7 +259,7 @@ extension AXUIElement {
                 let isMultiline = child.value?.contains("\n") ?? false
                 let displayValue = isMultiline ? "[multiple lines]" : (child.value?.components(separatedBy: .newlines).first ?? "?")
                 let ellipsedValue = displayValue.count > 50 ? String(displayValue.prefix(47)) + "..." : displayValue
-                print(
+                Logging.default.log(
                     "\(indentation)Role: \(child.role ?? "?"), " +
                     "Subrole: \(child.subrole ?? "?"), " +
                     "Title: \(child.rawTitle ?? "?"), " +
@@ -274,7 +274,7 @@ extension AXUIElement {
         let isMultiline = value?.contains("\n") ?? false
         let displayValue = isMultiline ? "[multiple lines]" : (value?.components(separatedBy: .newlines).first ?? "?")
         let ellipsedValue = displayValue.count > 50 ? String(displayValue.prefix(47)) + "..." : displayValue
-        print(
+        Logging.default.log(
             "Role: \(role ?? "?"), " +
             "Subrole: \(subrole ?? "?"), " +
             "Title: \(rawTitle ?? "?"), " +

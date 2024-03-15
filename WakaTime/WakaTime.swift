@@ -35,13 +35,13 @@ class WakaTime: HeartbeatEventHandler {
 
         // In local dev builds, print bundle-ids of all running apps to Xcode console
         if Dependencies.isLocalDevBuild {
-            print("********* Start Running Applications *********")
+            Logging.default.log("********* Start Running Applications *********")
             for runningApp in NSWorkspace.shared.runningApplications where runningApp.activationPolicy == .regular {
                 if let name = runningApp.localizedName, let id = runningApp.bundleIdentifier {
-                    print("\(name): \(id)")
+                    Logging.default.log("\(name): \(id)")
                 }
             }
-            print("********* End Running Applications *********")
+            Logging.default.log("********* End Running Applications *********")
         }
 
         if !PropertiesManager.hasLaunchedBefore {
@@ -138,7 +138,7 @@ class WakaTime: HeartbeatEventHandler {
             args.append(language)
         }
 
-        NSLog("Sending heartbeat with: \(args)")
+        Logging.default.log("Sending heartbeat with: \(args)")
 
         process.arguments = args
         process.standardOutput = FileHandle.nullDevice
@@ -148,7 +148,7 @@ class WakaTime: HeartbeatEventHandler {
             // with ObjC exception bridging on macOS 12 or earlier and Process.run() on macOS 13 or newer.
             try process.execute()
         } catch {
-            NSLog("Failed to run wakatime-cli: \(error)")
+            Logging.default.log("Failed to run wakatime-cli: \(error)")
         }
     }
 }
