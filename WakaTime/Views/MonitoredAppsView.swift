@@ -26,7 +26,7 @@ class MonitoredAppsView: NSView {
 
     func buildView(stackView: NSStackView) {
         for (index, bundleId) in MonitoredApp.allBundleIds.enumerated() {
-            guard !MonitoredApp.unsuportedAppIds.contains(bundleId) else { continue }
+            guard !MonitoredApp.unsupportedAppIds.contains(bundleId) else { continue }
 
             buildViewForApp(index: index * 2, stackView: stackView, bundleId: bundleId)
             buildViewForApp(

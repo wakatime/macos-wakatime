@@ -23,7 +23,7 @@ struct ConfigFile {
         do {
             contents = try String(contentsOfFile: file)
         } catch {
-            NSLog("Failed reading \(file): " + error.localizedDescription)
+            Logging.default.log("Failed reading \(file): " + error.localizedDescription)
             return nil
         }
         let lines = contents.split(separator: "\n")

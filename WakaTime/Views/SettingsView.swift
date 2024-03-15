@@ -10,6 +10,17 @@ class SettingsView: NSView, NSTextFieldDelegate {
         return checkbox
     }()
 
+    lazy var enableLoggingCheckbox: NSButton = {
+        let checkbox = NSButton(
+            checkboxWithTitle: "Enable logging to ~/.wakatime/macos-wakatime.log",
+            target: self,
+            action: #selector(enableLoggingCheckboxClicked)
+        )
+        checkbox.state = PropertiesManager.shouldLogToFile ? .on : .off
+        checkbox.translatesAutoresizingMaskIntoConstraints = false
+        return checkbox
+    }()
+
     lazy var apiKeyLabel: NSTextField = {
         let apiKeyLabel = NSTextField(labelWithString: "WakaTime API Key:")
         apiKeyLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -34,9 +45,10 @@ class SettingsView: NSView, NSTextFieldDelegate {
     init() {
         super.init(frame: .zero)
 
-        addSubview(launchAtLoginCheckbox)
         addSubview(apiKeyLabel)
         addSubview(textField)
+        addSubview(launchAtLoginCheckbox)
+        addSubview(enableLoggingCheckbox)
         addSubview(versionLabel)
 
         setupConstraints()
@@ -55,26 +67,37 @@ class SettingsView: NSView, NSTextFieldDelegate {
         }
     }
 
+    @objc func enableLoggingCheckboxClicked() {
+        PropertiesManager.shouldLaunchOnLogin = enableLoggingCheckbox.state == .on
+        if enableLoggingCheckbox.state == .on {
+            PropertiesManager.shouldLogToFile = true
+        } else {
+            PropertiesManager.shouldLogToFile = false
+        }
+    }
+
     func controlTextDidChange(_ obj: Notification) {
         ConfigFile.setSetting(section: "settings", key: "api_key", val: textField.stringValue)
     }
 
     private func setupConstraints() {
         let constraints = [
-            launchAtLoginCheckbox.topAnchor.constraint(equalTo: topAnchor, constant: 20),
-            launchAtLoginCheckbox.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-
-            apiKeyLabel.topAnchor.constraint(equalTo: launchAtLoginCheckbox.bottomAnchor, constant: 20),
+            apiKeyLabel.topAnchor.constraint(equalTo: topAnchor, constant: 20),
             apiKeyLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
 
             textField.topAnchor.constraint(equalTo: apiKeyLabel.bottomAnchor, constant: 10),
             textField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             textField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
 
-            versionLabel.topAnchor.constraint(equalTo: textField.bottomAnchor, constant: 10),
+            launchAtLoginCheckbox.topAnchor.constraint(equalTo: textField.bottomAnchor, constant: 30),
+            launchAtLoginCheckbox.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+
+            enableLoggingCheckbox.topAnchor.constraint(equalTo: launchAtLoginCheckbox.bottomAnchor, constant: 10),
+            enableLoggingCheckbox.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+
+            versionLabel.topAnchor.constraint(equalTo: enableLoggingCheckbox.bottomAnchor, constant: 30),
             versionLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             versionLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
-            versionLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -20)
         ]
         NSLayoutConstraint.activate(constraints)
     }

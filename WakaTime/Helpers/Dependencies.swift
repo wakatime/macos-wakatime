@@ -11,6 +11,10 @@ class Dependencies {
         }
     }
 
+    public static var isLocalDevBuild: Bool {
+        Bundle.main.version == "local-build"
+    }
+
     private static func getLatestVersion() async throws -> String? {
         struct Release: Decodable {
             let tagName: String
@@ -81,7 +85,7 @@ class Dependencies {
             let now = Int(NSDate().timeIntervalSince1970)
             let fourHours = 4 * 3600
             if accessed + fourHours > now {
-                NSLog("Skip checking for wakatime-cli updates because recently checked \(now - accessed) seconds ago")
+                Logging.default.log("Skip checking for wakatime-cli updates because recently checked \(now - accessed) seconds ago")
                 return true
             }
         }
@@ -106,7 +110,7 @@ class Dependencies {
             do {
                 try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true, attributes: nil)
             } catch {
-                NSLog(error.localizedDescription)
+                Logging.default.log(error.localizedDescription)
             }
         }
 
@@ -119,7 +123,7 @@ class Dependencies {
             do {
                 try FileManager.default.removeItem(atPath: zipFile)
             } catch {
-                NSLog(error.localizedDescription)
+                Logging.default.log(error.localizedDescription)
                 return
             }
         }
@@ -135,7 +139,7 @@ class Dependencies {
                     do {
                         try FileManager.default.removeItem(atPath: cliReal)
                     } catch {
-                        NSLog(error.localizedDescription)
+                        Logging.default.log(error.localizedDescription)
                         return
                     }
                 }
@@ -159,7 +163,7 @@ class Dependencies {
                 try! FileManager.default.createSymbolicLink(atPath: cli, withDestinationPath: cliReal)
 
             } catch {
-                NSLog(error.localizedDescription)
+                Logging.default.log(error.localizedDescription)
             }
         }.resume()
     }

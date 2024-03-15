@@ -37,6 +37,20 @@ extension AXUIElement {
         // swiftlint:enable force_cast
     }
 
+    var role: String? {
+        guard let ref = getValue(for: kAXRoleAttribute) else { return nil }
+        // swiftlint:disable force_cast
+        return (ref as! String)
+        // swiftlint:enable force_cast
+    }
+
+    var subrole: String? {
+        guard let ref = getValue(for: kAXSubroleAttribute) else { return nil }
+        // swiftlint:disable force_cast
+        return (ref as! String)
+        // swiftlint:enable force_cast
+    }
+
     // swiftlint:disable cyclomatic_complexity
     func title(for app: MonitoredApp) -> String? {
         switch app {
@@ -77,8 +91,22 @@ extension AXUIElement {
                 guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
                 return title
             case .notes:
-                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
-                return title
+                // There's apparently two text editor implementations in Apple Notes. One uses a web view,
+                // the other appears to be a native implementation based on the `ICTK2MacTextView` class.
+                let webAreaElement = firstDescendantWhere { $0.role == "AXWebArea" }
+                if let webAreaElement {
+                    // WebView-based implementation
+                    let titleElement = webAreaElement.firstDescendantWhere { $0.role == kAXStaticTextRole }
+                    return titleElement?.value
+                } else {
+                    // ICTK2MacTextView
+                    let textAreaElement = firstDescendantWhere { $0.role == kAXTextAreaRole }
+                    if let value = textAreaElement?.value {
+                        let title = extractPrefix(value, separator: "\n")
+                        return title
+                    }
+                    return nil
+                }
             case .notion:
                 guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
                 return title
@@ -141,9 +169,7 @@ extension AXUIElement {
 
     var value: String? {
         guard let ref = getValue(for: kAXValueAttribute) else { return nil }
-        // swiftlint:disable force_cast
-        return (ref as! String)
-        // swiftlint:enable force_cast
+        return (ref as? String)
     }
 
     var activeWindow: AXUIElement? {
@@ -180,12 +206,26 @@ extension AXUIElement {
     }
 
     // Traverses the element's subtree (breadth-first) until visitor() returns false or traversal is completed
-    func traverseDown(visitor: (AXUIElement) -> Bool, element: AXUIElement? = nil) {
-        let element = element ?? self
-        if let children = element.children {
-            for child in children {
-                if !visitor(child) { return }
-                traverseDown(visitor: visitor, element: child)
+    func traverseDown(visitor: (AXUIElement) -> Bool) {
+        var queue: [AXUIElement] = [self]
+        while !queue.isEmpty {
+            let currentElement = queue.removeFirst()
+            if let children = currentElement.children {
+                for child in children {
+                    if !visitor(child) { return }
+                    queue.append(child)
+                }
+            }
+        }
+    }
+
+    func traverseDownDFS(visitor: (AXUIElement) -> Bool) {
+        var stack: [AXUIElement] = [self]
+        while !stack.isEmpty {
+            let currentElement = stack.removeLast()
+            if !visitor(currentElement) { return }
+            if let children = currentElement.children {
+                stack.append(contentsOf: children.reversed())
             }
         }
     }
@@ -197,6 +237,49 @@ extension AXUIElement {
             if !visitor(parent) { return }
             traverseUp(visitor: visitor, element: parent)
         }
+    }
+
+    func firstDescendantWhere(_ condition: (AXUIElement) -> Bool) -> AXUIElement? {
+        var matchingDescendant: AXUIElement?
+        traverseDownDFS { element in
+            if condition(element) {
+                matchingDescendant = element
+                return false // stop traversal
+            }
+            return true // continue traversal
+        }
+        return matchingDescendant
+    }
+
+    func debugPrintSubtree(element: AXUIElement? = nil, depth: Int = 0) {
+        let element = element ?? self
+        if let children = element.children {
+            for child in children {
+                let indentation = String(repeating: " ", count: depth)
+                let isMultiline = child.value?.contains("\n") ?? false
+                let displayValue = isMultiline ? "[multiple lines]" : (child.value?.components(separatedBy: .newlines).first ?? "?")
+                let ellipsedValue = displayValue.count > 50 ? String(displayValue.prefix(47)) + "..." : displayValue
+                Logging.default.log(
+                    "\(indentation)Role: \(child.role ?? "?"), " +
+                    "Subrole: \(child.subrole ?? "?"), " +
+                    "Title: \(child.rawTitle ?? "?"), " +
+                    "Value: \(ellipsedValue)"
+                )
+                debugPrintSubtree(element: child, depth: depth + 1)
+            }
+        }
+    }
+
+    func debugPrint() {
+        let isMultiline = value?.contains("\n") ?? false
+        let displayValue = isMultiline ? "[multiple lines]" : (value?.components(separatedBy: .newlines).first ?? "?")
+        let ellipsedValue = displayValue.count > 50 ? String(displayValue.prefix(47)) + "..." : displayValue
+        Logging.default.log(
+            "Role: \(role ?? "?"), " +
+            "Subrole: \(subrole ?? "?"), " +
+            "Title: \(rawTitle ?? "?"), " +
+            "Value: \(ellipsedValue)"
+        )
     }
 
     private func extractPrefix(_ str: String?, separator: String, minCount: Int? = nil, fullTitle: Bool = false) -> String? {

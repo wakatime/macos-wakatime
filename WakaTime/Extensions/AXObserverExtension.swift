@@ -14,31 +14,31 @@ extension AXObserver {
     func add(notification: String, element: AXUIElement, refcon: UnsafeMutableRawPointer?) throws {
         let error = AXObserverAddNotification(self, element, notification as CFString, refcon)
         guard error == .success else {
-            NSLog("Add notification \(notification) failed: \(error.rawValue)")
+            Logging.default.log("Add notification \(notification) failed: \(error.rawValue)")
             throw AXObserverError.addNotificationFailed(error)
         }
 
-        // NSLog("Added notification \(notification) to observer \(self)")
+        // Logging.default.log("Added notification \(notification) to observer \(self)")
     }
 
     func remove(notification: String, element: AXUIElement) throws {
         let error = AXObserverRemoveNotification(self, element, notification as CFString)
         guard error == .success else {
-            NSLog("Remove notification \(notification) failed: \(error.rawValue)")
+            Logging.default.log("Remove notification \(notification) failed: \(error.rawValue)")
             throw AXObserverError.removeNotificationFailed(error)
         }
 
-        // NSLog("Removed notification \(notification) from observer \(self)")
+        // Logging.default.log("Removed notification \(notification) from observer \(self)")
     }
 
     func addToRunLoop(mode: CFRunLoopMode = .defaultMode) {
         CFRunLoopAddSource(RunLoop.current.getCFRunLoop(), AXObserverGetRunLoopSource(self), mode)
-        // NSLog("Added observer \(self) to run loop")
+        // Logging.default.log("Added observer \(self) to run loop")
     }
 
     func removeFromRunLoop(mode: CFRunLoopMode = .defaultMode) {
         CFRunLoopRemoveSource(RunLoop.current.getCFRunLoop(), AXObserverGetRunLoopSource(self), mode)
-        // NSLog("Removed observer \(self) from run loop")
+        // Logging.default.log("Removed observer \(self) from run loop")
     }
 }
 
