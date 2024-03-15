@@ -12,7 +12,7 @@ class SettingsView: NSView, NSTextFieldDelegate {
 
     lazy var enableLoggingCheckbox: NSButton = {
         let checkbox = NSButton(
-            checkboxWithTitle: "Enable loggin to ~/.wakatime/macos-wakatime.log",
+            checkboxWithTitle: "Enable logging to ~/.wakatime/macos-wakatime.log",
             target: self,
             action: #selector(enableLoggingCheckboxClicked)
         )
@@ -45,10 +45,10 @@ class SettingsView: NSView, NSTextFieldDelegate {
     init() {
         super.init(frame: .zero)
 
-        addSubview(launchAtLoginCheckbox)
-        addSubview(enableLoggingCheckbox)
         addSubview(apiKeyLabel)
         addSubview(textField)
+        addSubview(launchAtLoginCheckbox)
+        addSubview(enableLoggingCheckbox)
         addSubview(versionLabel)
 
         setupConstraints()
@@ -82,20 +82,20 @@ class SettingsView: NSView, NSTextFieldDelegate {
 
     private func setupConstraints() {
         let constraints = [
-            launchAtLoginCheckbox.topAnchor.constraint(equalTo: topAnchor, constant: 20),
-            launchAtLoginCheckbox.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-
-            enableLoggingCheckbox.topAnchor.constraint(equalTo: launchAtLoginCheckbox.bottomAnchor, constant: 10),
-            enableLoggingCheckbox.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-
-            apiKeyLabel.topAnchor.constraint(equalTo: enableLoggingCheckbox.bottomAnchor, constant: 30),
+            apiKeyLabel.topAnchor.constraint(equalTo: topAnchor, constant: 20),
             apiKeyLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
 
             textField.topAnchor.constraint(equalTo: apiKeyLabel.bottomAnchor, constant: 10),
             textField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             textField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
 
-            versionLabel.topAnchor.constraint(equalTo: textField.bottomAnchor, constant: 10),
+            launchAtLoginCheckbox.topAnchor.constraint(equalTo: textField.bottomAnchor, constant: 30),
+            launchAtLoginCheckbox.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+
+            enableLoggingCheckbox.topAnchor.constraint(equalTo: launchAtLoginCheckbox.bottomAnchor, constant: 10),
+            enableLoggingCheckbox.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+
+            versionLabel.topAnchor.constraint(equalTo: enableLoggingCheckbox.bottomAnchor, constant: 30),
             versionLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             versionLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
         ]
