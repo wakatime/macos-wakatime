@@ -101,10 +101,6 @@ class WakaTime: HeartbeatEventHandler {
         let category = category ?? Category.coding
         guard shouldSendHeartbeat(entity: entity, time: time, isWrite: isWrite, category: category) else { return }
 
-        lastEntity = entity
-        lastTime = time
-        lastCategory = category
-
         // make sure we should be tracking this app to avoid race condition bugs
         // do this after shouldSendHeartbeat for better performance because handleEvent may
         // be called frequently
@@ -139,6 +135,10 @@ class WakaTime: HeartbeatEventHandler {
         }
 
         Logging.default.log("Sending heartbeat with: \(args)")
+
+        lastEntity = entity
+        lastTime = time
+        lastCategory = category
 
         process.arguments = args
         process.standardOutput = FileHandle.nullDevice
