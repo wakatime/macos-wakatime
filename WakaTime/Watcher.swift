@@ -24,34 +24,7 @@ class Watcher: NSObject {
     override init() {
         super.init()
 
-        eventSourceObserver = EventSourceObserver(pollIntervalInSeconds: 1) { [weak self] in
-            self?.callbackQueue.async {
-                guard
-                    let app = self?.activeApp, !MonitoringManager.isAppXcode(app),
-                    let bundleId = app.bundleIdentifier
-                else { return }
-
-                var heartbeat = MonitoringManager.heartbeatData(app)
-
-                if let heartbeat {
-                    self?.lastValidHeartbeatForApp[bundleId] = heartbeat
-                } else {
-                    heartbeat = self?.lastValidHeartbeatForApp[bundleId]
-                }
-
-                if let heartbeat {
-                    self?.heartbeatEventHandler?.handleHeartbeatEvent(
-                        app: app,
-                        entity: heartbeat.entity,
-                        entityType: EntityType.app,
-                        project: heartbeat.project,
-                        language: heartbeat.language,
-                        category: heartbeat.category,
-                        isWrite: false
-                    )
-                }
-            }
-        }
+        eventSourceObserver = EventSourceObserver(pollIntervalInSeconds: 1)
 
         NSWorkspace.shared.notificationCenter.addObserver(
             self,
@@ -63,27 +36,6 @@ class Watcher: NSObject {
         if let app = NSWorkspace.shared.frontmostApplication {
             handleAppChanged(app)
         }
-
-        /*
-        NSEvent.addGlobalMonitorForEvents(
-            matching: [NSEvent.EventTypeMask.keyDown],
-            handler: handleKeyboardEvent
-        )
-        */
-
-        /*
-        do {
-            try EonilFSEvents.startWatching(
-                paths: ["/"],
-                for: ObjectIdentifier(self),
-                with: { event in
-                    // Logging.default.log(event)
-                }
-            )
-        } catch {
-            Logging.default.log("Failed to setup FSEvents: \(error.localizedDescription)")
-        }
-        */
     }
 
     deinit {
@@ -100,6 +52,7 @@ class Watcher: NSObject {
         if app != activeApp {
             // swiftlint:disable line_length
             Logging.default.log("App changed from \(activeApp?.localizedName ?? "nil") to \(app.localizedName ?? "nil") (\(app.bundleIdentifier ?? "nil"))")
+            eventSourceObserver?.stop()
             // swiftlint:enable line_length
             if let oldApp = activeApp { unwatch(app: oldApp) }
             activeApp = app
@@ -109,11 +62,6 @@ class Watcher: NSObject {
         }
 
         setAppVersion(app)
-    }
-
-    func handleKeyboardEvent(event: NSEvent!) {
-        // NSLog("keyDown")
-        // TODO: call eventHandler to send heartbeat
     }
 
     private func setAppVersion(_ app: NSRunningApplication) {
@@ -167,6 +115,35 @@ class Watcher: NSObject {
                     self.documentPath = currentPath
                 }
                 observeActivityText(activeWindow: activeWindow)
+            } else {
+                eventSourceObserver?.start { [weak self] in
+                    self?.callbackQueue.async {
+                        guard
+                            let app = self?.activeApp, !MonitoringManager.isAppXcode(app),
+                            let bundleId = app.bundleIdentifier
+                        else { return }
+
+                        var heartbeat = MonitoringManager.heartbeatData(app)
+
+                        if let heartbeat {
+                            self?.lastValidHeartbeatForApp[bundleId] = heartbeat
+                        } else {
+                            heartbeat = self?.lastValidHeartbeatForApp[bundleId]
+                        }
+
+                        if let heartbeat {
+                            self?.heartbeatEventHandler?.handleHeartbeatEvent(
+                                app: app,
+                                entity: heartbeat.entity,
+                                entityType: EntityType.app,
+                                project: heartbeat.project,
+                                language: heartbeat.language,
+                                category: heartbeat.category,
+                                isWrite: false
+                            )
+                        }
+                    }
+                }
             }
         } catch {
             Logging.default.log("Failed to setup AXObserver: \(error.localizedDescription)")
