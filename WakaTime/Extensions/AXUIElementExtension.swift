@@ -1,5 +1,14 @@
 import AppKit
 
+struct AXPatternElement {
+    var role: String?
+    var subrole: String?
+    var id: String?
+    var title: String?
+    var value: String?
+    var children: [AXPatternElement] = []
+}
+
 extension AXUIElement {
     var selectedText: String? {
         getValue(for: kAXSelectedTextAttribute) as? String
@@ -51,6 +60,34 @@ extension AXUIElement {
         // swiftlint:enable force_cast
     }
 
+    func project(for app: MonitoredApp) -> String? {
+        var address: String?
+        switch app {
+            case .brave:
+                let addressField = findAddressField()
+                address = addressField?.value
+            case .chrome:
+                let addressField = findAddressField()
+                address = addressField?.value
+            case .firefox:
+                let addressField = findAddressField()
+                address = addressField?.value
+            case .safari:
+                let addressField = elementById(identifier: "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD")
+                address = addressField?.value
+            case .safaripreview:
+                let addressField = elementById(identifier: "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD")
+                address = addressField?.value
+            default: return nil
+        }
+
+        if let address {
+            return extractProjectName(from: address)
+        }
+
+        return nil
+    }
+
     // swiftlint:disable cyclomatic_complexity
     func title(for app: MonitoredApp) -> String? {
         switch app {
@@ -58,6 +95,13 @@ extension AXUIElement {
                 guard
                     let title = extractPrefix(rawTitle, separator: " - "),
                     title != "Arc"
+                else { return nil }
+                return title
+            case .brave:
+                guard
+                    let title = extractPrefix(rawTitle, separator: " - "),
+                    title != "Brave",
+                    title != "New Tab"
                 else { return nil }
                 return title
             case .canva:
@@ -79,6 +123,13 @@ extension AXUIElement {
                     let title = extractPrefix(rawTitle, separator: " – "),
                     title != "Figma",
                     title != "Drafts"
+                else { return nil }
+                return title
+            case .firefox:
+                guard
+                    let title = extractPrefix(rawTitle, separator: " - "),
+                    title != "Firefox",
+                    title != "New Tab"
                 else { return nil }
                 return title
             case .imessage:
@@ -251,22 +302,158 @@ extension AXUIElement {
         return matchingDescendant
     }
 
-    func debugPrintSubtree(element: AXUIElement? = nil, depth: Int = 0) {
+    // Find the first descendant whose identifier matches the given identifier
+    func elementById(identifier: String) -> AXUIElement? {
+        firstDescendantWhere { $0.id == identifier }
+    }
+
+    func firstAncestorWhere(_ condition: (AXUIElement) -> Bool) -> AXUIElement? {
+        var matchingAncestor: AXUIElement?
+        traverseUp { element in
+            if condition(element) {
+                matchingAncestor = element
+                return false
+            }
+            return true
+        }
+        return matchingAncestor
+    }
+
+    // Index path of `element` relative to self
+    func indexPath(for element: AXUIElement) -> [Int] {
+        var path = [Int]()
+        var currentElement: AXUIElement? = element
+
+        while let current = currentElement, current != self {
+            if let parent = current.parent {
+                if let index = parent.children?.firstIndex(where: { $0 == current }) {
+                    path.insert(index, at: 0)
+                }
+                currentElement = parent
+            } else {
+                // No parent found, stop the loop
+                break
+            }
+        }
+
+        return path
+    }
+
+    // Finds the element at the given `indexPath`. `indexPath` must be relative to self.
+    // If no element with the given index path exists, returns nil.
+    func elementAtIndexPath(_ indexPath: [Int]) -> AXUIElement? {
+        var currentElement: AXUIElement = self
+        for index in indexPath {
+            currentElement.debugPrint()
+            guard let children = currentElement.children, index < children.count else {
+                // Index is out of bounds for the current element's children
+                return nil
+            }
+            currentElement = children[index]
+        }
+        return currentElement
+    }
+
+    func findByPattern(_ pattern: AXPatternElement, within element: AXUIElement? = nil) -> AXUIElement? {
+        let rootElement = element ?? self
+
+        func matchesPattern(element: AXUIElement, pattern: AXPatternElement) -> Bool {
+            let roleMatches = pattern.role == nil || element.role == pattern.role
+            let subroleMatches = pattern.subrole == nil || element.subrole == pattern.subrole
+            let titleMatches = pattern.title == nil || element.rawTitle == pattern.title
+            let valueMatches = pattern.value == nil || element.selectedText == pattern.value
+            let idMatches = pattern.id == nil || element.id == pattern.id
+
+            return roleMatches && subroleMatches && titleMatches && valueMatches && idMatches
+        }
+
+        func search(element: AXUIElement, pattern: AXPatternElement) -> AXUIElement? {
+            if matchesPattern(element: element, pattern: pattern) {
+                var currentElement = element
+                for childPattern in pattern.children {
+                    guard let children = currentElement.children else { return nil }
+
+                    var foundMatch = false
+                    for child in children {
+                        if let match = search(element: child, pattern: childPattern) {
+                            currentElement = match
+                            foundMatch = true
+                            break
+                        }
+                    }
+                    if !foundMatch {
+                        return nil
+                    }
+                }
+                return currentElement
+            } else {
+                guard let children = element.children else { return nil }
+
+                for child in children {
+                    if let match = search(element: child, pattern: pattern) {
+                        return match
+                    }
+                }
+            }
+            return nil
+        }
+
+        return search(element: rootElement, pattern: pattern)
+    }
+
+    // Finds the first text area element whose value looks like a URL. Note that Chrome
+    // cuts off the URL scheme, so this only scans for a domain with an optional path.
+    func findAddressField() -> AXUIElement? {
+        firstDescendantWhere { descendant in
+            if descendant.role == kAXTextFieldRole, let value = descendant.value {
+                let pattern = "(([^:\\/\\s]+)\\.([^:\\/\\s\\.]+))(\\/\\w+)*(\\/([\\w\\-\\.]+[^#?\\s]+))?(.*)?(#[\\w\\-]+)?$"
+                do {
+                    let regex = try NSRegularExpression(pattern: pattern)
+                    let range = NSRange(value.startIndex..<value.endIndex, in: value)
+                    let matches = regex.numberOfMatches(in: value, options: [], range: range)
+                    return matches > 0
+                } catch {
+                    print("Regex error: \(error.localizedDescription)")
+                    return false
+                }
+            }
+            return  false
+        }
+    }
+
+    func debugPrintSubtree(element: AXUIElement? = nil, depth: Int = 0, highlight indexPath: [Int] = [], currentPath: [Int] = []) {
         let element = element ?? self
         if let children = element.children {
-            for child in children {
+            for (index, child) in children.enumerated() {
                 let indentation = String(repeating: " ", count: depth)
                 let isMultiline = child.value?.contains("\n") ?? false
                 let displayValue = isMultiline ? "[multiple lines]" : (child.value?.components(separatedBy: .newlines).first ?? "?")
                 let ellipsedValue = displayValue.count > 50 ? String(displayValue.prefix(47)) + "..." : displayValue
-                Logging.default.log(
-                    "\(indentation)Role: \(child.role ?? "?"), " +
-                    "Subrole: \(child.subrole ?? "?"), " +
-                    "Title: \(child.rawTitle ?? "?"), " +
-                    "Value: \(ellipsedValue)"
+
+                // Check if the current path matches the ancestry path
+                let isOnIndexPath = currentPath + [index] == indexPath.prefix(currentPath.count + 1)
+                let highlightIndicator = isOnIndexPath ? "→ " : "  "
+
+                print(
+                    "\(indentation)\(highlightIndicator)Role: \"\(child.role ?? "[undefined]")\", " +
+                    "Subrole: \(child.subrole ?? "<nil>"), " +
+                    "Id: \(id ?? "<nil>"), " +
+                    "Title: \(child.rawTitle ?? "<nil>"), " +
+                    "Value: \"\(ellipsedValue)\""
                 )
-                debugPrintSubtree(element: child, depth: depth + 1)
+
+                debugPrintSubtree(element: child, depth: depth + 1, highlight: indexPath, currentPath: currentPath + [index])
             }
+        }
+    }
+
+    func debugPrintAncestors() {
+        traverseUp { element in
+            let title = element.rawTitle ?? "<nil>"
+            let role = element.role ?? "<nil>"
+            let subrole = element.subrole ?? "<nil>"
+            print("Title: \(title), Role: \(role), Subrole: \(subrole)")
+            return true // Continue traversing up
         }
     }
 
@@ -274,11 +461,12 @@ extension AXUIElement {
         let isMultiline = value?.contains("\n") ?? false
         let displayValue = isMultiline ? "[multiple lines]" : (value?.components(separatedBy: .newlines).first ?? "?")
         let ellipsedValue = displayValue.count > 50 ? String(displayValue.prefix(47)) + "..." : displayValue
-        Logging.default.log(
-            "Role: \(role ?? "?"), " +
-            "Subrole: \(subrole ?? "?"), " +
-            "Title: \(rawTitle ?? "?"), " +
-            "Value: \(ellipsedValue)"
+        print(
+            "Role: \(role ?? "<nil>"), " +
+            "Subrole: \(subrole ?? "<nil>"), " +
+            "Id: \(id ?? "<nil>"), " +
+            "Title: \(rawTitle ?? "<nil>"), " +
+            "Value: \"\(ellipsedValue)\""
         )
     }
 
@@ -297,6 +485,39 @@ extension AXUIElement {
             }
             return parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
         }
+        return nil
+    }
+
+    private func extractProjectName(from url: String) -> String? {
+        let patterns = [
+            "github.com/([^/]+/[^/]+)/?.*$",
+            "bitbucket.org/([^/]+/[^/]+)/?.*$",
+            "app.circleci.com/.*/?(github|bitbucket|gitlab)/([^/]+/[^/]+)/?.*$",
+            "app.travis-ci.com/(github|bitbucket|gitlab)/([^/]+/[^/]+)/?.*$",
+            "app.travis-ci.org/(github|bitbucket|gitlab)/([^/]+/[^/]+)/?.*$"
+        ]
+
+        for pattern in patterns {
+            do {
+                let regex = try NSRegularExpression(pattern: pattern)
+                let nsrange = NSRange(url.startIndex..<url.endIndex, in: url)
+                if let match = regex.firstMatch(in: url, options: [], range: nsrange) {
+                    // Adjusted to capture the right group based on the pattern.
+                    // The group index might be 2 if the pattern includes a platform prefix before the project name.
+                    let groupIndex = pattern.contains("(github|bitbucket|gitlab)") ? 2 : 1
+                    let range = match.range(at: groupIndex)
+
+                    if range.location != NSNotFound, let range = Range(range, in: url) {
+                        return String(url[range])
+                    }
+                }
+            } catch {
+                print("Regex error: \(error)")
+                continue
+            }
+        }
+
+        // Return nil if no pattern matches
         return nil
     }
 }
