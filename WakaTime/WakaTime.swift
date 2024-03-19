@@ -94,6 +94,7 @@ class WakaTime: HeartbeatEventHandler {
         app: NSRunningApplication,
         entity: String,
         entityType: EntityType,
+        project: String?,
         language: String?,
         category: Category?,
         isWrite: Bool) {
@@ -126,6 +127,10 @@ class WakaTime: HeartbeatEventHandler {
             "--plugin",
             "\(appName)/\(appVersion) macos-wakatime/" + Bundle.main.version,
         ]
+        if let project {
+            args.append("--project")
+            args.append(project)
+        }
         if isWrite {
             args.append("--write")
         }
@@ -195,6 +200,7 @@ protocol HeartbeatEventHandler {
         app: NSRunningApplication,
         entity: String,
         entityType: EntityType,
+        project: String?,
         language: String?,
         category: Category?,
         isWrite: Bool)

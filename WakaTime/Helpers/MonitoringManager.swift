@@ -56,14 +56,21 @@ class MonitoringManager {
 
         guard
             let monitoredApp = app.monitoredApp,
-            let element = AXUIElementCreateApplication(pid).activeWindow,
-            let title = element.title(for: monitoredApp)
+            let activeWindow = AXUIElementCreateApplication(pid).activeWindow,
+            let title = activeWindow.title(for: monitoredApp)
         else { return nil }
+
+        let project = activeWindow.project(for: monitoredApp)
 
         switch monitoredApp {
             case .arcbrowser:
                 return HeartbeatData(
                     entity: title,
+                    category: .browsing)
+            case .brave:
+                return HeartbeatData(
+                    entity: title,
+                    project: project,
                     category: .browsing)
             case .canva:
                 return HeartbeatData(
@@ -73,12 +80,18 @@ class MonitoringManager {
             case .chrome:
                 return HeartbeatData(
                     entity: title,
+                    project: project,
                     category: .browsing)
             case .figma:
                 return HeartbeatData(
                     entity: title,
                     language: "Figma Design",
                     category: .designing)
+            case .firefox:
+                return HeartbeatData(
+                    entity: title,
+                    project: project,
+                    category: .browsing)
             case .imessage:
                 return HeartbeatData(
                     entity: title,
@@ -92,7 +105,7 @@ class MonitoringManager {
                     entity: title,
                     category: .planning)
             case .notes:
-                if element.rawTitle == "Notes" {
+                if activeWindow.rawTitle == "Notes" {
                     return HeartbeatData(
                         entity: title,
                         category: .writingdocs
@@ -114,10 +127,12 @@ class MonitoringManager {
             case .safari:
                 return HeartbeatData(
                     entity: title,
+                    project: project,
                     category: .browsing)
             case .safaripreview:
                 return HeartbeatData(
                     entity: title,
+                    project: project,
                     category: .browsing)
             case .tableplus:
                 return HeartbeatData(
@@ -173,6 +188,7 @@ class MonitoringManager {
 
 struct HeartbeatData {
     var entity: String
+    var project: String?
     var language: String?
     var category: Category?
 }
