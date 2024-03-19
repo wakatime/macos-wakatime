@@ -2,9 +2,11 @@ import Cocoa
 
 enum MonitoredApp: String, CaseIterable {
     case arcbrowser = "company.thebrowser.Browser"
+    case brave = "com.brave.Browser"
     case canva = "com.canva.CanvaDesktop"
     case chrome = "com.google.Chrome"
     case figma = "com.figma.Desktop"
+    case firefox = "org.mozilla.firefox"
     case imessage = "com.apple.MobileSMS"
     case iterm2 = "com.googlecode.iterm2"
     case linear = "com.linear"
