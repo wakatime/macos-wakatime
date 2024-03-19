@@ -344,7 +344,7 @@ extension AXUIElement {
     func elementAtIndexPath(_ indexPath: [Int]) -> AXUIElement? {
         var currentElement: AXUIElement = self
         for index in indexPath {
-            currentElement.debugPrint()
+            // currentElement.debugPrint()
             guard let children = currentElement.children, index < children.count else {
                 // Index is out of bounds for the current element's children
                 return nil
@@ -413,7 +413,7 @@ extension AXUIElement {
                     let matches = regex.numberOfMatches(in: value, options: [], range: range)
                     return matches > 0
                 } catch {
-                    print("Regex error: \(error.localizedDescription)")
+                    // print("Regex error: \(error.localizedDescription)")
                     return false
                 }
             }
@@ -512,7 +512,7 @@ extension AXUIElement {
                     }
                 }
             } catch {
-                print("Regex error: \(error)")
+                Logging.default.log("Regex error: \(error)")
                 continue
             }
         }
