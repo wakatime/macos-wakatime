@@ -103,6 +103,7 @@ class MonitoringManager {
             case .linear:
                 return HeartbeatData(
                     entity: title,
+                    project: project,
                     category: .planning)
             case .notes:
                 if activeWindow.rawTitle == "Notes" {
