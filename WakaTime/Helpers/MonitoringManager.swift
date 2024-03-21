@@ -51,6 +51,16 @@ class MonitoringManager {
         return bundleId == MonitoredApp.xcode.rawValue
     }
 
+    static func isAppBrowser(for bundleId: String) -> Bool {
+        MonitoredApp.browserAppIds.contains(bundleId)
+    }
+
+    static func isAppBrowser(_ app: NSRunningApplication) -> Bool {
+        guard let bundleId = app.bundleIdentifier else { return false }
+
+        return isAppBrowser(for: bundleId)
+    }
+
     static func heartbeatData(_ app: NSRunningApplication) -> HeartbeatData? {
         let pid = app.processIdentifier
 
@@ -60,7 +70,18 @@ class MonitoringManager {
             let title = activeWindow.title(for: monitoredApp)
         else { return nil }
 
-        let project = activeWindow.project(for: monitoredApp)
+        // For browser apps, filter out black/whitelisted sites and use the predefined project
+        // from the whitelist if applicable.
+        let (included, predefinedProject) = FilterManager.filterBrowsedSites(
+            app: app,
+            monitoredApp: monitoredApp,
+            activeWindow: activeWindow
+        )
+        guard included else { return nil }
+
+        // If no predefined project is available from the whitelist, attempt to extract the
+        // project from the app
+        let project = predefinedProject ?? activeWindow.project(for: monitoredApp)
 
         switch monitoredApp {
             case .arcbrowser:

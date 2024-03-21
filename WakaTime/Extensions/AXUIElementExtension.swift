@@ -74,7 +74,7 @@ extension AXUIElement {
         // swiftlint:enable force_cast
     }
 
-    func project(for app: MonitoredApp) -> String? {
+    func address(for app: MonitoredApp) -> String? {
         var address: String?
         switch app {
             case .brave:
@@ -98,12 +98,12 @@ extension AXUIElement {
                 address = addressField?.value
             default: return nil
         }
+        return address
+    }
 
-        if let address {
-            return extractProjectName(from: address)
-        }
-
-        return nil
+    func project(for app: MonitoredApp) -> String? {
+        guard let address = address(for: app) else { return nil }
+        return extractProjectName(from: address)
     }
 
     // swiftlint:disable cyclomatic_complexity

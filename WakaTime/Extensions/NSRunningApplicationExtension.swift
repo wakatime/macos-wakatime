@@ -43,6 +43,15 @@ enum MonitoredApp: String, CaseIterable {
         MonitoredApp.slack.rawValue,
     ]
 
+    static let browserAppIds = [
+        MonitoredApp.arcbrowser.rawValue,
+        MonitoredApp.brave.rawValue,
+        MonitoredApp.chrome.rawValue,
+        MonitoredApp.firefox.rawValue,
+        MonitoredApp.safari.rawValue,
+        MonitoredApp.safaripreview.rawValue,
+    ]
+
     // list apps which are enabled by default on first run
     static let defaultEnabledApps = [
         MonitoredApp.canva.rawValue,

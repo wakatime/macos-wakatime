@@ -1,11 +1,19 @@
 import Foundation
 
 class PropertiesManager {
+    enum FilterType: String {
+        case blacklist
+        case whitelist
+    }
+
     enum Keys: String {
         case shouldLaunchOnLogin = "launch_on_login"
         case shouldLogToFile = "log_to_file"
         case shouldAutomaticallyDownloadUpdates = "should_automatically_download_updates"
         case hasLaunchedBefore = "has_launched_before"
+        case filterType = "filter_type"
+        case blacklist = "blacklist"
+        case whitelist = "whitelist"
     }
 
     static var shouldLaunchOnLogin: Bool {
@@ -69,6 +77,61 @@ class PropertiesManager {
         set {
             UserDefaults.standard.set(newValue, forKey: Keys.hasLaunchedBefore.rawValue)
             UserDefaults.standard.synchronize()
+        }
+    }
+
+    static var filterType: FilterType {
+        get {
+            guard let filterTypeString = UserDefaults.standard.string(forKey: Keys.filterType.rawValue) else {
+                return .whitelist
+            }
+
+            return FilterType(rawValue: filterTypeString) ?? .blacklist
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: Keys.filterType.rawValue)
+            UserDefaults.standard.synchronize()
+        }
+    }
+
+    static var blacklist: String {
+        get {
+            guard let blacklist = UserDefaults.standard.string(forKey: Keys.blacklist.rawValue) else {
+                return ""
+            }
+
+            return blacklist
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Keys.blacklist.rawValue)
+            UserDefaults.standard.synchronize()
+        }
+    }
+
+    static var whitelist: String {
+        get {
+            guard let whitelist = UserDefaults.standard.string(forKey: Keys.whitelist.rawValue) else {
+                return
+                    "https://github.com/\n" +
+                    "https://gitlab.com/\n" +
+                    "https://stackoverflow.com/\n" +
+                    "https://docs.python.org/\n" +
+                    "https://google.com/\n" +
+                    "https://npmjs.com"
+            }
+
+            return whitelist
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Keys.whitelist.rawValue)
+            UserDefaults.standard.synchronize()
+        }
+    }
+
+    static var currentFilterList: String {
+        switch Self.filterType {
+            case .blacklist: return Self.blacklist
+            case .whitelist: return Self.whitelist
         }
     }
 }

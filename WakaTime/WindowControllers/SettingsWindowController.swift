@@ -7,7 +7,7 @@ class SettingsWindowController: NSWindowController, NSTextFieldDelegate {
         self.init(window: nil)
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 190),
+            contentRect: NSRect(x: 0, y: 0, width: 440, height: 470),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -16,5 +16,6 @@ class SettingsWindowController: NSWindowController, NSTextFieldDelegate {
         window.title = "Settings"
         window.contentView = settingsView
         self.window = window
+        settingsView.adjustWindowSize(animate: false)
     }
 }
