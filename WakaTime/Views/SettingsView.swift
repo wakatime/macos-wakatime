@@ -52,7 +52,7 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         return stack
     }()
 
-    // MARK: Whitelist/Blacklist
+    // MARK: Denylist/Allowlist
 
     lazy var filterTypeLabel: NSTextField = {
         NSTextField(labelWithString: "Logging Style:")
@@ -62,8 +62,8 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         let control = NSSegmentedControl()
         control.segmentStyle = .texturedRounded
         control.segmentCount = 2
-        control.setLabel("All except blacklisted sites", forSegment: 0)
-        control.setLabel("Only whitelisted sites", forSegment: 1)
+        control.setLabel("All except denied sites", forSegment: 0)
+        control.setLabel("Only allowed sites", forSegment: 1)
         control.trackingMode = .selectOne // Ensure only one option can be selected at a time
         control.action = #selector(segmentedControlDidChange(_:))
         return control
@@ -190,7 +190,7 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
     }
 
     @objc func segmentedControlDidChange(_ sender: NSSegmentedControl) {
-        PropertiesManager.filterType = sender.selectedSegment == 0 ? .blacklist : .whitelist
+        PropertiesManager.filterType = sender.selectedSegment == 0 ? .denylist : .allowlist
         updateFilterControls(animate: true)
     }
 
@@ -206,10 +206,10 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         guard let textView = notification.object as? NSTextView else { return }
 
         switch PropertiesManager.filterType {
-            case .blacklist:
-                PropertiesManager.blacklist = textView.string
-            case .whitelist:
-                PropertiesManager.whitelist = textView.string
+            case .denylist:
+                PropertiesManager.denylist = textView.string
+            case .allowlist:
+                PropertiesManager.allowlist = textView.string
         }
     }
 
@@ -226,12 +226,12 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
     // MARK: State Helpers
 
     private func updateFilterControls(animate: Bool) {
-        let blacklistTitle = "Blacklist:"
-        let blacklistRemarks =
+        let denylistTitle = "Denylist:"
+        let denylistRemarks =
             "Sites that you don't want to show in your reports. " +
             "One line per site."
-        let whitelistTitle = "Whitelist:"
-        let whitelistRemarks =
+        let allowlistTitle = "Allowlist:"
+        let allowlistRemarks =
             "Sites that you want to show in your reports. " +
             "You can assign URL to project by adding @@YourProject at the end of line. " +
             "One line per site."
@@ -241,15 +241,15 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         var list: String
         var selectedSegment: Int
         switch PropertiesManager.filterType {
-            case .blacklist:
-                title = blacklistTitle
-                remarks = blacklistRemarks
-                list = PropertiesManager.blacklist
+            case .denylist:
+                title = denylistTitle
+                remarks = denylistRemarks
+                list = PropertiesManager.denylist
                 selectedSegment = 0
-            case .whitelist:
-                title = whitelistTitle
-                remarks = whitelistRemarks
-                list = PropertiesManager.whitelist
+            case .allowlist:
+                title = allowlistTitle
+                remarks = allowlistRemarks
+                list = PropertiesManager.allowlist
                 selectedSegment = 1
         }
 

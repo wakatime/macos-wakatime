@@ -2,8 +2,8 @@ import Foundation
 
 class PropertiesManager {
     enum FilterType: String {
-        case blacklist
-        case whitelist
+        case denylist
+        case allowlist
     }
 
     enum Keys: String {
@@ -12,8 +12,8 @@ class PropertiesManager {
         case shouldAutomaticallyDownloadUpdates = "should_automatically_download_updates"
         case hasLaunchedBefore = "has_launched_before"
         case filterType = "filter_type"
-        case blacklist = "blacklist"
-        case whitelist = "whitelist"
+        case denylist = "denylist"
+        case allowlist = "allowlist"
     }
 
     static var shouldLaunchOnLogin: Bool {
@@ -83,10 +83,10 @@ class PropertiesManager {
     static var filterType: FilterType {
         get {
             guard let filterTypeString = UserDefaults.standard.string(forKey: Keys.filterType.rawValue) else {
-                return .whitelist
+                return .allowlist
             }
 
-            return FilterType(rawValue: filterTypeString) ?? .blacklist
+            return FilterType(rawValue: filterTypeString) ?? .denylist
         }
         set {
             UserDefaults.standard.set(newValue.rawValue, forKey: Keys.filterType.rawValue)
@@ -94,23 +94,23 @@ class PropertiesManager {
         }
     }
 
-    static var blacklist: String {
+    static var denylist: String {
         get {
-            guard let blacklist = UserDefaults.standard.string(forKey: Keys.blacklist.rawValue) else {
+            guard let denylist = UserDefaults.standard.string(forKey: Keys.denylist.rawValue) else {
                 return ""
             }
 
-            return blacklist
+            return denylist
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: Keys.blacklist.rawValue)
+            UserDefaults.standard.set(newValue, forKey: Keys.denylist.rawValue)
             UserDefaults.standard.synchronize()
         }
     }
 
-    static var whitelist: String {
+    static var allowlist: String {
         get {
-            guard let whitelist = UserDefaults.standard.string(forKey: Keys.whitelist.rawValue) else {
+            guard let allowlist = UserDefaults.standard.string(forKey: Keys.allowlist.rawValue) else {
                 return
                     "https://github.com/\n" +
                     "https://gitlab.com/\n" +
@@ -120,18 +120,18 @@ class PropertiesManager {
                     "https://npmjs.com"
             }
 
-            return whitelist
+            return allowlist
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: Keys.whitelist.rawValue)
+            UserDefaults.standard.set(newValue, forKey: Keys.allowlist.rawValue)
             UserDefaults.standard.synchronize()
         }
     }
 
     static var currentFilterList: String {
         switch Self.filterType {
-            case .blacklist: return Self.blacklist
-            case .whitelist: return Self.whitelist
+            case .denylist: return Self.denylist
+            case .allowlist: return Self.allowlist
         }
     }
 }

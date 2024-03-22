@@ -11,25 +11,25 @@ class FilterManager {
             let (urls, projects) = Self.parseList(PropertiesManager.currentFilterList)
             if urls.isEmpty { return (true, nil) }
             switch PropertiesManager.filterType {
-                case .blacklist:
+                case .denylist:
                     for url in urls where address.contains(url) {
-                        // URL appears on blacklist. Filter the site out.
+                        // URL appears on denylist. Filter the site out.
                         return (false, nil)
                     }
-                case .whitelist:
-                    var addressMatchesWhitelist = false
+                case .allowlist:
+                    var addressMatchesAllowlist = false
                     // swiftlint:disable for_where
                     for (index, url) in urls.enumerated() {
                         if address.contains(url) {
-                            // URL appears on whitelist
-                            addressMatchesWhitelist = true
+                            // URL appears on allowlist
+                            addressMatchesAllowlist = true
                             project = projects[index]
                             break
                         }
                     }
                     // swiftlint:enable for_where
-                    // If none of the URLs on the whitelist match the given address, filter the site out
-                    if !addressMatchesWhitelist {
+                    // If none of the URLs on the allowlist match the given address, filter the site out
+                    if !addressMatchesAllowlist {
                         return (false, nil)
                     }
             }

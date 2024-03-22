@@ -70,8 +70,8 @@ class MonitoringManager {
             let title = activeWindow.title(for: monitoredApp)
         else { return nil }
 
-        // For browser apps, filter out black/whitelisted sites and use the predefined project
-        // from the whitelist if applicable.
+        // For browser apps, filter out deny/allowlisted sites and use the predefined project
+        // from the allowlist if applicable.
         let (included, predefinedProject) = FilterManager.filterBrowsedSites(
             app: app,
             monitoredApp: monitoredApp,
@@ -79,7 +79,7 @@ class MonitoringManager {
         )
         guard included else { return nil }
 
-        // If no predefined project is available from the whitelist, attempt to extract the
+        // If no predefined project is available from the allowlist, attempt to extract the
         // project from the app
         let project = predefinedProject ?? activeWindow.project(for: monitoredApp)
 
