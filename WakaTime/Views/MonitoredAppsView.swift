@@ -50,9 +50,9 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
 
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("AppColumn"))
         outlineView.addTableColumn(column)
-        outlineView.headerView = nil // Remove header if not needed
-
+        outlineView.headerView = nil
         outlineView.outlineTableColumn = column
+        outlineView.indentationPerLevel = 0.0
     }
 
     func reloadData() {
@@ -137,9 +137,9 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
 
             nameLabel.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 10),
             nameLabel.centerYAnchor.constraint(equalTo: cellView.centerYAnchor),
-            nameLabel.trailingAnchor.constraint(equalTo: switchControl.leadingAnchor, constant: -10),
+            nameLabel.trailingAnchor.constraint(equalTo: switchControl.leadingAnchor, constant: -5),
 
-            switchControl.trailingAnchor.constraint(equalTo: cellView.trailingAnchor, constant: -5),
+            switchControl.trailingAnchor.constraint(equalTo: cellView.trailingAnchor, constant: -10),
             switchControl.centerYAnchor.constraint(equalTo: cellView.centerYAnchor),
         ])
 
