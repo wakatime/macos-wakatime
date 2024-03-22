@@ -17,4 +17,9 @@ class MonitoredAppsWindowController: NSWindowController {
         window.contentView = monitoredAppsView
         self.window = window
     }
+
+    override func showWindow(_ sender: Any?) {
+        monitoredAppsView.reloadData()
+        super.showWindow(sender)
+    }
 }

@@ -55,6 +55,10 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
         outlineView.outlineTableColumn = column
     }
 
+    func reloadData() {
+        outlineView.reloadData()
+    }
+
     // MARK: NSOutlineViewDataSource
 
     func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
@@ -94,9 +98,10 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
         let nameLabel = NSTextField(labelWithString: appData.name)
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
 
+        let isMonitored = MonitoringManager.isAppMonitored(for: appData.bundleId)
         let switchControl = NSSwitch()
         switchControl.translatesAutoresizingMaskIntoConstraints = false
-        switchControl.state = MonitoringManager.isAppMonitored(for: appData.bundleId) ? .on : .off
+        switchControl.state = isMonitored ? .on : .off
         switchControl.target = self
         switchControl.action = #selector(switchToggled(_:))
         switchControl.tag = apps.firstIndex(of: appData) ?? -1
