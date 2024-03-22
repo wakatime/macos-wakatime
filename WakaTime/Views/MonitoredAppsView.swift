@@ -1,139 +1,149 @@
 import AppKit
 
-class MonitoredAppsView: NSView {
-    init() {
-        super.init(frame: .zero)
+class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate {
+    struct AppData: Equatable {
+        let bundleId: String
+        let icon: NSImage
+        let name: String
+    }
 
-        let scrollView = NSScrollView(frame: .zero)
-        scrollView.hasVerticalScroller = true
-        scrollView.drawsBackground = false
+    private var outlineView: NSOutlineView!
+    private lazy var apps: [AppData] = {
+        var apps = [AppData]()
+        let bundleIds = MonitoredApp.allBundleIds.filter { !MonitoredApp.unsupportedAppIds.contains($0) }
+        for bundleId in bundleIds {
+            if let icon = AppInfo.getIcon(bundleId: bundleId),
+               let name = AppInfo.getAppName(bundleId: bundleId) {
+                apps.append(AppData(bundleId: bundleId, icon: icon, name: name))
+            }
+        }
+        return apps
+    }()
 
-        let stackView = NSStackView(frame: .zero)
-        stackView.orientation = .vertical
-        stackView.distribution = .equalSpacing
-        stackView.alignment = .leading
-        stackView.spacing = 10
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
 
-        scrollView.documentView = stackView
-
-        addSubview(scrollView)
-
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 0).isActive = true
-        scrollView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: 0).isActive = true
-        scrollView.topAnchor.constraint(equalTo: topAnchor, constant: 0).isActive = true
-        scrollView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: 0).isActive = true
-
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor).isActive = true
-        stackView.trailingAnchor.constraint(
-            equalTo: scrollView.trailingAnchor,
-            constant: 0
-        ).isActive = true
-        stackView.topAnchor.constraint(equalTo: scrollView.topAnchor).isActive = true
-
-        buildView(stackView: stackView)
+        setupOutlineView()
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func buildView(stackView: NSStackView) {
-        // Transparent spacer view for padding at the top
-        let topSpacerView = NSView()
-        topSpacerView.translatesAutoresizingMaskIntoConstraints = false
+    private func setupOutlineView() {
+        let scrollView = NSScrollView()
+        scrollView.hasVerticalScroller = true
+        outlineView = NSOutlineView()
+        outlineView.dataSource = self
+        outlineView.delegate = self
+
+        scrollView.documentView = outlineView
+        addSubview(scrollView)
+
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            topSpacerView.heightAnchor.constraint(equalToConstant: 10)
+            scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            scrollView.topAnchor.constraint(equalTo: topAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
         ])
-        stackView.addArrangedSubview(topSpacerView)
 
-        for (index, bundleId) in MonitoredApp.allBundleIds.enumerated() {
-            guard !MonitoredApp.unsupportedAppIds.contains(bundleId) else { continue }
+        let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("AppColumn"))
+        outlineView.addTableColumn(column)
+        outlineView.headerView = nil // Remove header if not needed
 
-            buildViewForApp(index: index * 2, stackView: stackView, bundleId: bundleId)
-            buildViewForApp(
-                index: (index * 2) + 1,
-                stackView: stackView,
-                bundleId: bundleId.appending("-setapp"))
-        }
-
-        // Transparent spacer view for padding at the bottom
-        let bottomSpacerView = NSView()
-        bottomSpacerView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            bottomSpacerView.heightAnchor.constraint(equalToConstant: 10)
-        ])
-        stackView.addArrangedSubview(bottomSpacerView)
+        outlineView.outlineTableColumn = column
     }
 
-    func buildViewForApp(index: Int, stackView: NSStackView, bundleId: String) {
-        guard
-            let image = AppInfo.getIcon(bundleId: bundleId),
-            let appName = AppInfo.getAppName(bundleId: bundleId)
-        else { return }
+    // MARK: NSOutlineViewDataSource
 
-        let currentStackView = NSStackView(frame: .zero)
-        currentStackView.orientation = .horizontal
-        currentStackView.distribution = .fill
+    func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
+        apps.count
+    }
 
-        let paddingLeading = NSView()
-        paddingLeading.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            paddingLeading.widthAnchor.constraint(equalToConstant: 20) // Left padding
-        ])
+    func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
+        false
+    }
 
-        let paddingTrailing = NSView()
-        paddingTrailing.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            paddingTrailing.widthAnchor.constraint(equalToConstant: 20) // Right padding
-        ])
+    func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
+        apps[index]
+    }
 
-        currentStackView.addArrangedSubview(paddingLeading)
+    // MARK: NSOutlineViewDelegate
 
-        let imageView = NSImageView(frame: NSRect(x: 0, y: 0, width: 15, height: 15))
-        imageView.image = image
-        imageView.layer?.cornerRadius = imageView.frame.height / 2
-        currentStackView.addArrangedSubview(imageView)
-        currentStackView.setCustomSpacing(8, after: imageView)
+    func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
+        50
+    }
 
-        let nameLabel = NSTextField(labelWithString: appName)
-        nameLabel.alignment = .left
+    func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
+        guard let appData = item as? AppData else { return nil }
+
+        let cellView = outlineView.makeView(
+          withIdentifier: NSUserInterfaceItemIdentifier("AppCell"),
+          owner: self
+        ) as? NSTableCellView ?? NSTableCellView()
+
+        // Clear existing subviews to prevent duplication
+        cellView.subviews.forEach { $0.removeFromSuperview() }
+
+        let imageView = NSImageView()
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.image = appData.icon
+        imageView.image?.size = NSSize(width: 20, height: 20)
+
+        let nameLabel = NSTextField(labelWithString: appData.name)
+        nameLabel.translatesAutoresizingMaskIntoConstraints = false
+
         let switchControl = NSSwitch()
-        switchControl.state = MonitoringManager.isAppMonitored(for: bundleId) ? .on : .off
+        switchControl.translatesAutoresizingMaskIntoConstraints = false
+        switchControl.state = MonitoringManager.isAppMonitored(for: appData.bundleId) ? .on : .off
         switchControl.target = self
-        switchControl.tag = index
         switchControl.action = #selector(switchToggled(_:))
+        switchControl.tag = apps.firstIndex(of: appData) ?? -1
 
-        currentStackView.addArrangedSubview(nameLabel)
-        currentStackView.addArrangedSubview(switchControl)
+        cellView.addSubview(imageView)
+        cellView.addSubview(nameLabel)
+        cellView.addSubview(switchControl)
 
-        currentStackView.addArrangedSubview(paddingTrailing)
+        // Determine if the current item is the last in the list
+        let isLastItem = apps.last == appData
 
-        stackView.addArrangedSubview(currentStackView)
-        currentStackView.translatesAutoresizingMaskIntoConstraints = false
-        currentStackView.leadingAnchor.constraint(equalTo: stackView.leadingAnchor).isActive = true
-        currentStackView.trailingAnchor.constraint(equalTo: stackView.trailingAnchor).isActive = true
-        nameLabel.widthAnchor.constraint(equalTo: currentStackView.widthAnchor, multiplier: 0.7, constant: 0).isActive = true
+        if !isLastItem {
+            let divider = NSView()
+            divider.translatesAutoresizingMaskIntoConstraints = false
+            divider.wantsLayer = true
+            divider.layer?.backgroundColor = NSColor.separatorColor.cgColor
 
-        let divider = NSView(frame: NSRect(x: 0, y: 0, width: stackView.frame.width, height: 1))
-        divider.wantsLayer = true
-        divider.layer?.backgroundColor = NSColor.darkGray.cgColor
-        divider.translatesAutoresizingMaskIntoConstraints = false
-        divider.heightAnchor.constraint(equalToConstant: 1).isActive = true
+            cellView.addSubview(divider)
 
-        stackView.addArrangedSubview(divider)
+            NSLayoutConstraint.activate([
+                divider.heightAnchor.constraint(equalToConstant: 1),
+                divider.leadingAnchor.constraint(equalTo: cellView.leadingAnchor),
+                divider.trailingAnchor.constraint(equalTo: cellView.trailingAnchor),
+                divider.bottomAnchor.constraint(equalTo: cellView.bottomAnchor)
+            ])
+        }
+
+        NSLayoutConstraint.activate([
+            imageView.leadingAnchor.constraint(equalTo: cellView.leadingAnchor, constant: 5),
+            imageView.centerYAnchor.constraint(equalTo: cellView.centerYAnchor),
+            imageView.widthAnchor.constraint(equalToConstant: 20),
+            imageView.heightAnchor.constraint(equalToConstant: 20),
+
+            nameLabel.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 10),
+            nameLabel.centerYAnchor.constraint(equalTo: cellView.centerYAnchor),
+            nameLabel.trailingAnchor.constraint(equalTo: switchControl.leadingAnchor, constant: -10),
+
+            switchControl.trailingAnchor.constraint(equalTo: cellView.trailingAnchor, constant: -5),
+            switchControl.centerYAnchor.constraint(equalTo: cellView.centerYAnchor),
+        ])
+
+        return cellView
     }
 
     @objc func switchToggled(_ sender: NSSwitch) {
-        let isSetApp = !sender.tag.isMultiple(of: 2)
-        let index = (isSetApp ? sender.tag - 1 : sender.tag) / 2
-        var bundleId = MonitoredApp.allBundleIds[index]
-
-        if isSetApp {
-            bundleId = bundleId.appending("-setapp")
-        }
-
+        guard sender.tag >= 0 && sender.tag < MonitoredApp.allBundleIds.count else { return }
+        let bundleId = apps[sender.tag].bundleId
         MonitoringManager.set(monitoringState: sender.state == .on ? .on : .off, for: bundleId)
     }
 }
