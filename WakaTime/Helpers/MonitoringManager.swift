@@ -72,16 +72,14 @@ class MonitoringManager {
 
         // For browser apps, filter out deny/allowlisted sites and use the predefined project
         // from the allowlist if applicable.
-        let (included, predefinedProject) = FilterManager.filterBrowsedSites(
+        let included = FilterManager.filterBrowsedSites(
             app: app,
             monitoredApp: monitoredApp,
             activeWindow: activeWindow
         )
         guard included else { return nil }
 
-        // If no predefined project is available from the allowlist, attempt to extract the
-        // project from the app
-        let project = predefinedProject ?? activeWindow.project(for: monitoredApp)
+        let project = activeWindow.project(for: monitoredApp)
 
         switch monitoredApp {
             case .arcbrowser:

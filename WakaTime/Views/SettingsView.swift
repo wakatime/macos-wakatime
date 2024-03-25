@@ -233,7 +233,6 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         let allowlistTitle = "Allowlist:"
         let allowlistRemarks =
             "Sites that you want to show in your reports. " +
-            "You can assign URL to project by adding @@YourProject at the end of line. " +
             "One line per site."
 
         var title: String
@@ -266,7 +265,7 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
 
         let newHeight = stackView.fittingSize.height + 70
 
-        var newWindowFrame = window.frame // window.frameRect(forContentRect: NSRect(origin: window.frame.origin, size: newWindowSize))
+        var newWindowFrame = window.frame
         newWindowFrame.size.height = newHeight
         newWindowFrame.origin.y += window.frame.height - newWindowFrame.height // Adjust origin to keep the top-left corner stationary
 
