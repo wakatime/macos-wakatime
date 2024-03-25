@@ -112,12 +112,14 @@ class PropertiesManager {
         get {
             guard let allowlist = UserDefaults.standard.string(forKey: Keys.allowlist.rawValue) else {
                 return
-                    "https://github.com/\n" +
-                    "https://gitlab.com/\n" +
-                    "https://stackoverflow.com/\n" +
-                    "https://docs.python.org/\n" +
-                    "https://google.com/\n" +
-                    "https://npmjs.com"
+                    "https?://(\\w\\.)*github\\.com/\n" +
+                    "https?://(\\w\\.)*gitlab\\.com/\n" +
+                    "^stackoverflow\\.com/\n" +
+                    "^docs\\.python\\.org/\n" +
+                    "https?://(\\w\\.)*golang\\.org/\n" +
+                    "https?://(\\w\\.)*go\\.dev/\n" +
+                    "https?://(\\w\\.)*npmjs\\.com/\n" +
+                    "https?//localhost[:\\d+]?/"
             }
 
             return allowlist
