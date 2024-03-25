@@ -16,7 +16,7 @@ class FilterManager {
             switch PropertiesManager.filterType {
                 case .denylist:
                     for pattern in patterns {
-                        if httpAddress.matchesRegex(pattern) || httpsAddress.matchesRegex(pattern) {
+                        if address.matchesRegex(pattern) || httpAddress.matchesRegex(pattern) || httpsAddress.matchesRegex(pattern) {
                             // Address matches a pattern on the denylist. Filter the site out.
                             return false
                         }
