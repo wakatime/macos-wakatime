@@ -5,16 +5,26 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
         let bundleId: String
         let icon: NSImage
         let name: String
+        let tag: Int
     }
 
     private var outlineView: NSOutlineView!
     private lazy var apps: [AppData] = {
         var apps = [AppData]()
         let bundleIds = MonitoredApp.allBundleIds.filter { !MonitoredApp.unsupportedAppIds.contains($0) }
+        var index = 0
         for bundleId in bundleIds {
             if let icon = AppInfo.getIcon(bundleId: bundleId),
                let name = AppInfo.getAppName(bundleId: bundleId) {
-                apps.append(AppData(bundleId: bundleId, icon: icon, name: name))
+                apps.append(AppData(bundleId: bundleId, icon: icon, name: name, tag: index))
+                index += 1
+            }
+
+            let setAppBundleId = bundleId.appending("-setapp")
+            if let icon = AppInfo.getIcon(bundleId: setAppBundleId),
+               let name = AppInfo.getAppName(bundleId: setAppBundleId) {
+                apps.append(AppData(bundleId: bundleId.appending("-setapp"), icon: icon, name: name, tag: index))
+                index += 1
             }
         }
         return apps
@@ -104,7 +114,7 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
         switchControl.state = isMonitored ? .on : .off
         switchControl.target = self
         switchControl.action = #selector(switchToggled(_:))
-        switchControl.tag = apps.firstIndex(of: appData) ?? -1
+        switchControl.tag = appData.tag
 
         cellView.addSubview(imageView)
         cellView.addSubview(nameLabel)
@@ -147,8 +157,7 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
     }
 
     @objc func switchToggled(_ sender: NSSwitch) {
-        guard sender.tag >= 0 && sender.tag < MonitoredApp.allBundleIds.count else { return }
-        let bundleId = apps[sender.tag].bundleId
-        MonitoringManager.set(monitoringState: sender.state == .on ? .on : .off, for: bundleId)
+        let appData = apps[sender.tag]
+        MonitoringManager.set(monitoringState: sender.state == .on ? .on : .off, for: appData.bundleId)
     }
 }
