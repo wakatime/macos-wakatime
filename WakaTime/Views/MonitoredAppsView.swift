@@ -23,7 +23,7 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
             let setAppBundleId = bundleId.appending("-setapp")
             if let icon = AppInfo.getIcon(bundleId: setAppBundleId),
                let name = AppInfo.getAppName(bundleId: setAppBundleId) {
-                apps.append(AppData(bundleId: bundleId.appending("-setapp"), icon: icon, name: name, tag: index))
+                apps.append(AppData(bundleId: setAppBundleId, icon: icon, name: name, tag: index))
                 index += 1
             }
         }
