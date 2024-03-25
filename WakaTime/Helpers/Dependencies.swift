@@ -71,6 +71,12 @@ class Dependencies {
         }
         let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
         let output = String(decoding: outputData, as: UTF8.self)
+
+        // disable updating wakatime-cli when it was built from source
+        if output.trim() == "<local-build>" {
+            return true
+        }
+
         let version: String?
         if let regex = try? NSRegularExpression(pattern: "([0-9]+\\.[0-9]+\\.[0-9]+)"),
            let match = regex.firstMatch(in: output, range: NSRange(output.startIndex..., in: output)),
