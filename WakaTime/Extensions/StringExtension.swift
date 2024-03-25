@@ -8,4 +8,8 @@ extension String {
         }
         return false
     }
+
+    func trim() -> String {
+        self.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+    }
 }
