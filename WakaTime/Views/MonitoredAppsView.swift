@@ -85,6 +85,10 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
 
     // MARK: NSOutlineViewDelegate
 
+    func outlineView(_ outlineView: NSOutlineView, shouldSelectItem item: Any) -> Bool {
+        false
+    }
+
     func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
         50
     }
