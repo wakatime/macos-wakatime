@@ -55,7 +55,7 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
     // MARK: Denylist/Allowlist
 
     lazy var filterTypeLabel: NSTextField = {
-        NSTextField(labelWithString: "Logging Style:")
+        NSTextField(labelWithString: "Browser Filter:")
     }()
 
     lazy var filterSegmentedControl: NSSegmentedControl = {
@@ -230,11 +230,11 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         let denylistTitle = "Denylist:"
         let denylistRemarks =
             "Sites that you don't want to show in your reports. " +
-            "One line per site."
+            "Only applicable to browsing activity. One regex per line."
         let allowlistTitle = "Allowlist:"
         let allowlistRemarks =
             "Sites that you want to show in your reports. " +
-            "One line per site."
+            "Only applicable to browsing activity. One regex per line."
 
         var title: String
         var remarks: String

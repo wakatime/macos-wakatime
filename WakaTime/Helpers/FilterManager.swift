@@ -23,7 +23,7 @@ class FilterManager {
                     }
                 case .allowlist:
                     let addressMatchesAllowlist = patterns.contains { pattern in
-                        httpAddress.matchesRegex(pattern) || httpsAddress.matchesRegex(pattern)
+                        address.matchesRegex(pattern) || httpAddress.matchesRegex(pattern) || httpsAddress.matchesRegex(pattern)
                     }
                     // If none of the patterns on the allowlist match the given address, filter the site out
                     if !addressMatchesAllowlist {
