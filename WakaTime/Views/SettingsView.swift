@@ -76,6 +76,7 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
     lazy var filterTextView: NSTextView = {
         let textView = NSTextView()
         textView.isEditable = true
+        textView.isRichText = false
         textView.isSelectable = true
         textView.autoresizingMask = [.width]
         textView.isVerticallyResizable = true
