@@ -32,6 +32,20 @@ extension AXUIElement {
         // swiftlint:enable force_cast
     }
 
+    var nextSibling: AXUIElement? {
+        guard let parentChildren = self.parent?.children, let currentIndex = parentChildren.firstIndex(of: self) else { return nil }
+        let nextIndex = currentIndex + 1
+        guard parentChildren.indices.contains(nextIndex) else { return nil }
+        return parentChildren[nextIndex]
+    }
+
+    var previousSibling: AXUIElement? {
+        guard let parentChildren = self.parent?.children, let currentIndex = parentChildren.firstIndex(of: self) else { return nil }
+        let previousIndex = currentIndex - 1
+        guard parentChildren.indices.contains(previousIndex) else { return nil }
+        return parentChildren[previousIndex]
+    }
+
     var id: String? {
         guard let ref = getValue(for: kAXIdentifierAttribute) else { return nil }
         // swiftlint:disable force_cast
@@ -60,7 +74,7 @@ extension AXUIElement {
         // swiftlint:enable force_cast
     }
 
-    func project(for app: MonitoredApp) -> String? {
+    func address(for app: MonitoredApp) -> String? {
         var address: String?
         switch app {
             case .brave:
@@ -72,6 +86,10 @@ extension AXUIElement {
             case .firefox:
                 let addressField = findAddressField()
                 address = addressField?.value
+            case .linear:
+                let projectLabel = firstDescendantWhere { $0.value == "Project" }
+                let projectButton = projectLabel?.nextSibling?.firstDescendantWhere { $0.role == kAXButtonRole }
+                return projectButton?.rawTitle
             case .safari:
                 let addressField = elementById(identifier: "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD")
                 address = addressField?.value
@@ -80,12 +98,12 @@ extension AXUIElement {
                 address = addressField?.value
             default: return nil
         }
+        return address
+    }
 
-        if let address {
-            return extractProjectName(from: address)
-        }
-
-        return nil
+    func project(for app: MonitoredApp) -> String? {
+        guard let address = address(for: app) else { return nil }
+        return extractProjectName(from: address)
     }
 
     // swiftlint:disable cyclomatic_complexity

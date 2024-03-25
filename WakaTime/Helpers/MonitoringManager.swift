@@ -51,6 +51,16 @@ class MonitoringManager {
         return bundleId == MonitoredApp.xcode.rawValue
     }
 
+    static func isAppBrowser(for bundleId: String) -> Bool {
+        MonitoredApp.browserAppIds.contains(bundleId)
+    }
+
+    static func isAppBrowser(_ app: NSRunningApplication) -> Bool {
+        guard let bundleId = app.bundleIdentifier else { return false }
+
+        return isAppBrowser(for: bundleId)
+    }
+
     static func heartbeatData(_ app: NSRunningApplication) -> HeartbeatData? {
         let pid = app.processIdentifier
 
@@ -59,6 +69,15 @@ class MonitoringManager {
             let activeWindow = AXUIElementCreateApplication(pid).activeWindow,
             let title = activeWindow.title(for: monitoredApp)
         else { return nil }
+
+        // For browser apps, filter out deny/allowlisted sites and use the predefined project
+        // from the allowlist if applicable.
+        let included = FilterManager.filterBrowsedSites(
+            app: app,
+            monitoredApp: monitoredApp,
+            activeWindow: activeWindow
+        )
+        guard included else { return nil }
 
         let project = activeWindow.project(for: monitoredApp)
 
@@ -103,6 +122,7 @@ class MonitoringManager {
             case .linear:
                 return HeartbeatData(
                     entity: title,
+                    project: project,
                     category: .planning)
             case .notes:
                 if activeWindow.rawTitle == "Notes" {

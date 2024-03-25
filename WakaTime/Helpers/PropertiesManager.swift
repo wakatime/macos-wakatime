@@ -1,11 +1,19 @@
 import Foundation
 
 class PropertiesManager {
+    enum FilterType: String {
+        case denylist
+        case allowlist
+    }
+
     enum Keys: String {
         case shouldLaunchOnLogin = "launch_on_login"
         case shouldLogToFile = "log_to_file"
         case shouldAutomaticallyDownloadUpdates = "should_automatically_download_updates"
         case hasLaunchedBefore = "has_launched_before"
+        case filterType = "filter_type"
+        case denylist = "denylist"
+        case allowlist = "allowlist"
     }
 
     static var shouldLaunchOnLogin: Bool {
@@ -69,6 +77,63 @@ class PropertiesManager {
         set {
             UserDefaults.standard.set(newValue, forKey: Keys.hasLaunchedBefore.rawValue)
             UserDefaults.standard.synchronize()
+        }
+    }
+
+    static var filterType: FilterType {
+        get {
+            guard let filterTypeString = UserDefaults.standard.string(forKey: Keys.filterType.rawValue) else {
+                return .allowlist
+            }
+
+            return FilterType(rawValue: filterTypeString) ?? .denylist
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: Keys.filterType.rawValue)
+            UserDefaults.standard.synchronize()
+        }
+    }
+
+    static var denylist: String {
+        get {
+            guard let denylist = UserDefaults.standard.string(forKey: Keys.denylist.rawValue) else {
+                return ""
+            }
+
+            return denylist
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Keys.denylist.rawValue)
+            UserDefaults.standard.synchronize()
+        }
+    }
+
+    static var allowlist: String {
+        get {
+            guard let allowlist = UserDefaults.standard.string(forKey: Keys.allowlist.rawValue) else {
+                return
+                    "https?://(\\w\\.)*github\\.com/\n" +
+                    "https?://(\\w\\.)*gitlab\\.com/\n" +
+                    "^stackoverflow\\.com/\n" +
+                    "^docs\\.python\\.org/\n" +
+                    "https?://(\\w\\.)*golang\\.org/\n" +
+                    "https?://(\\w\\.)*go\\.dev/\n" +
+                    "https?://(\\w\\.)*npmjs\\.com/\n" +
+                    "https?//localhost[:\\d+]?/"
+            }
+
+            return allowlist
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Keys.allowlist.rawValue)
+            UserDefaults.standard.synchronize()
+        }
+    }
+
+    static var currentFilterList: String {
+        switch Self.filterType {
+            case .denylist: return Self.denylist
+            case .allowlist: return Self.allowlist
         }
     }
 }
