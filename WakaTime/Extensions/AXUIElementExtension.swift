@@ -173,8 +173,9 @@ extension AXUIElement {
                 FilterManager.filterBrowsedSites(url)
             else { return nil }
 
-            // TODO: return only domain part depending on user setting
-            return url
+            guard PropertiesManager.domainPreference == .domain else { return url }
+
+            return domainFromUrl(url)
         }
 
         return title(for: monitoredApp)
@@ -318,6 +319,13 @@ extension AXUIElement {
             return URL(string: path)
         }
         return nil
+    }
+
+    func domainFromUrl(_ url: String) -> String? {
+        guard let host = URL(string: url)?.host else { return nil }
+        let domain = host.replacingOccurrences(of: "^www.", with: "", options: .regularExpression)
+        guard let port = URL(string: url)?.port else { return domain }
+        return "\(domain):\(port)"
     }
 
     // Traverses the element's subtree (breadth-first) until visitor() returns false or traversal is completed
