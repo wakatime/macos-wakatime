@@ -322,9 +322,9 @@ extension AXUIElement {
     }
 
     func domainFromUrl(_ url: String) -> String? {
-        guard let host = URL(string: url)?.host else { return nil }
+        guard let host = URL(stringWithoutScheme: url)?.host else { return nil }
         let domain = host.replacingOccurrences(of: "^www.", with: "", options: .regularExpression)
-        guard let port = URL(string: url)?.port else { return domain }
+        guard let port = URL(stringWithoutScheme: url)?.port else { return domain }
         return "\(domain):\(port)"
     }
 
