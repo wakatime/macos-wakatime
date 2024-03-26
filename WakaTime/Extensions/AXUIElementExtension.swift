@@ -74,7 +74,7 @@ extension AXUIElement {
         // swiftlint:enable force_cast
     }
 
-    func address(for app: MonitoredApp) -> String? {
+    func currentBrowserUrl(for app: MonitoredApp) -> String? {
         var address: String?
         switch app {
             case .brave:
@@ -102,26 +102,91 @@ extension AXUIElement {
     }
 
     func project(for app: MonitoredApp) -> String? {
-        guard let address = address(for: app) else { return nil }
-        return extractProjectName(from: address)
+        guard let url = currentBrowserUrl(for: app) else { return nil }
+        return project(from: url)
+    }
+
+    func category(for app: MonitoredApp) -> Category? {
+        switch app {
+            case .arcbrowser:
+                return .browsing
+            case .brave:
+                return .browsing
+            case .canva:
+                return .designing
+            case .chrome:
+                return .browsing
+            case .figma:
+                return .designing
+            case .firefox:
+                return .browsing
+            case .imessage:
+                return .communicating
+            case .iterm2:
+                return .coding
+            case .linear:
+                return .planning
+            case .notes:
+                return .writingdocs
+            case .notion:
+                return .writingdocs
+            case .postman:
+                return .debugging
+            case .slack:
+                return .communicating
+            case .safari:
+                return .browsing
+            case .safaripreview:
+                return .browsing
+            case .tableplus:
+                return .debugging
+            case .terminal:
+                return .coding
+            case .warp:
+                return .coding
+            case .wecom:
+                return .communicating
+            case .whatsapp:
+                return .meeting
+            case .xcode:
+                fatalError("\(app.rawValue) should never use window title")
+            case .zoom:
+                return .meeting
+        }
+    }
+
+    func language(for app: MonitoredApp) -> String? {
+        switch app {
+            case .figma:
+                return "Figma Design"
+            case .postman:
+                return "HTTP Request"
+            default:
+                return nil
+        }
+    }
+
+    func entity(for monitoredApp: MonitoredApp, _ app: NSRunningApplication) -> String? {
+        if MonitoringManager.isAppBrowser(app) {
+            guard
+                let url = currentBrowserUrl(for: monitoredApp),
+                FilterManager.filterBrowsedSites(url)
+            else { return nil }
+
+            // TODO: return only domain part depending on user setting
+            return url
+        }
+
+        return title(for: monitoredApp)
     }
 
     // swiftlint:disable cyclomatic_complexity
     func title(for app: MonitoredApp) -> String? {
         switch app {
             case .arcbrowser:
-                guard
-                    let title = extractPrefix(rawTitle, separator: " - "),
-                    title != "Arc"
-                else { return nil }
-                return title
+                fatalError("\(app.rawValue) should never use window title as entity")
             case .brave:
-                guard
-                    let title = extractPrefix(rawTitle, separator: " - "),
-                    title != "Brave",
-                    title != "New Tab"
-                else { return nil }
-                return title
+                fatalError("\(app.rawValue) should never use window title as entity")
             case .canva:
                 guard
                     let title = extractPrefix(rawTitle, separator: " - ", minCount: 2),
@@ -130,12 +195,7 @@ extension AXUIElement {
                 else { return nil }
                 return title
             case .chrome:
-                guard
-                    let title = extractPrefix(rawTitle, separator: " - "),
-                    title != "Chrome",
-                    title != "New Tab"
-                else { return nil }
-                return title
+                fatalError("\(app.rawValue) should never use window title as entity")
             case .figma:
                 guard
                     let title = extractPrefix(rawTitle, separator: " – "),
@@ -144,12 +204,7 @@ extension AXUIElement {
                 else { return nil }
                 return title
             case .firefox:
-                guard
-                    let title = extractPrefix(rawTitle, separator: " - "),
-                    title != "Firefox",
-                    title != "New Tab"
-                else { return nil }
-                return title
+                fatalError("\(app.rawValue) should never use window title as entity")
             case .imessage:
                 guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
                 return title
@@ -190,18 +245,9 @@ extension AXUIElement {
                 guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
                 return title
             case .safari:
-                guard
-                    let title = extractPrefix(rawTitle, separator: " - "),
-                    title != "Safari"
-                else { return nil }
-                return title
+                fatalError("\(app.rawValue) should never use window title as entity")
             case .safaripreview:
-                guard
-                    let title = extractPrefix(rawTitle, separator: " - "),
-                    title != "Safari",
-                    title != "Safari Technology Preview"
-                else { return nil }
-                return title
+                fatalError("\(app.rawValue) should never use window title as entity")
             case .tableplus:
                 guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
                 return title
@@ -506,7 +552,7 @@ extension AXUIElement {
         return nil
     }
 
-    private func extractProjectName(from url: String) -> String? {
+    private func project(from url: String) -> String? {
         let patterns = [
             "github.com/([^/]+/[^/]+)/?.*$",
             "bitbucket.org/([^/]+/[^/]+)/?.*$",

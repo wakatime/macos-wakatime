@@ -52,6 +52,32 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         return stack
     }()
 
+    // MARK: Domain Preference
+
+    lazy var browserLabel: NSTextField = {
+        var label = NSTextField(labelWithString: "The settings below are only applicable when you’ve enabled " +
+            "monitoring a browser in the Monitored Apps menu.")
+        label.lineBreakMode = .byWordWrapping // Enable word wrapping
+        label.maximumNumberOfLines = 0 // Set to 0 to allow unlimited lines
+        label.preferredMaxLayoutWidth = 380
+        return label
+    }()
+
+    lazy var domainPreferenceLabel: NSTextField = {
+        NSTextField(labelWithString: "Browser Tracking:")
+    }()
+
+    lazy var domainPreferenceControl: NSSegmentedControl = {
+        let control = NSSegmentedControl()
+        control.segmentStyle = .texturedRounded
+        control.segmentCount = 2
+        control.setLabel("Domain only", forSegment: 0)
+        control.setLabel("Full url", forSegment: 1)
+        control.trackingMode = .selectOne // Ensure only one option can be selected at a time
+        control.action = #selector(domainPreferenceDidChange(_:))
+        return control
+    }()
+
     // MARK: Denylist/Allowlist
 
     lazy var filterTypeLabel: NSTextField = {
@@ -105,6 +131,18 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         return label
     }()
 
+    lazy var domainStackView: NSStackView = {
+        let stack = NSStackView(views: [
+            domainPreferenceLabel,
+            domainPreferenceControl
+        ])
+        stack.alignment = .leading
+        stack.orientation = .vertical
+        stack.spacing = 10
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
+
     lazy var filterStackView: NSStackView = {
         let stack = NSStackView(views: [
             filterTypeLabel,
@@ -132,6 +170,8 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         let stackView = NSStackView(views: [
             apiKeyStackView,
             checkboxesStackView,
+            browserLabel,
+            domainStackView,
             filterStackView,
             versionLabel
         ])
@@ -163,6 +203,7 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         addSubview(stackView)
         setupConstraints()
 
+        updateDomainPreference(animate: false)
         updateFilterControls(animate: false)
     }
 
@@ -182,12 +223,17 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
     }
 
     @objc func enableLoggingCheckboxClicked() {
-        PropertiesManager.shouldLaunchOnLogin = enableLoggingCheckbox.state == .on
+        PropertiesManager.shouldLogToFile = enableLoggingCheckbox.state == .on
         if enableLoggingCheckbox.state == .on {
             PropertiesManager.shouldLogToFile = true
         } else {
             PropertiesManager.shouldLogToFile = false
         }
+    }
+
+    @objc func domainPreferenceDidChange(_ sender: NSSegmentedControl) {
+        PropertiesManager.domainPreference = sender.selectedSegment == 0 ? .domain : .url
+        updateDomainPreference(animate: true)
     }
 
     @objc func segmentedControlDidChange(_ sender: NSSegmentedControl) {
@@ -225,6 +271,18 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
     }
 
     // MARK: State Helpers
+
+    private func updateDomainPreference(animate: Bool) {
+        var selectedSegment: Int
+        switch PropertiesManager.domainPreference {
+            case .domain:
+                selectedSegment = 0
+            case .url:
+                selectedSegment = 1
+        }
+        domainPreferenceControl.setSelected(true, forSegment: selectedSegment)
+        adjustWindowSize(animate: animate)
+    }
 
     private func updateFilterControls(animate: Bool) {
         let denylistTitle = "Denylist:"
