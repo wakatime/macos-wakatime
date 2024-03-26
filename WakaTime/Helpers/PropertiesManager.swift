@@ -1,6 +1,11 @@
 import Foundation
 
 class PropertiesManager {
+    enum DomainPreferenceType: String {
+        case domain
+        case url
+    }
+
     enum FilterType: String {
         case denylist
         case allowlist
@@ -11,6 +16,7 @@ class PropertiesManager {
         case shouldLogToFile = "log_to_file"
         case shouldAutomaticallyDownloadUpdates = "should_automatically_download_updates"
         case hasLaunchedBefore = "has_launched_before"
+        case domainPreference = "domain_preference"
         case filterType = "filter_type"
         case denylist = "denylist"
         case allowlist = "allowlist"
@@ -76,6 +82,20 @@ class PropertiesManager {
         }
         set {
             UserDefaults.standard.set(newValue, forKey: Keys.hasLaunchedBefore.rawValue)
+            UserDefaults.standard.synchronize()
+        }
+    }
+
+    static var domainPreference: DomainPreferenceType {
+        get {
+            guard let domainPreferenceString = UserDefaults.standard.string(forKey: Keys.domainPreference.rawValue) else {
+                return .domain
+            }
+
+            return DomainPreferenceType(rawValue: domainPreferenceString) ?? .domain
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: Keys.domainPreference.rawValue)
             UserDefaults.standard.synchronize()
         }
     }
