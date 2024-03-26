@@ -67,122 +67,15 @@ class MonitoringManager {
         guard
             let monitoredApp = app.monitoredApp,
             let activeWindow = AXUIElementCreateApplication(pid).activeWindow,
-            let title = activeWindow.title(for: monitoredApp)
+            let entity = activeWindow.entity(for: monitoredApp, app)
         else { return nil }
 
-        // For browser apps, filter out deny/allowlisted sites and use the predefined project
-        // from the allowlist if applicable.
-        let included = FilterManager.filterBrowsedSites(
-            app: app,
-            monitoredApp: monitoredApp,
-            activeWindow: activeWindow
+        return HeartbeatData(
+            entity: entity,
+            project: activeWindow.project(for: monitoredApp),
+            language: activeWindow.language(for: monitoredApp),
+            category: activeWindow.category(for: monitoredApp)
         )
-        guard included else { return nil }
-
-        let project = activeWindow.project(for: monitoredApp)
-
-        switch monitoredApp {
-            case .arcbrowser:
-                return HeartbeatData(
-                    entity: title,
-                    category: .browsing)
-            case .brave:
-                return HeartbeatData(
-                    entity: title,
-                    project: project,
-                    category: .browsing)
-            case .canva:
-                return HeartbeatData(
-                    entity: title,
-                    language: "Canva Design",
-                    category: .designing)
-            case .chrome:
-                return HeartbeatData(
-                    entity: title,
-                    project: project,
-                    category: .browsing)
-            case .figma:
-                return HeartbeatData(
-                    entity: title,
-                    language: "Figma Design",
-                    category: .designing)
-            case .firefox:
-                return HeartbeatData(
-                    entity: title,
-                    project: project,
-                    category: .browsing)
-            case .imessage:
-                return HeartbeatData(
-                    entity: title,
-                    category: .communicating)
-            case .iterm2:
-                return HeartbeatData(
-                    entity: title,
-                    category: .coding)
-            case .linear:
-                return HeartbeatData(
-                    entity: title,
-                    project: project,
-                    category: .planning)
-            case .notes:
-                if activeWindow.rawTitle == "Notes" {
-                    return HeartbeatData(
-                        entity: title,
-                        category: .writingdocs
-                    )
-                }
-            case .notion:
-                return HeartbeatData(
-                    entity: title,
-                    category: .writingdocs)
-            case .postman:
-                return HeartbeatData(
-                    entity: title,
-                    language: "HTTP Request",
-                    category: .debugging)
-            case .slack:
-                return HeartbeatData(
-                    entity: title,
-                    category: .communicating)
-            case .safari:
-                return HeartbeatData(
-                    entity: title,
-                    project: project,
-                    category: .browsing)
-            case .safaripreview:
-                return HeartbeatData(
-                    entity: title,
-                    project: project,
-                    category: .browsing)
-            case .tableplus:
-                return HeartbeatData(
-                    entity: title,
-                    category: .debugging)
-            case .terminal:
-                return HeartbeatData(
-                    entity: title,
-                    category: .coding)
-            case .warp:
-                return HeartbeatData(
-                    entity: title,
-                    category: .coding)
-            case .wecom:
-                return HeartbeatData(
-                    entity: title,
-                    category: .communicating)
-            case .whatsapp:
-                return HeartbeatData(
-                    entity: title,
-                    category: .meeting)
-            case .xcode:
-                fatalError("\(monitoredApp.rawValue) should never use window title")
-            case .zoom:
-                return HeartbeatData(
-                    entity: title,
-                    category: .meeting)
-        }
-
-        return nil
     }
 
     static func set(monitoringState: MonitoringState, for bundleId: String) {
