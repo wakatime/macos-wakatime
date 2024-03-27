@@ -67,15 +67,27 @@ class MonitoringManager {
         guard
             let monitoredApp = app.monitoredApp,
             let activeWindow = AXUIElementCreateApplication(pid).activeWindow,
-            let entity = activeWindow.entity(for: monitoredApp, app)
+            let entity = monitoredApp.entity(for: activeWindow, app)
         else { return nil }
 
         return HeartbeatData(
             entity: entity,
-            project: activeWindow.project(for: monitoredApp),
-            language: activeWindow.language(for: monitoredApp),
-            category: activeWindow.category(for: monitoredApp)
+            project: monitoredApp.project(for: activeWindow),
+            language: monitoredApp.language,
+            category: monitoredApp.category
         )
+    }
+
+    static var isMonitoringBrowsing: Bool {
+        for bundleId in MonitoredApp.browserAppIds {
+            guard
+                AppInfo.getAppName(bundleId: bundleId) != nil,
+                isAppMonitored(for: bundleId)
+            else { continue }
+
+            return true
+        }
+        return false
     }
 
     static func set(monitoringState: MonitoringState, for bundleId: String) {

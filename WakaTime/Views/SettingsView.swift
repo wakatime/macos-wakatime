@@ -55,7 +55,7 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
     // MARK: Domain Preference
 
     lazy var browserLabel: NSTextField = {
-        var label = NSTextField(labelWithString: "The settings below are only applicable when you’ve enabled " +
+        var label = NSTextField(labelWithString: "The settings below are only applicable because you’ve enabled " +
             "monitoring a browser in the Monitored Apps menu.")
         label.lineBreakMode = .byWordWrapping // Enable word wrapping
         label.maximumNumberOfLines = 0 // Set to 0 to allow unlimited lines
@@ -181,6 +181,7 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         stackView.distribution = .equalSpacing
         stackView.edgeInsets = NSEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
         stackView.translatesAutoresizingMaskIntoConstraints = false
+
         stackView.addConstraint(
             NSLayoutConstraint(
                 item: filterStackView,
@@ -192,6 +193,7 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
                 constant: -(stackView.edgeInsets.left + stackView.edgeInsets.right)
             )
         )
+
         return stackView
     }()
 
@@ -202,7 +204,7 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
 
         addSubview(stackView)
         setupConstraints()
-
+        setBrowserVisibility()
         updateDomainPreference(animate: false)
         updateFilterControls(animate: false)
     }
@@ -268,6 +270,21 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
             stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
         ])
+    }
+
+    func setBrowserVisibility() {
+        if MonitoringManager.isMonitoringBrowsing {
+            browserLabel.isHidden = false
+            domainStackView.isHidden = false
+            filterStackView.isHidden = false
+            versionLabel.isHidden = false
+        } else {
+            browserLabel.isHidden = true
+            domainStackView.isHidden = true
+            filterStackView.isHidden = true
+            versionLabel.isHidden = true
+        }
+        adjustWindowSize(animate: false)
     }
 
     // MARK: State Helpers

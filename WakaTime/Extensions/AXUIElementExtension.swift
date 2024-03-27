@@ -74,208 +74,6 @@ extension AXUIElement {
         // swiftlint:enable force_cast
     }
 
-    func currentBrowserUrl(for app: MonitoredApp) -> String? {
-        var address: String?
-        switch app {
-            case .brave:
-                let addressField = findAddressField()
-                address = addressField?.value
-            case .chrome:
-                let addressField = findAddressField()
-                address = addressField?.value
-            case .firefox:
-                let addressField = findAddressField()
-                address = addressField?.value
-            case .linear:
-                let projectLabel = firstDescendantWhere { $0.value == "Project" }
-                let projectButton = projectLabel?.nextSibling?.firstDescendantWhere { $0.role == kAXButtonRole }
-                return projectButton?.rawTitle
-            case .safari:
-                let addressField = elementById(identifier: "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD")
-                address = addressField?.value
-            case .safaripreview:
-                let addressField = elementById(identifier: "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD")
-                address = addressField?.value
-            default: return nil
-        }
-        return address
-    }
-
-    func project(for app: MonitoredApp) -> String? {
-        guard let url = currentBrowserUrl(for: app) else { return nil }
-        return project(from: url)
-    }
-
-    func category(for app: MonitoredApp) -> Category? {
-        switch app {
-            case .arcbrowser:
-                return .browsing
-            case .brave:
-                return .browsing
-            case .canva:
-                return .designing
-            case .chrome:
-                return .browsing
-            case .figma:
-                return .designing
-            case .firefox:
-                return .browsing
-            case .imessage:
-                return .communicating
-            case .iterm2:
-                return .coding
-            case .linear:
-                return .planning
-            case .notes:
-                return .writingdocs
-            case .notion:
-                return .writingdocs
-            case .postman:
-                return .debugging
-            case .slack:
-                return .communicating
-            case .safari:
-                return .browsing
-            case .safaripreview:
-                return .browsing
-            case .tableplus:
-                return .debugging
-            case .terminal:
-                return .coding
-            case .warp:
-                return .coding
-            case .wecom:
-                return .communicating
-            case .whatsapp:
-                return .meeting
-            case .xcode:
-                fatalError("\(app.rawValue) should never use window title")
-            case .zoom:
-                return .meeting
-        }
-    }
-
-    func language(for app: MonitoredApp) -> String? {
-        switch app {
-            case .figma:
-                return "Figma Design"
-            case .postman:
-                return "HTTP Request"
-            default:
-                return nil
-        }
-    }
-
-    func entity(for monitoredApp: MonitoredApp, _ app: NSRunningApplication) -> String? {
-        if MonitoringManager.isAppBrowser(app) {
-            guard
-                let url = currentBrowserUrl(for: monitoredApp),
-                FilterManager.filterBrowsedSites(url)
-            else { return nil }
-
-            guard PropertiesManager.domainPreference == .domain else { return url }
-
-            return domainFromUrl(url)
-        }
-
-        return title(for: monitoredApp)
-    }
-
-    // swiftlint:disable cyclomatic_complexity
-    func title(for app: MonitoredApp) -> String? {
-        switch app {
-            case .arcbrowser:
-                fatalError("\(app.rawValue) should never use window title as entity")
-            case .brave:
-                fatalError("\(app.rawValue) should never use window title as entity")
-            case .canva:
-                guard
-                    let title = extractPrefix(rawTitle, separator: " - ", minCount: 2),
-                    title != "Canva",
-                    title != "Home"
-                else { return nil }
-                return title
-            case .chrome:
-                fatalError("\(app.rawValue) should never use window title as entity")
-            case .figma:
-                guard
-                    let title = extractPrefix(rawTitle, separator: " – "),
-                    title != "Figma",
-                    title != "Drafts"
-                else { return nil }
-                return title
-            case .firefox:
-                fatalError("\(app.rawValue) should never use window title as entity")
-            case .imessage:
-                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
-                return title
-            case .iterm2:
-                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
-                return title
-            case .linear:
-                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
-                return title
-            case .notes:
-                // There's apparently two text editor implementations in Apple Notes. One uses a web view,
-                // the other appears to be a native implementation based on the `ICTK2MacTextView` class.
-                let webAreaElement = firstDescendantWhere { $0.role == "AXWebArea" }
-                if let webAreaElement {
-                    // WebView-based implementation
-                    let titleElement = webAreaElement.firstDescendantWhere { $0.role == kAXStaticTextRole }
-                    return titleElement?.value
-                } else {
-                    // ICTK2MacTextView
-                    let textAreaElement = firstDescendantWhere { $0.role == kAXTextAreaRole }
-                    if let value = textAreaElement?.value {
-                        let title = extractPrefix(value, separator: "\n")
-                        return title
-                    }
-                    return nil
-                }
-            case .notion:
-                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
-                return title
-            case .postman:
-                guard
-                    let title = extractPrefix(rawTitle, separator: " - ", fullTitle: true),
-                    title != "Postman"
-                else { return nil }
-
-                return title
-            case .slack:
-                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
-                return title
-            case .safari:
-                fatalError("\(app.rawValue) should never use window title as entity")
-            case .safaripreview:
-                fatalError("\(app.rawValue) should never use window title as entity")
-            case .tableplus:
-                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
-                return title
-            case .terminal:
-                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
-                return title
-            case .warp:
-                guard
-                    let title = extractPrefix(rawTitle, separator: " - "),
-                    title != "Warp"
-                else { return nil }
-                return title
-            case .wecom:
-                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
-                return title
-            case .whatsapp:
-                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
-                return title
-            case .xcode:
-                fatalError("\(app.rawValue) should never use window title as entity")
-            case .zoom:
-                guard let title = extractPrefix(rawTitle, separator: " - ") else { return nil }
-                return title
-        }
-    }
-    // swiftlint:enable cyclomatic_complexity
-
     var document: String? {
         guard let ref = getValue(for: kAXDocumentAttribute) else { return nil }
         // swiftlint:disable force_cast
@@ -319,13 +117,6 @@ extension AXUIElement {
             return URL(string: path)
         }
         return nil
-    }
-
-    func domainFromUrl(_ url: String) -> String? {
-        guard let host = URL(stringWithoutScheme: url)?.host else { return nil }
-        let domain = host.replacingOccurrences(of: "^www.", with: "", options: .regularExpression)
-        guard let port = URL(stringWithoutScheme: url)?.port else { return domain }
-        return "\(domain):\(port)"
     }
 
     // Traverses the element's subtree (breadth-first) until visitor() returns false or traversal is completed
@@ -493,6 +284,43 @@ extension AXUIElement {
         }
     }
 
+    func elementAtPosition(x: Float, y: Float) -> AXUIElement? {
+        var element: AXUIElement?
+        AXUIElementCopyElementAtPosition(self, x, y, &element)
+        return element
+    }
+
+    func elementAtPositionRelativeToWindow(x: CGFloat, y: CGFloat) -> AXUIElement? {
+        // swiftlint:disable force_unwrapping
+        let windowPositionData = getValue(for: kAXPositionAttribute)!
+        let windowSizeData = getValue(for: kAXSizeAttribute)!
+        // swiftlint:enable force_unwrapping
+
+        var windowPosition = CGPoint()
+        var windowSize = CGSize()
+
+        // swiftlint:disable force_cast
+        if !AXValueGetValue(windowPositionData as! AXValue, .cgPoint, &windowPosition) ||
+           !AXValueGetValue(windowSizeData as! AXValue, .cgSize, &windowSize) {
+            return nil
+        }
+        // swiftlint:enable force_cast
+
+        let globalX = windowPosition.x + x
+        let globalY = windowPosition.y + y
+
+        if globalX < windowPosition.x || globalX > windowPosition.x + windowSize.width ||
+           globalY < windowPosition.y || globalY > windowPosition.y + windowSize.height {
+            // Point is outside the window bounds
+            return nil
+        }
+
+        var element: AXUIElement?
+        let systemWideElement = AXUIElementCreateSystemWide()
+        AXUIElementCopyElementAtPosition(systemWideElement, Float(globalX), Float(globalY), &element)
+        return element
+    }
+
     func debugPrintSubtree(element: AXUIElement? = nil, depth: Int = 0, highlight indexPath: [Int] = [], currentPath: [Int] = []) {
         let element = element ?? self
         if let children = element.children {
@@ -542,7 +370,7 @@ extension AXUIElement {
         )
     }
 
-    private func extractPrefix(_ str: String?, separator: String, minCount: Int? = nil, fullTitle: Bool = false) -> String? {
+    func extractPrefix(_ str: String?, separator: String, minCount: Int? = nil, fullTitle: Bool = false) -> String? {
         guard let str = str else { return nil }
 
         let parts = str.components(separatedBy: separator)
@@ -557,39 +385,6 @@ extension AXUIElement {
             }
             return parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
         }
-        return nil
-    }
-
-    private func project(from url: String) -> String? {
-        let patterns = [
-            "github.com/([^/]+/[^/]+)/?.*$",
-            "bitbucket.org/([^/]+/[^/]+)/?.*$",
-            "app.circleci.com/.*/?(github|bitbucket|gitlab)/([^/]+/[^/]+)/?.*$",
-            "app.travis-ci.com/(github|bitbucket|gitlab)/([^/]+/[^/]+)/?.*$",
-            "app.travis-ci.org/(github|bitbucket|gitlab)/([^/]+/[^/]+)/?.*$"
-        ]
-
-        for pattern in patterns {
-            do {
-                let regex = try NSRegularExpression(pattern: pattern)
-                let nsrange = NSRange(url.startIndex..<url.endIndex, in: url)
-                if let match = regex.firstMatch(in: url, options: [], range: nsrange) {
-                    // Adjusted to capture the right group based on the pattern.
-                    // The group index might be 2 if the pattern includes a platform prefix before the project name.
-                    let groupIndex = pattern.contains("(github|bitbucket|gitlab)") ? 2 : 1
-                    let range = match.range(at: groupIndex)
-
-                    if range.location != NSNotFound, let range = Range(range, in: url) {
-                        return String(url[range])
-                    }
-                }
-            } catch {
-                Logging.default.log("Regex error: \(error)")
-                continue
-            }
-        }
-
-        // Return nil if no pattern matches
         return nil
     }
 }
