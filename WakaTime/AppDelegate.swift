@@ -153,6 +153,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
 
     private func showSettings() {
         NSApp.activate(ignoringOtherApps: true)
+        settingsWindowController.settingsView.setBrowserVisibility()
         settingsWindowController.showWindow(self)
     }
 

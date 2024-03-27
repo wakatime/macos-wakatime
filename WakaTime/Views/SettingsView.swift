@@ -167,20 +167,14 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
     }()
 
     lazy var stackView: NSStackView = {
-        var views: [NSView] = [
+        let stackView = NSStackView(views: [
             apiKeyStackView,
-            checkboxesStackView
-        ]
-        if MonitoringManager.isMonitoringBrowsing {
-            views.append(contentsOf: [
-                browserLabel,
-                domainStackView,
-                filterStackView,
-                versionLabel
-            ])
-        }
-
-        let stackView = NSStackView(views: views)
+            checkboxesStackView,
+            browserLabel,
+            domainStackView,
+            filterStackView,
+            versionLabel
+        ])
         stackView.alignment = .leading
         stackView.orientation = .vertical
         stackView.spacing = 25
@@ -188,19 +182,17 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         stackView.edgeInsets = NSEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
         stackView.translatesAutoresizingMaskIntoConstraints = false
 
-        if MonitoringManager.isMonitoringBrowsing {
-            stackView.addConstraint(
-                NSLayoutConstraint(
-                    item: filterStackView,
-                    attribute: .width,
-                    relatedBy: .equal,
-                    toItem: stackView,
-                    attribute: .width,
-                    multiplier: 1,
-                    constant: -(stackView.edgeInsets.left + stackView.edgeInsets.right)
-                )
+        stackView.addConstraint(
+            NSLayoutConstraint(
+                item: filterStackView,
+                attribute: .width,
+                relatedBy: .equal,
+                toItem: stackView,
+                attribute: .width,
+                multiplier: 1,
+                constant: -(stackView.edgeInsets.left + stackView.edgeInsets.right)
             )
-        }
+        )
 
         return stackView
     }()
@@ -212,11 +204,9 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
 
         addSubview(stackView)
         setupConstraints()
-
-        if MonitoringManager.isMonitoringBrowsing {
-            updateDomainPreference(animate: false)
-            updateFilterControls(animate: false)
-        }
+        setBrowserVisibility()
+        updateDomainPreference(animate: false)
+        updateFilterControls(animate: false)
     }
 
     required init?(coder: NSCoder) {
@@ -280,6 +270,21 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
             stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
         ])
+    }
+
+    func setBrowserVisibility() {
+        if MonitoringManager.isMonitoringBrowsing {
+            browserLabel.isHidden = false
+            domainStackView.isHidden = false
+            filterStackView.isHidden = false
+            versionLabel.isHidden = false
+        } else {
+            browserLabel.isHidden = true
+            domainStackView.isHidden = true
+            filterStackView.isHidden = true
+            versionLabel.isHidden = true
+        }
+        adjustWindowSize(animate: false)
     }
 
     // MARK: State Helpers
