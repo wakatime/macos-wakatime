@@ -284,6 +284,43 @@ extension AXUIElement {
         }
     }
 
+    func elementAtPosition(x: Float, y: Float) -> AXUIElement? {
+        var element: AXUIElement?
+        AXUIElementCopyElementAtPosition(self, x, y, &element)
+        return element
+    }
+
+    func elementAtPositionRelativeToWindow(x: CGFloat, y: CGFloat) -> AXUIElement? {
+        // swiftlint:disable force_unwrapping
+        let windowPositionData = getValue(for: kAXPositionAttribute)!
+        let windowSizeData = getValue(for: kAXSizeAttribute)!
+        // swiftlint:enable force_unwrapping
+
+        var windowPosition = CGPoint()
+        var windowSize = CGSize()
+
+        // swiftlint:disable force_cast
+        if !AXValueGetValue(windowPositionData as! AXValue, .cgPoint, &windowPosition) ||
+           !AXValueGetValue(windowSizeData as! AXValue, .cgSize, &windowSize) {
+            return nil
+        }
+        // swiftlint:enable force_cast
+
+        let globalX = windowPosition.x + x
+        let globalY = windowPosition.y + y
+
+        if globalX < windowPosition.x || globalX > windowPosition.x + windowSize.width ||
+           globalY < windowPosition.y || globalY > windowPosition.y + windowSize.height {
+            // Point is outside the window bounds
+            return nil
+        }
+
+        var element: AXUIElement?
+        let systemWideElement = AXUIElementCreateSystemWide()
+        AXUIElementCopyElementAtPosition(systemWideElement, Float(globalX), Float(globalY), &element)
+        return element
+    }
+
     func debugPrintSubtree(element: AXUIElement? = nil, depth: Int = 0, highlight indexPath: [Int] = [], currentPath: [Int] = []) {
         let element = element ?? self
         if let children = element.children {
