@@ -67,14 +67,14 @@ class MonitoringManager {
         guard
             let monitoredApp = app.monitoredApp,
             let activeWindow = AXUIElementCreateApplication(pid).activeWindow,
-            let entity = activeWindow.entity(for: monitoredApp, app)
+            let entity = monitoredApp.entity(for: activeWindow, app)
         else { return nil }
 
         return HeartbeatData(
             entity: entity,
-            project: activeWindow.project(for: monitoredApp),
-            language: activeWindow.language(for: monitoredApp),
-            category: activeWindow.category(for: monitoredApp)
+            project: monitoredApp.project(for: activeWindow),
+            language: monitoredApp.language,
+            category: monitoredApp.category
         )
     }
 
