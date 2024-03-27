@@ -206,6 +206,17 @@ enum MonitoredApp: String, CaseIterable {
         }
 
         switch self {
+            case .canva:
+                // Canva obviously implements tabs in a different way than the tab content UI.
+                // Due to this circumstance, it's possible to just sample an element from the
+                // Canva window which is positioned underneath the tab bar and trace to the
+                // web area root which appears to be properly titled. All the UI zoom settings
+                // in Canva only change the tab content or sub content of the tab content, hence
+                // this should be relatively safe. In cases where this fails, nil should be
+                // returned as a consequence of the web area not being found.
+                let someElem = element.elementAtPositionRelativeToWindow(x: 10, y: 60)
+                let webArea = someElem?.firstAncestorWhere { $0.role == "AXWebArea" }
+                return webArea?.rawTitle
             case .notes:
                 // There's apparently two text editor implementations in Apple Notes. One uses a web view,
                 // the other appears to be a native implementation based on the `ICTK2MacTextView` class.
@@ -235,16 +246,7 @@ enum MonitoredApp: String, CaseIterable {
             case .brave:
                 fatalError("\(self.rawValue) should never use window title as entity")
             case .canva:
-                // Canva obviously implements tabs in a different way than the tab content UI.
-                // Due to this circumstance, it's possible to just sample an element from the
-                // Canva window which is positioned underneath the tab bar and trace to the
-                // web area root which appears to be properly titled. All the UI zoom settings
-                // in Canva only change the tab content or sub content of the tab content, hence
-                // this should be relatively safe. In cases where this fails, nil should be
-                // returned as a consequence of the web area not being found.
-                let someElem = element.elementAtPositionRelativeToWindow(x: 10, y: 60)
-                let webArea = someElem?.firstAncestorWhere { $0.role == "AXWebArea" }
-                return webArea?.rawTitle
+                fatalError("\(self.rawValue) should never use window title as entity")
             case .chrome:
                 fatalError("\(self.rawValue) should never use window title as entity")
             case .figma:
