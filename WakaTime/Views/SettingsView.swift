@@ -55,7 +55,7 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
     // MARK: Domain Preference
 
     lazy var browserLabel: NSTextField = {
-        var label = NSTextField(labelWithString: "The settings below are only applicable when you’ve enabled " +
+        var label = NSTextField(labelWithString: "The settings below are only applicable because you’ve enabled " +
             "monitoring a browser in the Monitored Apps menu.")
         label.lineBreakMode = .byWordWrapping // Enable word wrapping
         label.maximumNumberOfLines = 0 // Set to 0 to allow unlimited lines
@@ -167,31 +167,41 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
     }()
 
     lazy var stackView: NSStackView = {
-        let stackView = NSStackView(views: [
+        var views: [NSView] = [
             apiKeyStackView,
-            checkboxesStackView,
-            browserLabel,
-            domainStackView,
-            filterStackView,
-            versionLabel
-        ])
+            checkboxesStackView
+        ]
+        if MonitoringManager.isMonitoringBrowsing {
+            views.append(contentsOf: [
+                browserLabel,
+                domainStackView,
+                filterStackView,
+                versionLabel
+            ])
+        }
+
+        let stackView = NSStackView(views: views)
         stackView.alignment = .leading
         stackView.orientation = .vertical
         stackView.spacing = 25
         stackView.distribution = .equalSpacing
         stackView.edgeInsets = NSEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
         stackView.translatesAutoresizingMaskIntoConstraints = false
-        stackView.addConstraint(
-            NSLayoutConstraint(
-                item: filterStackView,
-                attribute: .width,
-                relatedBy: .equal,
-                toItem: stackView,
-                attribute: .width,
-                multiplier: 1,
-                constant: -(stackView.edgeInsets.left + stackView.edgeInsets.right)
+
+        if MonitoringManager.isMonitoringBrowsing {
+            stackView.addConstraint(
+                NSLayoutConstraint(
+                    item: filterStackView,
+                    attribute: .width,
+                    relatedBy: .equal,
+                    toItem: stackView,
+                    attribute: .width,
+                    multiplier: 1,
+                    constant: -(stackView.edgeInsets.left + stackView.edgeInsets.right)
+                )
             )
-        )
+        }
+
         return stackView
     }()
 
@@ -203,8 +213,10 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         addSubview(stackView)
         setupConstraints()
 
-        updateDomainPreference(animate: false)
-        updateFilterControls(animate: false)
+        if MonitoringManager.isMonitoringBrowsing {
+            updateDomainPreference(animate: false)
+            updateFilterControls(animate: false)
+        }
     }
 
     required init?(coder: NSCoder) {
