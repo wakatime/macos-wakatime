@@ -78,6 +78,18 @@ class MonitoringManager {
         )
     }
 
+    static var isMonitoringBrowsing: Bool {
+        for bundleId in MonitoredApp.browserAppIds {
+            guard
+                AppInfo.getAppName(bundleId: bundleId) != nil,
+                isAppMonitored(for: bundleId)
+            else { continue }
+
+            return true
+        }
+        return false
+    }
+
     static func set(monitoringState: MonitoringState, for bundleId: String) {
         UserDefaults.standard.set(monitoringState == .on, forKey: monitoredKey(bundleId: bundleId))
         UserDefaults.standard.synchronize()
