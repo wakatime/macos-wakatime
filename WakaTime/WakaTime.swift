@@ -50,6 +50,16 @@ class WakaTime: HeartbeatEventHandler {
             }
             PropertiesManager.hasLaunchedBefore = true
         }
+
+        if MonitoringManager.isMonitoringBrowsing {
+            Task {
+                if let browser = await Dependencies.recentBrowserExtension() {
+                    delegate.toastNotification("Warning: WakaTime \(browser) extension detected. " +
+                        "It’s recommended to only track browsing activity with the \(browser) " +
+                        "extension or Mac Desktop app, but not both.")
+                }
+            }
+        }
     }
 
     private func configureFirebase() {
