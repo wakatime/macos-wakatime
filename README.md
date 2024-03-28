@@ -55,4 +55,4 @@ Made with :heart: by the WakaTime Team.
 [dashboard]: https://wakatime.com/
 [contributing]: CONTRIBUTING.md
 [authors]: AUTHORS
-[supported apps]: https://github.com/wakatime/macos-wakatime/blob/main/WakaTime/Extensions/NSRunningApplicationExtension.swift#L3
+[supported apps]: https://github.com/wakatime/macos-wakatime/blob/main/WakaTime/Watchers/MonitoredApp.swift#L3
