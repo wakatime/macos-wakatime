@@ -277,12 +277,10 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
             browserLabel.isHidden = false
             domainStackView.isHidden = false
             filterStackView.isHidden = false
-            versionLabel.isHidden = false
         } else {
             browserLabel.isHidden = true
             domainStackView.isHidden = true
             filterStackView.isHidden = true
-            versionLabel.isHidden = true
         }
         adjustWindowSize(animate: false)
     }
