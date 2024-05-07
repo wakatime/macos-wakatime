@@ -14,6 +14,7 @@ class PropertiesManager {
     enum Keys: String {
         case shouldLaunchOnLogin = "launch_on_login"
         case shouldLogToFile = "log_to_file"
+        case shouldRequestA11y = "request_a11y"
         case shouldAutomaticallyDownloadUpdates = "should_automatically_download_updates"
         case hasLaunchedBefore = "has_launched_before"
         case domainPreference = "domain_preference"
@@ -68,6 +69,21 @@ class PropertiesManager {
         }
         set {
             UserDefaults.standard.set(newValue, forKey: Keys.shouldAutomaticallyDownloadUpdates.rawValue)
+            UserDefaults.standard.synchronize()
+        }
+    }
+
+    static var shouldRequestA11yPermission: Bool {
+        get {
+            guard UserDefaults.standard.string(forKey: Keys.shouldRequestA11y.rawValue) != nil else {
+                UserDefaults.standard.set(true, forKey: Keys.shouldRequestA11y.rawValue)
+                return true
+            }
+
+            return UserDefaults.standard.bool(forKey: Keys.shouldRequestA11y.rawValue)
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Keys.shouldRequestA11y.rawValue)
             UserDefaults.standard.synchronize()
         }
     }
