@@ -44,8 +44,18 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         return checkbox
     }()
 
+    lazy var requestA11yCheckbox: NSButton = {
+        let checkbox = NSButton(
+            checkboxWithTitle: "Enable stats from Xcode by requesting accessibility permission",
+            target: self,
+            action: #selector(enableA11yCheckboxClicked)
+        )
+        checkbox.state = PropertiesManager.shouldRequestA11yPermission ? .on : .off
+        return checkbox
+    }()
+
     lazy var checkboxesStackView: NSStackView = {
-        let stack = NSStackView(views: [launchAtLoginCheckbox, enableLoggingCheckbox])
+        let stack = NSStackView(views: [launchAtLoginCheckbox, requestA11yCheckbox, enableLoggingCheckbox])
         stack.alignment = .leading
         stack.orientation = .vertical
         stack.spacing = 10
@@ -230,6 +240,15 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
             PropertiesManager.shouldLogToFile = true
         } else {
             PropertiesManager.shouldLogToFile = false
+        }
+    }
+
+    @objc func enableA11yCheckboxClicked() {
+        PropertiesManager.shouldRequestA11yPermission = requestA11yCheckbox.state == .on
+        if requestA11yCheckbox.state == .on {
+            PropertiesManager.shouldRequestA11yPermission = true
+        } else {
+            PropertiesManager.shouldRequestA11yPermission = false
         }
     }
 

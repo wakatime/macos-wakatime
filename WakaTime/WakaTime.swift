@@ -24,7 +24,7 @@ class WakaTime: HeartbeatEventHandler {
 
         Dependencies.installDependencies()
         if SettingsManager.shouldRegisterAsLoginItem() { SettingsManager.registerAsLoginItem() }
-        if !Accessibility.requestA11yPermission() {
+        if PropertiesManager.shouldRequestA11yPermission && !Accessibility.requestA11yPermission() {
             delegate.a11yStatusChanged(false)
         }
 

@@ -148,6 +148,10 @@ class Watcher: NSObject {
         } catch {
             Logging.default.log("Failed to setup AXObserver: \(error.localizedDescription)")
 
+            guard PropertiesManager.shouldRequestA11yPermission else {
+                return
+            }
+
             // TODO: App could be still launching, retry setting AXObserver in 20 seconds for this app
 
             if lastCheckedA11y.timeIntervalSinceNow > 60 {
