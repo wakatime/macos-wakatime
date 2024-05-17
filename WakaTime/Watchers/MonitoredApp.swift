@@ -7,6 +7,7 @@ enum MonitoredApp: String, CaseIterable {
     case chrome = "com.google.Chrome"
     case figma = "com.figma.Desktop"
     case firefox = "org.mozilla.firefox"
+    case github = "com.github.GitHubClient"
     case imessage = "com.apple.MobileSMS"
     case iterm2 = "com.googlecode.iterm2"
     case linear = "com.linear"
@@ -56,6 +57,7 @@ enum MonitoredApp: String, CaseIterable {
     static let defaultEnabledApps = [
         MonitoredApp.canva.rawValue,
         MonitoredApp.figma.rawValue,
+        MonitoredApp.github.rawValue,
         MonitoredApp.linear.rawValue,
         MonitoredApp.notes.rawValue,
         MonitoredApp.notion.rawValue,
@@ -82,6 +84,8 @@ enum MonitoredApp: String, CaseIterable {
                 return .designing
             case .firefox:
                 return .browsing
+            case .github:
+                return .codereviewing
             case .imessage:
                 return .communicating
             case .iterm2:
@@ -118,6 +122,7 @@ enum MonitoredApp: String, CaseIterable {
     }
 
     func project(for element: AXUIElement) -> String? {
+        // TODO: detect repo from GitHub Desktop Client if possible
         guard let url = currentBrowserUrl(for: element) else { return nil }
         return project(from: url)
     }
@@ -258,6 +263,8 @@ enum MonitoredApp: String, CaseIterable {
                 return title
             case .firefox:
                 fatalError("\(self.rawValue) should never use window title as entity")
+            case .github:
+                return element.extractPrefix(element.rawTitle, separator: " - ")
             case .imessage:
                 return element.extractPrefix(element.rawTitle, separator: " - ")
             case .iterm2:
