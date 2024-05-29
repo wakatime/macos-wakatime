@@ -24,6 +24,7 @@ enum MonitoredApp: String, CaseIterable {
     case whatsapp = "net.whatsapp.WhatsApp"
     case xcode = "com.apple.dt.Xcode"
     case zoom = "us.zoom.xos"
+    case photoshop = "com.adobe.Photoshop"
 
     init?(from bundleId: String) {
         if let app = MonitoredApp(rawValue: bundleId) {
@@ -81,6 +82,8 @@ enum MonitoredApp: String, CaseIterable {
             case .chrome:
                 return .browsing
             case .figma:
+                return .designing
+            case .photoshop:
                 return .designing
             case .firefox:
                 return .browsing
@@ -164,6 +167,8 @@ enum MonitoredApp: String, CaseIterable {
         switch self {
             case .figma:
                 return "Figma Design"
+            case .photoshop:
+                return "Photoshop Design"
             case .postman:
                 return "HTTP Request"
             default:
@@ -253,6 +258,8 @@ enum MonitoredApp: String, CaseIterable {
             case .canva:
                 fatalError("\(self.rawValue) should never use window title as entity")
             case .chrome:
+                fatalError("\(self.rawValue) should never use window title as entity")
+            case .photoshop:
                 fatalError("\(self.rawValue) should never use window title as entity")
             case .figma:
                 guard
