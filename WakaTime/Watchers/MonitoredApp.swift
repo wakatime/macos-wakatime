@@ -25,6 +25,13 @@ enum MonitoredApp: String, CaseIterable {
     case xcode = "com.apple.dt.Xcode"
     case zoom = "us.zoom.xos"
     case photoshop = "com.adobe.Photoshop"
+    case illustrator = "com.adobe.illustrator"
+    case premierepro = "com.adobe.PremierePro.24"
+    case mediaencoder = "com.adobe.ame.application.24"
+    case aftereffect = "com.adobe.AfterEffects"
+    case bridge = "com.adobe.bridge14"
+    case cyberduck = "ch.sudo.cyberduck"
+    case beeper = "im.beeper"
 
     init?(from bundleId: String) {
         if let app = MonitoredApp(rawValue: bundleId) {
@@ -121,6 +128,12 @@ enum MonitoredApp: String, CaseIterable {
                 fatalError("\(rawValue) should never use window title")
             case .zoom:
                 return .meeting
+            case .photoshop, .illustrator, .mediaencoder, .bridge, .aftereffect, .premierepro:
+                return .designing
+            case .cyberduck:
+                return .building
+            case .beeper:
+                return .communicating
         }
     }
 
@@ -312,6 +325,12 @@ enum MonitoredApp: String, CaseIterable {
                 fatalError("\(self.rawValue) should never use window title as entity")
             case .zoom:
                 return element.extractPrefix(element.rawTitle, separator: " - ")
+            case .photoshop, .illustrator, .premierepro, .bridge, .mediaencoder, .aftereffect:
+                fatalError("\(self.rawValue) should never use window title as entity")
+            case .cyberduck:
+                return element.rawTitle
+            case .beeper:
+                fatalError("\(self.rawValue) should never use window title as entity")
         }
     }
 
