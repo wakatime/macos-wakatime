@@ -31,10 +31,6 @@ If you don’t use any other WakaTime plugins, run `rm -r ~/.wakatime*`.
 
 Before requesting support for a new app, first check the [list of supported apps][supported apps].
 
-## SwiftLint
-
-To fix linter warning(s), run `swiftlint --fix`.
-
 ## Contributing
 
 Pull requests and issues are welcome!
