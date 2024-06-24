@@ -17,6 +17,10 @@ This project currently has two branches
 
 Build with `Xcode` before creating any pull requests, or your PR won’t pass the automated checks.
 
+## SwiftLint
+
+To fix linter warning(s), run `swiftlint --fix`.
+
 ## Branching Stratgegy
 
 Please follow our guideline for branch names [here](https://github.com/wakatime/semver-action#branch-names). Branches off the pattern won't be accepted.
