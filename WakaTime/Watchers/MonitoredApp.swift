@@ -24,6 +24,14 @@ enum MonitoredApp: String, CaseIterable {
     case whatsapp = "net.whatsapp.WhatsApp"
     case xcode = "com.apple.dt.Xcode"
     case zoom = "us.zoom.xos"
+    case photoshop = "com.adobe.Photoshop"
+    case illustrator = "com.adobe.illustrator"
+    case premierepro = "com.adobe.PremierePro.24"
+    case mediaencoder = "com.adobe.ame.application.24"
+    case aftereffect = "com.adobe.AfterEffects"
+    case bridge = "com.adobe.bridge14"
+    case cyberduck = "ch.sudo.cyberduck"
+    case beeper = "im.beeper"
 
     init?(from bundleId: String) {
         if let app = MonitoredApp(rawValue: bundleId) {
@@ -82,6 +90,8 @@ enum MonitoredApp: String, CaseIterable {
                 return .browsing
             case .figma:
                 return .designing
+            case .photoshop:
+                return .designing
             case .firefox:
                 return .browsing
             case .github:
@@ -118,6 +128,12 @@ enum MonitoredApp: String, CaseIterable {
                 fatalError("\(rawValue) should never use window title")
             case .zoom:
                 return .meeting
+            case .photoshop, .illustrator, .mediaencoder, .bridge, .aftereffect, .premierepro:
+                return .designing
+            case .cyberduck:
+                return .building
+            case .beeper:
+                return .communicating
         }
     }
 
@@ -164,6 +180,8 @@ enum MonitoredApp: String, CaseIterable {
         switch self {
             case .figma:
                 return "Figma Design"
+            case .photoshop:
+                return "Photoshop Design"
             case .postman:
                 return "HTTP Request"
             default:
@@ -254,6 +272,8 @@ enum MonitoredApp: String, CaseIterable {
                 fatalError("\(self.rawValue) should never use window title as entity")
             case .chrome:
                 fatalError("\(self.rawValue) should never use window title as entity")
+            case .photoshop:
+                fatalError("\(self.rawValue) should never use window title as entity")
             case .figma:
                 guard
                     let title = element.extractPrefix(element.rawTitle, separator: " – "),
@@ -305,6 +325,12 @@ enum MonitoredApp: String, CaseIterable {
                 fatalError("\(self.rawValue) should never use window title as entity")
             case .zoom:
                 return element.extractPrefix(element.rawTitle, separator: " - ")
+            case .photoshop, .illustrator, .premierepro, .bridge, .mediaencoder, .aftereffect:
+                fatalError("\(self.rawValue) should never use window title as entity")
+            case .cyberduck:
+                return element.rawTitle
+            case .beeper:
+                fatalError("\(self.rawValue) should never use window title as entity")
         }
     }
 
