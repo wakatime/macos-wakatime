@@ -1,10 +1,17 @@
 # Contributing
 
-To contribute to this project please carefully read this document.
-
 ## Setup
 
-`macos-wakatime` is written in [Swift](https://www.swift.org/).
+This project depends on the [xcodegen](https://github.com/yonaskolb/XcodeGen?tab=readme-ov-file#installing) command line tool.
+
+```bash
+git clone git@github.com:wakatime/macos-wakatime.git
+cd macos-wakatime
+xcodegen
+```
+
+Then open the `WakaTime.xcodeproj` in [Xcode 15.2](https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_15.2/Xcode_15.2.xip).
+Currently there’s a bug in new Swift compiler versions, so the largest Xcode version working with this app is 15.2.
 
 ## Branches
 
@@ -23,7 +30,15 @@ To fix linter warning(s), run `swiftlint --fix`.
 
 ## Branching Stratgegy
 
-Please follow our guideline for branch names [here](https://github.com/wakatime/semver-action#branch-names). Branches off the pattern won't be accepted.
+We require specific branch name prefixes for PRs:
+
+- `^major/.+` - `major`
+- `^feature/.+` - `minor`
+- `^bugfix/.+` - `patch`
+- `^docs?/.+` - `build`
+- `^misc/.+` - `build`
+
+More info at [wakatime/semver-action](https://github.com/wakatime/semver-action#branch-names).
 
 ## Pull Requests
 

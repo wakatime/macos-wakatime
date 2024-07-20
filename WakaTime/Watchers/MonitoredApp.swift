@@ -23,6 +23,7 @@ enum MonitoredApp: String, CaseIterable {
     case wecom = "com.tencent.WeWorkMac"
     case whatsapp = "net.whatsapp.WhatsApp"
     case xcode = "com.apple.dt.Xcode"
+    case zed = "dev.zed.Zed"
     case zoom = "us.zoom.xos"
 
     init?(from bundleId: String) {
@@ -65,6 +66,7 @@ enum MonitoredApp: String, CaseIterable {
         MonitoredApp.tableplus.rawValue,
         MonitoredApp.xcode.rawValue,
         MonitoredApp.zoom.rawValue,
+        MonitoredApp.zed.rawValue,
     ]
 
     // list apps which we aren't yet able to track, so they're hidden from the Monitored Apps menu
@@ -118,13 +120,20 @@ enum MonitoredApp: String, CaseIterable {
                 fatalError("\(rawValue) should never use window title")
             case .zoom:
                 return .meeting
+            case .zed:
+                return .coding
         }
     }
 
     func project(for element: AXUIElement) -> String? {
         // TODO: detect repo from GitHub Desktop Client if possible
-        guard let url = currentBrowserUrl(for: element) else { return nil }
-        return project(from: url)
+        switch self {
+            case .zed:
+                return extractSuffix(element.rawTitle, separator: " — ")
+            default:
+                guard let url = currentBrowserUrl(for: element) else { return nil }
+                return project(from: url)
+        }
     }
 
     private func project(from url: String) -> String? {
@@ -234,7 +243,7 @@ enum MonitoredApp: String, CaseIterable {
                     // ICTK2MacTextView
                     let textAreaElement = element.firstDescendantWhere { $0.role == kAXTextAreaRole }
                     if let value = textAreaElement?.value {
-                        let title = element.extractPrefix(value, separator: "\n")
+                        let title = extractPrefix(value, separator: "\n")
                         return title
                     }
                     return nil
@@ -256,7 +265,7 @@ enum MonitoredApp: String, CaseIterable {
                 fatalError("\(self.rawValue) should never use window title as entity")
             case .figma:
                 guard
-                    let title = element.extractPrefix(element.rawTitle, separator: " – "),
+                    let title = extractPrefix(element.rawTitle, separator: " – "),
                     title != "Figma",
                     title != "Drafts"
                 else { return nil }
@@ -264,48 +273,84 @@ enum MonitoredApp: String, CaseIterable {
             case .firefox:
                 fatalError("\(self.rawValue) should never use window title as entity")
             case .github:
-                return element.extractPrefix(element.rawTitle, separator: " - ")
+                return extractPrefix(element.rawTitle, separator: " - ")
             case .imessage:
-                return element.extractPrefix(element.rawTitle, separator: " - ")
+                return extractPrefix(element.rawTitle, separator: " - ")
             case .iterm2:
-                return element.extractPrefix(element.rawTitle, separator: " - ")
+                return extractPrefix(element.rawTitle, separator: " - ")
             case .linear:
-                return element.extractPrefix(element.rawTitle, separator: " - ")
+                return extractPrefix(element.rawTitle, separator: " - ")
             case .notes:
                 fatalError("\(self.rawValue) should never use window title as entity")
             case .notion:
-                return element.extractPrefix(element.rawTitle, separator: " - ")
+                return extractPrefix(element.rawTitle, separator: " - ")
             case .postman:
                 guard
-                    let title = element.extractPrefix(element.rawTitle, separator: " - ", fullTitle: true),
+                    let title = extractPrefix(element.rawTitle, separator: " - ", fullTitle: true),
                     title != "Postman"
                 else { return nil }
                 return title
             case .slack:
-                return element.extractPrefix(element.rawTitle, separator: " - ")
+                return extractPrefix(element.rawTitle, separator: " - ")
             case .safari:
                 fatalError("\(self.rawValue) should never use window title as entity")
             case .safaripreview:
                 fatalError("\(self.rawValue) should never use window title as entity")
             case .tableplus:
-                return element.extractPrefix(element.rawTitle, separator: " - ")
+                return extractPrefix(element.rawTitle, separator: " - ")
             case .terminal:
-                return element.extractPrefix(element.rawTitle, separator: " - ")
+                return extractPrefix(element.rawTitle, separator: " - ")
             case .warp:
                 guard
-                    let title = element.extractPrefix(element.rawTitle, separator: " - "),
+                    let title = extractPrefix(element.rawTitle, separator: " - "),
                     title != "Warp"
                 else { return nil }
                 return title
             case .wecom:
-                return element.extractPrefix(element.rawTitle, separator: " - ")
+                return extractPrefix(element.rawTitle, separator: " - ")
             case .whatsapp:
-                return element.extractPrefix(element.rawTitle, separator: " - ")
+                return extractPrefix(element.rawTitle, separator: " - ")
             case .xcode:
                 fatalError("\(self.rawValue) should never use window title as entity")
             case .zoom:
-                return element.extractPrefix(element.rawTitle, separator: " - ")
+                return extractPrefix(element.rawTitle, separator: " - ")
+            case .zed:
+                return extractPrefix(element.rawTitle, separator: " — ")
         }
+    }
+
+    private func extractPrefix(_ str: String?, separator: String, minCount: Int? = nil, fullTitle: Bool = false) -> String? {
+        guard let str = str else { return nil }
+
+        let parts = str.components(separatedBy: separator)
+        guard !parts.isEmpty else { return nil }
+        guard let item = parts.first else { return nil }
+
+        if let minCount = minCount, minCount > 0, parts.count < minCount {
+            return nil
+        }
+
+        if item.trimmingCharacters(in: .whitespacesAndNewlines) != "" {
+            if fullTitle {
+                return str.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            return item.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return nil
+    }
+
+    private func extractSuffix(_ str: String?, separator: String) -> String? {
+        guard let str = str else { return nil }
+
+        let parts = str.components(separatedBy: separator)
+        guard !parts.isEmpty else { return nil }
+        guard let item = parts.last else { return nil }
+
+        if item.trimmingCharacters(in: .whitespacesAndNewlines) != "" {
+            return item.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        return nil
     }
 
     private func domainFromUrl(_ url: String) -> String? {
