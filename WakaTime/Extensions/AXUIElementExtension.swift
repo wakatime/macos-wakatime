@@ -369,24 +369,6 @@ extension AXUIElement {
             "Value: \"\(ellipsedValue)\""
         )
     }
-
-    func extractPrefix(_ str: String?, separator: String, minCount: Int? = nil, fullTitle: Bool = false) -> String? {
-        guard let str = str else { return nil }
-
-        let parts = str.components(separatedBy: separator)
-
-        if let minCount = minCount, minCount > 0, parts.count < minCount {
-            return nil
-        }
-
-        if !parts.isEmpty && parts[0].trimmingCharacters(in: .whitespacesAndNewlines) != "" {
-            if fullTitle {
-                return str.trimmingCharacters(in: .whitespacesAndNewlines)
-            }
-            return parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-        return nil
-    }
 }
 
 enum AXUIElementNotification {

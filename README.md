@@ -35,14 +35,6 @@ Before requesting support for a new app, first check the [list of supported apps
 
 Pull requests and issues are welcome!
 See [Contributing][contributing] for more details.
-The main thing to know is we require specific branch name prefixes for PRs:
-
-- `^major/.+` - `major`
-- `^feature/.+` - `minor`
-- `^bugfix/.+` - `patch`
-- `^docs?/.+` - `build`
-- `^misc/.+` - `build`
-
 Many thanks to all [contributors][authors]!
 
 Made with :heart: by the WakaTime Team.
