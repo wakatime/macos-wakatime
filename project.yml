@@ -16,7 +16,7 @@ targets:
   WakaTime:
     type: application
     platform: macOS
-    deploymentTarget: 14.5
+    deploymentTarget: 13.5
     sources: [WakaTime]
     settings:
       CURRENT_PROJECT_VERSION: local-build
@@ -51,7 +51,7 @@ targets:
   WakaTime Helper:
     type: application
     platform: macOS
-    deploymentTarget: 14.5
+    deploymentTarget: 13.5
     sources: [WakaTime Helper]
     settings:
       CURRENT_PROJECT_VERSION: local-build
