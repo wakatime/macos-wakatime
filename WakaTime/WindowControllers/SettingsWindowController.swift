@@ -1,7 +1,7 @@
 import AppKit
 
 class SettingsWindowController: NSWindowController, NSTextFieldDelegate {
-    let settingsView = SettingsView()
+    public let settingsView = SettingsView()
 
     convenience init() {
         self.init(window: nil)
