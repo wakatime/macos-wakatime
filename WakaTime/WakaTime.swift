@@ -165,6 +165,8 @@ class WakaTime: HeartbeatEventHandler {
         } catch {
             Logging.default.log("Failed to run wakatime-cli: \(error)")
         }
+
+        delegate.fetchToday()
     }
 }
 
@@ -203,6 +205,7 @@ enum Category: String {
 protocol StatusBarDelegate: AnyObject {
     func a11yStatusChanged(_ hasPermission: Bool)
     func toastNotification(_ title: String)
+    func fetchToday()
 }
 
 protocol HeartbeatEventHandler {

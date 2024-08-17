@@ -1,6 +1,8 @@
 import AppKit
 
 class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
+    var delegate: StatusBarDelegate?
+
     // MARK: API Key
 
     lazy var apiKeyLabel: NSTextField = {
@@ -44,6 +46,16 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         return checkbox
     }()
 
+    lazy var statusBarTextCheckbox: NSButton = {
+        let checkbox = NSButton(
+            checkboxWithTitle: "Show today’s time in status bar",
+            target: self,
+            action: #selector(enableStatusBarTextCheckboxClicked)
+        )
+        checkbox.state = PropertiesManager.shouldDisplayTodayInStatusBar ? .on : .off
+        return checkbox
+    }()
+
     lazy var requestA11yCheckbox: NSButton = {
         let checkbox = NSButton(
             checkboxWithTitle: "Enable stats from Xcode by requesting accessibility permission",
@@ -55,7 +67,7 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
     }()
 
     lazy var checkboxesStackView: NSStackView = {
-        let stack = NSStackView(views: [launchAtLoginCheckbox, requestA11yCheckbox, enableLoggingCheckbox])
+        let stack = NSStackView(views: [launchAtLoginCheckbox, statusBarTextCheckbox, requestA11yCheckbox, enableLoggingCheckbox])
         stack.alignment = .leading
         stack.orientation = .vertical
         stack.spacing = 10
@@ -241,6 +253,16 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         } else {
             PropertiesManager.shouldLogToFile = false
         }
+    }
+
+    @objc func enableStatusBarTextCheckboxClicked() {
+        PropertiesManager.shouldDisplayTodayInStatusBar = statusBarTextCheckbox.state == .on
+        if statusBarTextCheckbox.state == .on {
+            PropertiesManager.shouldDisplayTodayInStatusBar = true
+        } else {
+            PropertiesManager.shouldDisplayTodayInStatusBar = false
+        }
+        delegate?.fetchToday()
     }
 
     @objc func enableA11yCheckboxClicked() {

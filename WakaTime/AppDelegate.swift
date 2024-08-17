@@ -12,6 +12,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
     var monitoredAppsWindowController = MonitoredAppsWindowController()
     var wakaTime: WakaTime?
 
+    @Atomic var lastTodayTime = 0
+    @Atomic var lastTodayText = ""
+
     let updater = AppUpdater(owner: "wakatime", repo: "macos-wakatime")
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
@@ -56,6 +59,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
         statusBarItem.menu = menu
 
         wakaTime = WakaTime(self)
+
+        settingsWindowController.settingsView.delegate = self
 
         // request notifications permission
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
@@ -177,5 +182,60 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
 
             notificationCenter.add(request)
         }
+    }
+
+    private func setText(_ text: String) {
+        DispatchQueue.main.async {
+            Logging.default.log("Set status bar text: \(text)")
+            self.statusBarItem.button?.title = text.isEmpty ? text : " " + text
+        }
+    }
+
+    internal func fetchToday() {
+        guard PropertiesManager.shouldDisplayTodayInStatusBar else {
+            setText("")
+            return
+        }
+
+        let time = Int(NSDate().timeIntervalSince1970)
+        guard lastTodayTime + 300 < time else {
+            setText(lastTodayText)
+            return
+        }
+
+        lastTodayTime = time
+
+        let cli = NSString.path(
+            withComponents: ConfigFile.resourcesFolder + ["wakatime-cli"]
+        )
+        let process = Process()
+        process.launchPath = cli
+        let args = [
+            "--today",
+            "--today-hide-categories",
+            "true",
+            "--plugin",
+            "macos-wakatime/" + Bundle.main.version,
+        ]
+
+        Logging.default.log("Fetching coding activity for Today from api: \(args)")
+
+        process.arguments = args
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.execute()
+            setText("")
+        } catch {
+            Logging.default.log("Failed to run wakatime-cli fetching Today coding activity: \(error)")
+        }
+
+        let handle = pipe.fileHandleForReading
+        let data = handle.readDataToEndOfFile()
+        let text = (String(data: data, encoding: String.Encoding.utf8) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        lastTodayText = text
+        setText(text)
     }
 }
