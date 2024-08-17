@@ -128,6 +128,8 @@ enum MonitoredApp: String, CaseIterable {
     func project(for element: AXUIElement) -> String? {
         // TODO: detect repo from GitHub Desktop Client if possible
         switch self {
+            case .slack:
+                return extractSuffix(element.rawTitle, separator: " - ", offset: 1)
             case .zed:
                 return extractSuffix(element.rawTitle, separator: " — ")
             default:
@@ -339,11 +341,20 @@ enum MonitoredApp: String, CaseIterable {
         return nil
     }
 
-    private func extractSuffix(_ str: String?, separator: String) -> String? {
+    private func extractSuffix(_ str: String?, separator: String, offset: Int = 0) -> String? {
         guard let str = str else { return nil }
 
-        let parts = str.components(separatedBy: separator)
+        var parts = str.components(separatedBy: separator)
         guard !parts.isEmpty else { return nil }
+        guard parts.count > 1 else { return nil }
+
+        var i = offset
+        while i > 0 {
+            guard parts.count > 1 else { return nil }
+
+            parts.removeLast()
+            i += 1
+        }
         guard let item = parts.last else { return nil }
 
         if item.trimmingCharacters(in: .whitespacesAndNewlines) != "" {
