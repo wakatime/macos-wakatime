@@ -17,6 +17,7 @@ class PropertiesManager {
         case shouldRequestA11y = "request_a11y"
         case shouldAutomaticallyDownloadUpdates = "should_automatically_download_updates"
         case hasLaunchedBefore = "has_launched_before"
+        case shouldDisplayTodayInStatusBar = "status_bar_text"
         case domainPreference = "domain_preference"
         case filterType = "filter_type"
         case denylist = "denylist"
@@ -84,6 +85,21 @@ class PropertiesManager {
         }
         set {
             UserDefaults.standard.set(newValue, forKey: Keys.shouldRequestA11y.rawValue)
+            UserDefaults.standard.synchronize()
+        }
+    }
+
+    static var shouldDisplayTodayInStatusBar: Bool {
+        get {
+            guard UserDefaults.standard.string(forKey: Keys.shouldDisplayTodayInStatusBar.rawValue) != nil else {
+                UserDefaults.standard.set(true, forKey: Keys.shouldDisplayTodayInStatusBar.rawValue)
+                return true
+            }
+
+            return UserDefaults.standard.bool(forKey: Keys.shouldDisplayTodayInStatusBar.rawValue)
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Keys.shouldDisplayTodayInStatusBar.rawValue)
             UserDefaults.standard.synchronize()
         }
     }
