@@ -5,6 +5,7 @@ import UserNotifications
 class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
     var window: NSWindow!
     var statusBarItem: NSStatusItem!
+    let menu = NSMenu()
     var statusBarA11yItem: NSMenuItem!
     var statusBarA11ySeparator: NSMenuItem!
     var statusBarA11yStatus: Bool = true
@@ -37,7 +38,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
         statusBarItem = statusBar.statusItem(withLength: NSStatusItem.variableLength)
         statusBarItem.button?.image = NSImage(named: NSImage.Name("WakaTime"))
 
-        let menu = NSMenu()
+        // refresh code time text when status bar icon clicked
+        statusBarItem.button?.target = self
+        statusBarItem.button?.action = #selector(AppDelegate.onClick(_:))
+        statusBarItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
 
         statusBarA11yItem = NSMenuItem(
             title: "* A11y permission needed *",
@@ -50,17 +54,25 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
         statusBarA11ySeparator.isHidden = true
         menu.addItem(withTitle: "Dashboard", action: #selector(AppDelegate.dashboardClicked(_:)), keyEquivalent: "")
         menu.addItem(withTitle: "Settings", action: #selector(AppDelegate.settingsClicked(_:)), keyEquivalent: "")
-        menu.addItem(withTitle: "Monitored Apps", action: #selector(AppDelegate.monitoredAppsClicked(_:)), keyEquivalent: "")
+        menu.addItem(
+            withTitle: "Monitored Apps",
+            action: #selector(AppDelegate.monitoredAppsClicked(_:)),
+            keyEquivalent: "")
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(withTitle: "Check for Updates", action: #selector(AppDelegate.checkForUpdatesClicked(_:)), keyEquivalent: "")
+        menu.addItem(
+            withTitle: "Check for Updates",
+            action: #selector(AppDelegate.checkForUpdatesClicked(_:)),
+            keyEquivalent: "")
         menu.addItem(NSMenuItem.separator())
         menu.addItem(withTitle: "Quit", action: #selector(AppDelegate.quitClicked(_:)), keyEquivalent: "")
-
-        statusBarItem.menu = menu
 
         wakaTime = WakaTime(self)
 
         settingsWindowController.settingsView.delegate = self
+
+        Task.detached(priority: .background) {
+            self.fetchToday()
+        }
 
         // request notifications permission
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
@@ -141,6 +153,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
 
     @objc func quitClicked(_ sender: AnyObject) {
         NSApplication.shared.terminate(self)
+    }
+
+    @objc func onClick(_ sender: NSStatusItem) {
+        Task.detached(priority: .background) {
+            self.fetchToday()
+        }
+        statusBarItem.popUpMenu(menu)
     }
 
     func a11yStatusChanged(_ hasPermission: Bool) {
