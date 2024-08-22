@@ -217,7 +217,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
         }
 
         let time = Int(NSDate().timeIntervalSince1970)
-        guard lastTodayTime + 300 < time else {
+        guard lastTodayTime + 60 < time else {
             setText(lastTodayText)
             return
         }
