@@ -135,7 +135,7 @@ class Watcher: NSObject {
                             self?.heartbeatEventHandler?.handleHeartbeatEvent(
                                 app: app,
                                 entity: heartbeat.entity,
-                                entityType: EntityType.app,
+                                entityType: heartbeat.entityType,
                                 project: heartbeat.project,
                                 language: heartbeat.language,
                                 category: heartbeat.category,
@@ -235,7 +235,7 @@ class Watcher: NSObject {
             self.heartbeatEventHandler?.handleHeartbeatEvent(
                 app: app,
                 entity: path.path,
-                entityType: EntityType.file,
+                entityType: .file,
                 project: nil,
                 language: nil,
                 category: self.isBuilding ? Category.building : Category.coding,
