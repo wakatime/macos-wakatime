@@ -138,17 +138,11 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
         let nameLabel = NSTextField(labelWithString: appData.name)
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let isMonitored = MonitoringManager.isAppMonitored(for: appData.bundleId)
-        let switchControl = NSSwitch()
-        switchControl.translatesAutoresizingMaskIntoConstraints = false
-        switchControl.state = isMonitored ? .on : .off
-        switchControl.target = self
-        switchControl.action = #selector(switchToggled(_:))
-        switchControl.tag = appData.tag
+        let action = switchOrLink(appData)
 
         cellView.addSubview(imageView)
         cellView.addSubview(nameLabel)
-        cellView.addSubview(switchControl)
+        cellView.addSubview(action)
 
         // Determine if the current item is the last in the list
         let isLastItem = apps.last == appData
@@ -177,17 +171,49 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
 
             nameLabel.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 10),
             nameLabel.centerYAnchor.constraint(equalTo: cellView.centerYAnchor),
-            nameLabel.trailingAnchor.constraint(equalTo: switchControl.leadingAnchor, constant: -5),
+            nameLabel.trailingAnchor.constraint(equalTo: action.leadingAnchor, constant: -5),
 
-            switchControl.trailingAnchor.constraint(equalTo: cellView.trailingAnchor, constant: -10),
-            switchControl.centerYAnchor.constraint(equalTo: cellView.centerYAnchor),
+            action.trailingAnchor.constraint(equalTo: cellView.trailingAnchor, constant: -10),
+            action.centerYAnchor.constraint(equalTo: cellView.centerYAnchor),
         ])
 
         return cellView
     }
 
+    func switchOrLink(_ appData: AppData) -> NSView {
+        if MonitoredApp.pluginAppIds[appData.bundleId] != nil {
+            let button = NSButton()
+            button.translatesAutoresizingMaskIntoConstraints = false
+            button.bezelStyle = NSButton.BezelStyle.rounded
+            button.title = "Install plugin"
+            button.action = #selector(clickInstallPlugin(_:))
+            button.widthAnchor.constraint(equalToConstant: 100).isActive = true
+            button.tag = appData.tag
+            return button
+        }
+
+        let isMonitored = MonitoringManager.isAppMonitored(for: appData.bundleId)
+        let switchControl = NSSwitch()
+        switchControl.translatesAutoresizingMaskIntoConstraints = false
+        switchControl.state = isMonitored ? .on : .off
+        switchControl.target = self
+        switchControl.action = #selector(switchToggled(_:))
+        switchControl.tag = appData.tag
+        return switchControl
+    }
+
     @objc func switchToggled(_ sender: NSSwitch) {
         let appData = apps[sender.tag]
         MonitoringManager.set(monitoringState: sender.state == .on ? .on : .off, for: appData.bundleId)
+    }
+
+    @objc func clickInstallPlugin(_ sender: NSButton) {
+        let appData = apps[sender.tag]
+        guard
+            let path = MonitoredApp.pluginAppIds[appData.bundleId],
+            let url = URL(string: "https://wakatime.com/\(path)")
+        else { return }
+
+        NSWorkspace.shared.open(url)
     }
 }
