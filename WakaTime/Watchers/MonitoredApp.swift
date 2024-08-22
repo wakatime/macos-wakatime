@@ -1,7 +1,14 @@
 import AppKit
 
 enum MonitoredApp: String, CaseIterable {
+    case adobeaftereffect = "com.adobe.AfterEffects"
+    case adobebridge = "com.adobe.bridge14"
+    case adobeillustrator = "com.adobe.illustrator"
+    case adobemediaencoder = "com.adobe.ame.application.24"
+    case adobephotoshop = "com.adobe.Photoshop"
+    case adobepremierepro = "com.adobe.PremierePro.24"
     case arcbrowser = "company.thebrowser.Browser"
+    case beeper = "im.beeper"
     case brave = "com.brave.Browser"
     case canva = "com.canva.CanvaDesktop"
     case chrome = "com.google.Chrome"
@@ -11,9 +18,11 @@ enum MonitoredApp: String, CaseIterable {
     case imessage = "com.apple.MobileSMS"
     case iterm2 = "com.googlecode.iterm2"
     case linear = "com.linear"
+    case miro = "com.electron.realtimeboard"
     case notes = "com.apple.Notes"
     case notion = "notion.id"
     case postman = "com.postmanlabs.mac"
+    case rocketchat = "chat.rocket"
     case safari = "com.apple.Safari"
     case safaripreview = "com.apple.SafariTechnologyPreview"
     case slack = "com.tinyspeck.slackmacgap"
@@ -35,6 +44,12 @@ enum MonitoredApp: String, CaseIterable {
             return nil
         }
     }
+
+    // Hide these from the Monitored Apps menu
+    static let unsupportedAppIds = [
+        "macos-wakatime.WakaTime",
+        "com.apple.finder",
+    ]
 
     static var allBundleIds: [String] {
         MonitoredApp.allCases.map { $0.rawValue }
