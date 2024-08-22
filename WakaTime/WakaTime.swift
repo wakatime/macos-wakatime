@@ -180,6 +180,8 @@ enum DeepLink: String {
 enum EntityType: String {
     case file
     case app
+    case domain
+    case url
 }
 
 enum Category: String {
