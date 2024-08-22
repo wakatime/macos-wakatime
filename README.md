@@ -29,6 +29,12 @@ If you don’t use any other WakaTime plugins, run `rm -r ~/.wakatime*`.
 
 ## Supported Apps
 
+WakaTime for Mac can track the time you spend in any app on your mac. It’s a catch-all when we don’t have a plugin for your IDE or app.
+
+We add support for specific apps when a custom category, project, or entity type is necessary.
+For example, when Slack needs the `communicating` category or Figma needs the `designing` category.
+Only request support for a new app when it needs a custom category, or we can detect the project from the window title.
+
 Before requesting support for a new app, first check the [list of supported apps][supported apps].
 
 ## Contributing
