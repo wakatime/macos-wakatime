@@ -149,14 +149,29 @@ class MonitoringManager {
         }
     }
 
+    // swiftlint:disable cyclomatic_complexity
     static func title(for app: NSRunningApplication, _ element: AXUIElement) -> String? {
         guard let monitoredApp = app.monitoredApp else {
-            return extractPrefix(element.rawTitle, separator: " — ")
+            return extractPrefix(element.rawTitle)
         }
 
         switch monitoredApp {
+            case .adobeaftereffect:
+                return extractPrefix(element.rawTitle)
+            case .adobebridge:
+                return extractPrefix(element.rawTitle)
+            case .adobeillustrator:
+                return extractPrefix(element.rawTitle)
+            case .adobemediaencoder:
+                return extractPrefix(element.rawTitle)
+            case .adobephotoshop:
+                return extractPrefix(element.rawTitle)
+            case .adobepremierepro:
+                return extractPrefix(element.rawTitle)
             case .arcbrowser:
                 fatalError("\(monitoredApp.rawValue) should never use window title as entity")
+            case .beeper:
+                return extractPrefix(element.rawTitle)
             case .brave:
                 fatalError("\(monitoredApp.rawValue) should never use window title as entity")
             case .canva:
@@ -180,6 +195,8 @@ class MonitoringManager {
                 return extractPrefix(element.rawTitle, separator: " - ")
             case .linear:
                 return extractPrefix(element.rawTitle, separator: " - ")
+            case .miro:
+                return extractSuffix(element.rawTitle)
             case .notes:
                 fatalError("\(monitoredApp.rawValue) should never use window title as entity")
             case .notion:
@@ -190,6 +207,8 @@ class MonitoringManager {
                     title != "Postman"
                 else { return nil }
                 return title
+            case .rocketchat:
+                return extractPrefix(element.rawTitle)
             case .slack:
                 return extractPrefix(element.rawTitle, separator: " - ")
             case .safari:
@@ -223,8 +242,22 @@ class MonitoringManager {
         guard let monitoredApp = app.monitoredApp else { return .coding }
 
         switch monitoredApp {
+            case .adobeaftereffect:
+                return .designing
+            case .adobebridge:
+                return .designing
+            case .adobeillustrator:
+                return .designing
+            case .adobemediaencoder:
+                return .designing
+            case .adobephotoshop:
+                return .designing
+            case .adobepremierepro:
+                return .designing
             case .arcbrowser:
                 return .browsing
+            case .beeper:
+                return .communicating
             case .brave:
                 return .browsing
             case .canva:
@@ -243,12 +276,16 @@ class MonitoringManager {
                 return .coding
             case .linear:
                 return .planning
+            case .miro:
+                return .planning
             case .notes:
                 return .writingdocs
             case .notion:
                 return .writingdocs
             case .postman:
                 return .debugging
+            case .rocketchat:
+                return .communicating
             case .slack:
                 return .communicating
             case .safari:
@@ -273,6 +310,7 @@ class MonitoringManager {
                 return .coding
         }
     }
+    // swiftlint:enable cyclomatic_complexity
 
     static func project(for app: NSRunningApplication, _ element: AXUIElement) -> String? {
         guard let monitoredApp = app.monitoredApp else {
@@ -367,8 +405,12 @@ class MonitoringManager {
         return address
     }
 
-    static func extractPrefix(_ str: String?, separator: String, minCount: Int? = nil, fullTitle: Bool = false) -> String? {
+    static func extractPrefix(_ str: String?, separator: String? = nil, minCount: Int? = nil, fullTitle: Bool = false) -> String? {
         guard let str = str else { return nil }
+
+        guard let separator = separator else {
+            return getFirstPrefixMatch(str)
+        }
 
         let parts = str.components(separatedBy: separator)
         guard !parts.isEmpty else { return nil }
@@ -387,8 +429,12 @@ class MonitoringManager {
         return nil
     }
 
-    static func extractSuffix(_ str: String?, separator: String, offset: Int = 0) -> String? {
+    static func extractSuffix(_ str: String?, separator: String? = nil, offset: Int = 0) -> String? {
         guard let str = str else { return nil }
+
+        guard let separator = separator else {
+            return getFirstSuffixMatch(str)
+        }
 
         var parts = str.components(separatedBy: separator)
         guard !parts.isEmpty else { return nil }
@@ -415,6 +461,58 @@ class MonitoringManager {
         let domain = host.replacingOccurrences(of: "^www.", with: "", options: .regularExpression)
         guard let port = URL(stringWithoutScheme: url)?.port else { return domain }
         return "\(domain):\(port)"
+    }
+
+    static let separators = [
+        "-",
+        "᠆",
+        "‐",
+        "‑",
+        "‒",
+        "–",
+        "—",
+        "―",
+        "⸺",
+        "⸻",
+        "︱",
+        "︲",
+        "﹘",
+        "﹣",
+        "－",
+    ]
+
+    static func getFirstPrefixMatch(_ str: String) -> String {
+        guard !str.isEmpty else { return str.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+        for separator in separators {
+            let parts = str.components(separatedBy: separator)
+            guard parts.count > 1 else { continue }
+            guard let item = parts.first else { continue }
+
+            let trimmed = item.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { continue }
+
+            return trimmed
+        }
+
+        return str.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    static func getFirstSuffixMatch(_ str: String) -> String {
+        guard !str.isEmpty else { return str.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+        for separator in separators {
+            let parts = str.components(separatedBy: separator)
+            guard parts.count > 1 else { continue }
+            guard let item = parts.last else { continue }
+
+            let trimmed = item.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { continue }
+
+            return trimmed
+        }
+
+        return str.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 

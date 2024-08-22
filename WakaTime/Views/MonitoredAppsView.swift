@@ -39,7 +39,7 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
             let bundleId = id.replacingOccurrences(of: "-setapp$", with: "", options: .regularExpression)
 
             guard
-                bundleId != "com.apple.finder",
+                !MonitoredApp.unsupportedAppIds.contains(where: { $0 == bundleId }),
                 !MonitoredApp.allBundleIds.contains(where: { $0 == bundleId })
             else { continue }
 
