@@ -9,9 +9,10 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
     }
 
     private var outlineView: NSOutlineView!
+
     private lazy var apps: [AppData] = {
         var apps = [AppData]()
-        let bundleIds = MonitoredApp.allBundleIds.filter { !MonitoredApp.unsupportedAppIds.contains($0) }
+        let bundleIds = sort(MonitoredApp.allBundleIds + runningApps())
         var index = 0
         for bundleId in bundleIds {
             if let icon = AppInfo.getIcon(bundleId: bundleId),
@@ -29,6 +30,31 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
         }
         return apps
     }()
+
+    private func runningApps() -> [String] {
+        var ids: [String] = []
+        for runningApp in NSWorkspace.shared.runningApplications where runningApp.activationPolicy == .regular {
+            guard let id = runningApp.bundleIdentifier else { continue }
+
+            let bundleId = id.replacingOccurrences(of: "-setapp$", with: "", options: .regularExpression)
+
+            guard
+                !MonitoredApp.unsupportedAppIds.contains(where: { $0 == bundleId }),
+                !MonitoredApp.allBundleIds.contains(where: { $0 == bundleId })
+            else { continue }
+
+            ids.append(bundleId)
+        }
+        return ids
+    }
+
+    private func sort(_ bundleIds: [String]) -> [String] {
+        bundleIds.sorted {
+            let left = AppInfo.getAppName(bundleId: $0) ?? $0
+            let right = AppInfo.getAppName(bundleId: $1) ?? $1
+            return left.localizedCaseInsensitiveCompare(right) == ComparisonResult.orderedAscending
+        }
+    }
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
