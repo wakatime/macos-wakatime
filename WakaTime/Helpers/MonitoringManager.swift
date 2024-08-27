@@ -367,8 +367,10 @@ class MonitoringManager {
         guard let monitoredApp = app.monitoredApp else { return nil }
 
         switch monitoredApp {
+            case .canva:
+                return "Image (svg)"
             case .figma:
-                return "Figma Design"
+                return "Image (svg)"
             case .postman:
                 return "HTTP Request"
             default:
