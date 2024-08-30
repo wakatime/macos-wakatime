@@ -246,7 +246,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
 
         do {
             try process.execute()
-            setText("")
         } catch {
             Logging.default.log("Failed to run wakatime-cli fetching Today coding activity: \(error)")
         }
