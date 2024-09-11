@@ -56,6 +56,7 @@ class Watcher: NSObject {
             // swiftlint:enable line_length
             if let oldApp = activeApp { unwatch(app: oldApp) }
             activeApp = app
+            self.statusBarDelegate?.fetchToday()
             if let bundleId = app.bundleIdentifier, MonitoringManager.isAppMonitored(for: bundleId) {
                 watch(app: app)
             }
