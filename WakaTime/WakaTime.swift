@@ -33,17 +33,6 @@ class WakaTime: HeartbeatEventHandler {
         watcher.heartbeatEventHandler = self
         watcher.statusBarDelegate = delegate
 
-        // In local dev builds, print bundle-ids of all running apps to Xcode console
-        if Dependencies.isLocalDevBuild {
-            Logging.default.log("********* Start Running Applications *********")
-            for runningApp in NSWorkspace.shared.runningApplications where runningApp.activationPolicy == .regular {
-                if let name = runningApp.localizedName, let id = runningApp.bundleIdentifier {
-                    Logging.default.log("\(name): \(id)")
-                }
-            }
-            Logging.default.log("********* End Running Applications *********")
-        }
-
         if !PropertiesManager.hasLaunchedBefore {
             for bundleId in MonitoredApp.defaultEnabledApps {
                 MonitoringManager.enableByDefault(bundleId)
