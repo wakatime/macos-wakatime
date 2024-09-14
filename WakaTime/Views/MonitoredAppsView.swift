@@ -11,9 +11,9 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
     private var outlineView: NSOutlineView!
     private var runningApps: [AppData] = []
 
-    private func refreshRunningApps() -> [AppData] {
+    private func refreshRunningApps() {
         var apps = [AppData]()
-        let bundleIds = sort(MonitoredApp.allBundleIds + getRunningApps())
+        let bundleIds = sort(Array(Set(MonitoredApp.allBundleIds + getRunningApps() + MonitoringManager.allMonitoredApps)))
         var index = 0
         for bundleId in bundleIds {
             if let icon = AppInfo.getIcon(bundleId: bundleId),
@@ -30,7 +30,6 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
             }
         }
         runningApps = apps
-        return apps
     }
 
     private func getRunningApps() -> [String] {

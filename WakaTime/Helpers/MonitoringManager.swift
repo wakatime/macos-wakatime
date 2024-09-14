@@ -8,15 +8,7 @@ class MonitoringManager {
     }
 
     static func isAppMonitored(for bundleId: String) -> Bool {
-        let isMonitoredKey = monitoredKey(bundleId: bundleId)
-
-        if UserDefaults.standard.string(forKey: isMonitoredKey) != nil {
-            return UserDefaults.standard.bool(forKey: isMonitoredKey)
-        } else {
-            UserDefaults.standard.set(false, forKey: isMonitoredKey)
-            UserDefaults.standard.synchronize()
-            return false
-        }
+        allMonitoredApps.contains(bundleId)
     }
 
     static func isAppMonitored(_ app: NSRunningApplication) -> Bool {
@@ -81,10 +73,33 @@ class MonitoringManager {
         return false
     }
 
+    static var allMonitoredApps: [String] {
+        if let bundleIds = UserDefaults.standard.stringArray(forKey: monitoringKey) {
+            return bundleIds
+        } else {
+            var bundleIds: [String] = []
+            let defaults = UserDefaults.standard.dictionaryRepresentation()
+            for key in defaults.keys {
+                if key.starts(with: "is_") && key.contains("_monitored") {
+                    if UserDefaults.standard.bool(forKey: key) {
+                        let bundleId = key.replacingOccurrences(of: "is_", with: "").replacingOccurrences(of: "_monitored", with: "")
+                        bundleIds.append(bundleId)
+                    }
+                    UserDefaults.standard.removeObject(forKey: key)
+                }
+            }
+            UserDefaults.standard.set(bundleIds, forKey: monitoringKey)
+            UserDefaults.standard.synchronize()
+            return bundleIds
+        }
+    }
+
     static func set(monitoringState: MonitoringState, for bundleId: String) {
-        UserDefaults.standard.set(monitoringState == .on, forKey: monitoredKey(bundleId: bundleId))
+        let allApps = allMonitoredApps
+        if !allApps.contains(bundleId) {
+            UserDefaults.standard.set(allApps + [bundleId], forKey: monitoringKey)
+        }
         UserDefaults.standard.synchronize()
-        // NSLog("Monitoring \(monitoringState == .on ? "enabled" : "disabled") for \(AppInfo.getAppName(bundleId: bundleId) ?? "")")
     }
 
     static func enableByDefault(_ bundleId: String) {
@@ -97,9 +112,7 @@ class MonitoringManager {
         }
     }
 
-    static func monitoredKey(bundleId: String) -> String {
-        "is_\(bundleId)_monitored"
-    }
+    static var monitoringKey = "wakatime_monitored_apps"
 
     static func entity(for app: NSRunningApplication, _ element: AXUIElement) -> (String?, EntityType)? {
         if MonitoringManager.isAppBrowser(app) {
