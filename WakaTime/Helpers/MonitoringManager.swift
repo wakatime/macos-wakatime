@@ -102,9 +102,11 @@ class MonitoringManager {
     }
 
     static func set(monitoringState: MonitoringState, for bundleId: String) {
-        let allApps = allMonitoredApps
-        if !allApps.contains(bundleId) {
-            UserDefaults.standard.set(allApps + [bundleId], forKey: monitoringKey)
+        if monitoringState == .on {
+            UserDefaults.standard.set(Array(Set(allMonitoredApps + [bundleId])), forKey: monitoringKey)
+        } else {
+            let apps = allMonitoredApps.filter { $0 != bundleId }
+            UserDefaults.standard.set(apps, forKey: monitoringKey)
         }
         UserDefaults.standard.synchronize()
     }
