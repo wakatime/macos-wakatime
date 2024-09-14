@@ -52,13 +52,20 @@ class MonitoringManager {
             let entityUnwrapped = entity.0
         else { return nil }
 
-        return HeartbeatData(
+        let project = project(for: app, activeWindow)
+        var language = language(for: app, activeWindow)
+        if project != nil && language == nil {
+            language = "<<LAST_LANGUAGE>>"
+        }
+
+        let heartbeat = HeartbeatData(
             entity: entityUnwrapped,
             entityType: entity.1,
-            project: project(for: app, activeWindow),
-            language: language(for: app),
-            category: category(for: app)
+            project: project,
+            language: language,
+            category: category(for: app, activeWindow)
         )
+        return heartbeat
     }
 
     static var isMonitoringBrowsing: Bool {
@@ -95,9 +102,11 @@ class MonitoringManager {
     }
 
     static func set(monitoringState: MonitoringState, for bundleId: String) {
-        let allApps = allMonitoredApps
-        if !allApps.contains(bundleId) {
-            UserDefaults.standard.set(allApps + [bundleId], forKey: monitoringKey)
+        if monitoringState == .on {
+            UserDefaults.standard.set(Array(Set(allMonitoredApps + [bundleId])), forKey: monitoringKey)
+        } else {
+            let apps = allMonitoredApps.filter { $0 != bundleId }
+            UserDefaults.standard.set(apps, forKey: monitoringKey)
         }
         UserDefaults.standard.synchronize()
     }
@@ -251,8 +260,11 @@ class MonitoringManager {
         }
     }
 
-    static func category(for app: NSRunningApplication) -> Category? {
-        guard let monitoredApp = app.monitoredApp else { return .coding }
+    static func category(for app: NSRunningApplication, _ element: AXUIElement) -> Category {
+        guard let monitoredApp = app.monitoredApp else {
+            guard let url = currentBrowserUrl(for: app, element) else { return .coding }
+            return category(from: url)
+        }
 
         switch monitoredApp {
             case .adobeaftereffect:
@@ -325,6 +337,29 @@ class MonitoringManager {
     }
     // swiftlint:enable cyclomatic_complexity
 
+    static func category(from url: String) -> Category {
+        let patterns = [
+            "github.com/[^/]+/[^/]+/pull/.*$",
+            "gitlab.com/[^/]+/[^/]+/[^/]+/merge_requests/.*$",
+            "bitbucket.org/[^/]+/[^/]+/pull-requests/.*$",
+        ]
+
+        for pattern in patterns {
+            do {
+                let regex = try NSRegularExpression(pattern: pattern)
+                let nsrange = NSRange(url.startIndex..<url.endIndex, in: url)
+                if regex.firstMatch(in: url, options: [], range: nsrange) != nil {
+                    return .codereviewing
+                }
+            } catch {
+                Logging.default.log("Regex error: \(error)")
+                continue
+            }
+        }
+
+        return .coding
+    }
+
     static func project(for app: NSRunningApplication, _ element: AXUIElement) -> String? {
         guard let monitoredApp = app.monitoredApp else {
             guard let url = currentBrowserUrl(for: app, element) else { return nil }
@@ -346,6 +381,7 @@ class MonitoringManager {
     static func project(from url: String) -> String? {
         let patterns = [
             "github.com/([^/]+/[^/]+)/?.*$",
+            "gitlab.com/([^/]+/[^/]+)/?.*$",
             "bitbucket.org/([^/]+/[^/]+)/?.*$",
             "app.circleci.com/.*/?(github|bitbucket|gitlab)/([^/]+/[^/]+)/?.*$",
             "app.travis-ci.com/(github|bitbucket|gitlab)/([^/]+/[^/]+)/?.*$",
@@ -376,12 +412,41 @@ class MonitoringManager {
         return nil
     }
 
-    static func language(for app: NSRunningApplication) -> String? {
+    static func language(for app: NSRunningApplication, _ element: AXUIElement) -> String? {
         guard let monitoredApp = app.monitoredApp else { return nil }
 
         switch monitoredApp {
             case .canva:
                 return "Image (svg)"
+            case .chrome:
+                do {
+                    guard let url = currentBrowserUrl(for: app, element) else { return nil }
+
+                    let regex = try NSRegularExpression(pattern: "github.com/[^/]+/[^/]+/?$")
+                    let nsrange = NSRange(url.startIndex..<url.endIndex, in: url)
+                    if regex.firstMatch(in: url, options: [], range: nsrange) != nil {
+                        let languages = element.firstDescendantWhere { $0.role == "AXStaticText" && $0.value == "Languages" }
+                        guard let languages = languages else { return nil }
+
+                        guard let wrapper = languages.parent?.parent else { return nil }
+
+                        let langList = wrapper.firstDescendantWhere { $0.role == "AXList" }
+                        guard let langList = langList else { return nil }
+
+                        let link = langList.firstDescendantWhere { $0.role == "AXLink" }
+                        guard let link = link else { return nil }
+
+                        let lang = link.firstDescendantWhere { $0.role == "AXStaticText" }
+                        guard let lang = lang else { return nil }
+
+                        return lang.value
+                    }
+
+                    return nil
+                } catch {
+                    Logging.default.log("Error parsing language from browser: \(error)")
+                    return nil
+                }
             case .figma:
                 return "Image (svg)"
             case .postman:

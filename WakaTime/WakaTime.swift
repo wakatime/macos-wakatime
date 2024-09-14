@@ -125,17 +125,22 @@ class WakaTime: HeartbeatEventHandler {
             category.rawValue.replacingOccurrences(of: "_", with: " "),
             "--plugin",
             "\(appName)/\(appVersion) macos-wakatime/" + Bundle.main.version,
+            "--alternate-branch",
+            "<<LAST_BRANCH>>",
         ]
-        if let project {
+        if let project = project {
             args.append("--project")
             args.append(project)
-        }
-        if isWrite {
-            args.append("--write")
+        } else {
+            args.append("--alternate-project")
+            args.append("<<LAST_PROJECT>>")
         }
         if let language = language {
             args.append("--language")
             args.append(language)
+        }
+        if isWrite {
+            args.append("--write")
         }
 
         Logging.default.log("Sending heartbeat with: \(args)")

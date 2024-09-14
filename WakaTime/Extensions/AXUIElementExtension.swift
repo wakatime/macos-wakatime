@@ -119,7 +119,7 @@ extension AXUIElement {
         return nil
     }
 
-    // Traverses the element's subtree (breadth-first) until visitor() returns false or traversal is completed
+    // Traverses the element's children (breadth-first) until visitor() returns false or traversal is completed
     func traverseDown(visitor: (AXUIElement) -> Bool) {
         var queue: [AXUIElement] = [self]
         while !queue.isEmpty {
@@ -144,7 +144,7 @@ extension AXUIElement {
         }
     }
 
-    // Traverses the element's subtree (breadth-first) until visitor() returns false or traversal is completed
+    // Traverses the element's parents until visitor() returns false or traversal is completed
     func traverseUp(visitor: (AXUIElement) -> Bool, element: AXUIElement? = nil) {
         let element = element ?? self
         if let parent = element.parent {
