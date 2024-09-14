@@ -9,10 +9,11 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
     }
 
     private var outlineView: NSOutlineView!
+    private var runningApps: [AppData] = []
 
-    private lazy var apps: [AppData] = {
+    private func refreshRunningApps() -> [AppData] {
         var apps = [AppData]()
-        let bundleIds = sort(MonitoredApp.allBundleIds + runningApps())
+        let bundleIds = sort(MonitoredApp.allBundleIds + getRunningApps())
         var index = 0
         for bundleId in bundleIds {
             if let icon = AppInfo.getIcon(bundleId: bundleId),
@@ -28,10 +29,11 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
                 index += 1
             }
         }
+        runningApps = apps
         return apps
-    }()
+    }
 
-    private func runningApps() -> [String] {
+    private func getRunningApps() -> [String] {
         var ids: [String] = []
         for runningApp in NSWorkspace.shared.runningApplications where runningApp.activationPolicy == .regular {
             guard let id = runningApp.bundleIdentifier else { continue }
@@ -92,13 +94,14 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
     }
 
     func reloadData() {
+        refreshRunningApps()
         outlineView.reloadData()
     }
 
     // MARK: NSOutlineViewDataSource
 
     func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
-        apps.count
+        runningApps.count
     }
 
     func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
@@ -106,7 +109,7 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
     }
 
     func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
-        apps[index]
+        runningApps[index]
     }
 
     // MARK: NSOutlineViewDelegate
@@ -145,7 +148,7 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
         cellView.addSubview(action)
 
         // Determine if the current item is the last in the list
-        let isLastItem = apps.last == appData
+        let isLastItem = runningApps.last == appData
 
         if !isLastItem {
             let divider = NSView()
@@ -203,12 +206,12 @@ class MonitoredAppsView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate 
     }
 
     @objc func switchToggled(_ sender: NSSwitch) {
-        let appData = apps[sender.tag]
+        let appData = runningApps[sender.tag]
         MonitoringManager.set(monitoringState: sender.state == .on ? .on : .off, for: appData.bundleId)
     }
 
     @objc func clickInstallPlugin(_ sender: NSButton) {
-        let appData = apps[sender.tag]
+        let appData = runningApps[sender.tag]
         guard
             let path = MonitoredApp.pluginAppIds[appData.bundleId],
             let url = URL(string: "https://wakatime.com/\(path)")
