@@ -198,7 +198,7 @@ class MonitoringManager {
                 fatalError("\(monitoredApp.rawValue) should never use window title as entity")
             case .canva:
                 fatalError("\(monitoredApp.rawValue) should never use window title as entity")
-            case .chrome:
+            case .chrome, .chromebeta, .chromecanary:
                 fatalError("\(monitoredApp.rawValue) should never use window title as entity")
             case .figma:
                 guard
@@ -287,7 +287,7 @@ class MonitoringManager {
                 return .browsing
             case .canva:
                 return .designing
-            case .chrome:
+            case .chrome, .chromebeta, .chromecanary:
                 return .browsing
             case .figma:
                 return .designing
@@ -418,7 +418,7 @@ class MonitoringManager {
         switch monitoredApp {
             case .canva:
                 return "Image (svg)"
-            case .chrome:
+            case .chrome, .chromebeta, .chromecanary:
                 do {
                     guard let url = currentBrowserUrl(for: app, element) else { return nil }
 
@@ -464,7 +464,7 @@ class MonitoringManager {
             case .brave:
                 let addressField = element.findAddressField()
                 address = addressField?.value
-            case .chrome:
+            case .chrome, .chromebeta, .chromecanary:
                 let addressField = element.findAddressField()
                 address = addressField?.value
             case .firefox:

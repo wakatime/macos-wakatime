@@ -12,6 +12,8 @@ enum MonitoredApp: String, CaseIterable {
     case brave = "com.brave.Browser"
     case canva = "com.canva.CanvaDesktop"
     case chrome = "com.google.Chrome"
+    case chromebeta = "com.google.Chrome.beta"
+    case chromecanary = "com.google.Chrome.canary"
     case figma = "com.figma.Desktop"
     case firefox = "org.mozilla.firefox"
     case github = "com.github.GitHubClient"
@@ -101,6 +103,8 @@ enum MonitoredApp: String, CaseIterable {
         MonitoredApp.arcbrowser.rawValue,
         MonitoredApp.brave.rawValue,
         MonitoredApp.chrome.rawValue,
+        MonitoredApp.chromebeta.rawValue,
+        MonitoredApp.chromecanary.rawValue,
         MonitoredApp.firefox.rawValue,
         MonitoredApp.safari.rawValue,
         MonitoredApp.safaripreview.rawValue,
