@@ -18,6 +18,7 @@ class PropertiesManager {
         case shouldAutomaticallyDownloadUpdates = "should_automatically_download_updates"
         case hasLaunchedBefore = "has_launched_before"
         case shouldDisplayTodayInStatusBar = "status_bar_text"
+        case shouldDisplayTodayMinutesInStatusBar = "status_bar_minutes"
         case domainPreference = "domain_preference"
         case filterType = "filter_type"
         case denylist = "denylist"
@@ -100,6 +101,21 @@ class PropertiesManager {
         }
         set {
             UserDefaults.standard.set(newValue, forKey: Keys.shouldDisplayTodayInStatusBar.rawValue)
+            UserDefaults.standard.synchronize()
+        }
+    }
+
+    static var shouldDisplayTodayMinutesInStatusBar: Bool {
+        get {
+            guard UserDefaults.standard.string(forKey: Keys.shouldDisplayTodayMinutesInStatusBar.rawValue) != nil else {
+                UserDefaults.standard.set(true, forKey: Keys.shouldDisplayTodayMinutesInStatusBar.rawValue)
+                return true
+            }
+
+            return UserDefaults.standard.bool(forKey: Keys.shouldDisplayTodayMinutesInStatusBar.rawValue)
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Keys.shouldDisplayTodayMinutesInStatusBar.rawValue)
             UserDefaults.standard.synchronize()
         }
     }
