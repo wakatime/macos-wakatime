@@ -71,6 +71,7 @@ enum MonitoredApp: String, CaseIterable {
         "com.jetbrains.rider": "rider",
         "com.microsoft.VSCode": "vs-code",
         "com.microsoft.VSCodeInsiders": "vs-code",
+        "com.Roblox.RobloxStudio": "roblox-studio",
         "com.sublimetext.2": "sublime",
         "com.sublimetext.3": "sublime",
         "com.sublimetext.4": "sublime",
