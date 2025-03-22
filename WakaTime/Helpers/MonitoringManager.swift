@@ -461,6 +461,9 @@ class MonitoringManager {
 
         var address: String?
         switch monitoredApp {
+            case .arcbrowser:
+                let addressField = element.findAddressField()
+                address = addressField?.value
             case .brave:
                 let addressField = element.findAddressField()
                 address = addressField?.value
