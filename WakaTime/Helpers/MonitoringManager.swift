@@ -378,25 +378,29 @@ class MonitoringManager {
         }
     }
 
+    struct Pattern {
+        var expression: String
+        var group: Int
+    }
+
     static func project(from url: String) -> String? {
-        let patterns = [
-            "github.com/([^/]+/[^/]+)/?.*$",
-            "gitlab.com/([^/]+/[^/]+)/?.*$",
-            "bitbucket.org/([^/]+/[^/]+)/?.*$",
-            "app.circleci.com/.*/?(github|bitbucket|gitlab)/([^/]+/[^/]+)/?.*$",
-            "app.travis-ci.com/(github|bitbucket|gitlab)/([^/]+/[^/]+)/?.*$",
-            "app.travis-ci.org/(github|bitbucket|gitlab)/([^/]+/[^/]+)/?.*$"
+        let patterns: [Pattern] = [
+            Pattern(expression: "github.com/[^/]+/([^/]+)/?.*$", group: 1),
+            Pattern(expression: "gitlab.com/[^/]+/([^/]+)/?.*$", group: 1),
+            Pattern(expression: "bitbucket.org/[^/]+/([^/]+)/?.*$", group: 1),
+            Pattern(expression: "app.circleci.com/.*/?(github|bitbucket|gitlab)/[^/]+/([^/]+)/?.*$", group: 2),
+            Pattern(expression: "app.travis-ci.com/(github|bitbucket|gitlab)/[^/]+/([^/]+)/?.*$", group: 2),
+            Pattern(expression: "app.travis-ci.org/(github|bitbucket|gitlab)/[^/]+/([^/]+)/?.*$", group: 2)
         ]
 
         for pattern in patterns {
             do {
-                let regex = try NSRegularExpression(pattern: pattern)
+                let regex = try NSRegularExpression(pattern: pattern.expression)
                 let nsrange = NSRange(url.startIndex..<url.endIndex, in: url)
                 if let match = regex.firstMatch(in: url, options: [], range: nsrange) {
                     // Adjusted to capture the right group based on the pattern.
                     // The group index might be 2 if the pattern includes a platform prefix before the project name.
-                    let groupIndex = pattern.contains("(github|bitbucket|gitlab)") ? 2 : 1
-                    let range = match.range(at: groupIndex)
+                    let range = match.range(at: pattern.group)
 
                     if range.location != NSNotFound, let range = Range(range, in: url) {
                         return String(url[range])
