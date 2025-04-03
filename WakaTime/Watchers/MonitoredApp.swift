@@ -75,6 +75,7 @@ enum MonitoredApp: String, CaseIterable {
         "com.sublimetext.2": "sublime",
         "com.sublimetext.3": "sublime",
         "com.sublimetext.4": "sublime",
+        "com.todesktop.230313mzl4w4u92": "cursor",
         "com.visualstudio.code.oss": "vs-code",
         "com.vscodium": "vs-code",
         "epp.package.committers": "eclipse",
