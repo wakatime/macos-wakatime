@@ -82,7 +82,7 @@ class MonitoringManager {
 
     static var allMonitoredApps: [String] {
         if let bundleIds = UserDefaults.standard.stringArray(forKey: monitoringKey) {
-            return bundleIds
+            return bundleIds.filter { MonitoredApp.pluginAppIds[$0] == nil }
         } else {
             var bundleIds: [String] = []
             let defaults = UserDefaults.standard.dictionaryRepresentation()
@@ -97,7 +97,7 @@ class MonitoringManager {
             }
             UserDefaults.standard.set(bundleIds, forKey: monitoringKey)
             UserDefaults.standard.synchronize()
-            return bundleIds
+            return bundleIds.filter { MonitoredApp.pluginAppIds[$0] == nil }
         }
     }
 
