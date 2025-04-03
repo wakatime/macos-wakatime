@@ -210,6 +210,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
         }
     }
 
+    private func formatTimeText(_ text: String) -> String {
+        if !PropertiesManager.shouldDisplayTodayMinutesInStatusBar {
+            let parts = text.components(separatedBy: " ")
+            return parts[0] + " " + parts[1]
+        } else {
+            return text
+        }
+    }
+
     internal func fetchToday() {
         guard PropertiesManager.shouldDisplayTodayInStatusBar else {
             setText("")
@@ -218,7 +227,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
 
         let time = Int(NSDate().timeIntervalSince1970)
         guard lastTodayTime + 120 < time else {
-            setText(lastTodayText)
+            setText(formatTimeText(lastTodayText))
             return
         }
 
@@ -254,6 +263,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
         let data = handle.readDataToEndOfFile()
         let text = (String(data: data, encoding: String.Encoding.utf8) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         lastTodayText = text
-        setText(text)
+        setText(formatTimeText(text))
     }
 }
