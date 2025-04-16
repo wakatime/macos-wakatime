@@ -3,6 +3,8 @@ import Foundation
 // swiftlint:disable force_unwrapping
 // swiftlint:disable force_try
 class Dependencies {
+    public static var twelveHours = 43200
+
     public static func installDependencies() {
         Task {
             if !(await isCLILatest()) {
@@ -57,7 +59,7 @@ class Dependencies {
                 isoDateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
                 isoDateFormatter.formatOptions = [.withInternetDateTime]
                 if let lastSeen = isoDateFormatter.date(from: lastSeenAt) {
-                    if now.timeIntervalSince(lastSeen) > 600 {
+                    if Int(now.timeIntervalSince(lastSeen)) > twelveHours {
                         break
                     }
                 }

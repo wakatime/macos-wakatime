@@ -2,7 +2,7 @@ import AppUpdater
 import Cocoa
 import UserNotifications
 
-class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate, UNUserNotificationCenterDelegate {
     var window: NSWindow!
     var statusBarItem: NSStatusItem!
     let menu = NSMenu()
@@ -15,6 +15,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
 
     @Atomic var lastTodayTime = 0
     @Atomic var lastTodayText = ""
+    @Atomic var lastBrowserWarningTime = 0
 
     let updater = AppUpdater(owner: "wakatime", repo: "macos-wakatime")
 
@@ -159,7 +160,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
         Task.detached(priority: .background) {
             self.fetchToday()
         }
-        statusBarItem.popUpMenu(menu)
+        // statusBarItem.popUpMenu(menu)
+        statusBarItem.menu = menu
     }
 
     func a11yStatusChanged(_ hasPermission: Bool) {
@@ -173,6 +175,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
         }
         statusBarA11yItem.isHidden = hasPermission
         statusBarA11ySeparator.isHidden = hasPermission
+    }
+
+    private func checkBrowserDuplicateTracking() {
+        // Warn about using both Browser extension and Mac app tracking a browser at same time, once per 12 hrs
+        let time = Int(NSDate().timeIntervalSince1970)
+        if time - lastBrowserWarningTime > Dependencies.twelveHours && MonitoringManager.isMonitoringBrowsing {
+            Task {
+                if let browser = await Dependencies.recentBrowserExtension() {
+                    lastBrowserWarningTime = time
+                    delegate.toastNotification("Warning: WakaTime \(browser) extension detected. " +
+                        "It’s recommended to only track browsing activity with the \(browser) " +
+                        "extension or Mac Desktop app, but not both.")
+                }
+            }
+        }
     }
 
     private func showSettings() {
@@ -189,6 +206,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
     internal func toastNotification(_ title: String) {
         let content = UNMutableNotificationContent()
         content.title = title
+        content.body = " "
 
         let uuidString = UUID().uuidString
         let request = UNNotificationRequest(
@@ -196,10 +214,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
         content: content, trigger: nil)
 
         let notificationCenter = UNUserNotificationCenter.current()
+        notificationCenter.delegate = self
+
         notificationCenter.requestAuthorization(options: [.alert, .sound]) { granted, _ in
             guard granted else { return }
 
-            notificationCenter.add(request)
+            DispatchQueue.main.async {
+                notificationCenter.add(request)
+            }
+        }
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        if #available(macOS 11.0, *) {
+            completionHandler([.banner, .sound])
+        } else {
+            completionHandler([.alert, .sound]) // Fallback for older macOS versions
         }
     }
 
@@ -248,6 +280,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
             try process.execute()
         } catch {
             Logging.default.log("Failed to run wakatime-cli fetching Today coding activity: \(error)")
+            return
         }
 
         let handle = pipe.fileHandleForReading
@@ -255,5 +288,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate {
         let text = (String(data: data, encoding: String.Encoding.utf8) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         lastTodayText = text
         setText(text)
+
+        checkBrowserDuplicateTracking()
     }
 }

@@ -10,7 +10,7 @@ packages:
     branch: master
   Firebase:
     url: https://github.com/firebase/firebase-ios-sdk
-    from: 10.0.0
+    from: 11.11.0
 
 targets:
   WakaTime:
