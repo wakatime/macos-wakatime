@@ -10,7 +10,7 @@ on:
 jobs:
   test:
     name: Tests and Build
-    runs-on: macos-13
+    runs-on: macos-15
     steps:
       -
         name: Checkout
@@ -75,7 +75,7 @@ jobs:
   sign:
     name: Sign Apple app
     needs: [version]
-    runs-on: macos-13
+    runs-on: macos-15
     steps:
       -
         name: Checkout
@@ -210,7 +210,7 @@ jobs:
 
   release:
     name: Release
-    runs-on: macos-13
+    runs-on: macos-15
     needs: [version, sign, changelog]
     steps:
       -
