@@ -213,6 +213,8 @@ class MonitoringManager {
                 return extractPrefix(element.rawTitle, separator: " - ")
             case .imessage:
                 return extractPrefix(element.rawTitle, separator: " - ")
+            case .inkscape:
+                return extractPrefix(element.rawTitle)
             case .iterm2:
                 return extractPrefix(element.rawTitle, separator: " - ")
             case .linear:
@@ -297,6 +299,8 @@ class MonitoringManager {
                 return .codereviewing
             case .imessage:
                 return .communicating
+            case .inkscape:
+                return .designing
             case .iterm2:
                 return .coding
             case .linear:
@@ -452,6 +456,8 @@ class MonitoringManager {
                     return nil
                 }
             case .figma:
+                return "Image (svg)"
+            case .inkscape:
                 return "Image (svg)"
             case .postman:
                 return "HTTP Request"
