@@ -17,6 +17,7 @@ enum MonitoredApp: String, CaseIterable {
     case figma = "com.figma.Desktop"
     case firefox = "org.mozilla.firefox"
     case github = "com.github.GitHubClient"
+    case hyper = "co.zeit.hyper"
     case imessage = "com.apple.MobileSMS"
     case inkscape = "org.inkscape.Inkscape"
     case iterm2 = "com.googlecode.iterm2"
