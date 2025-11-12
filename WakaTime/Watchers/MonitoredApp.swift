@@ -32,6 +32,7 @@ enum MonitoredApp: String, CaseIterable {
     case slack = "com.tinyspeck.slackmacgap"
     case tableplus = "com.tinyapp.TablePlus"
     case terminal = "com.apple.Terminal"
+    case unity3d = "com.unity3d.UnityEditor5.x"
     case warp = "dev.warp.Warp-Stable"
     case wecom = "com.tencent.WeWorkMac"
     case whatsapp = "net.whatsapp.WhatsApp"
@@ -119,11 +120,13 @@ enum MonitoredApp: String, CaseIterable {
         MonitoredApp.canva.rawValue,
         MonitoredApp.figma.rawValue,
         MonitoredApp.github.rawValue,
+        MonitoredApp.hyper.rawValue,
         MonitoredApp.linear.rawValue,
         MonitoredApp.notes.rawValue,
         MonitoredApp.notion.rawValue,
         MonitoredApp.postman.rawValue,
         MonitoredApp.tableplus.rawValue,
+        MonitoredApp.unity.rawValue,
         MonitoredApp.xcode.rawValue,
         MonitoredApp.zoom.rawValue,
         MonitoredApp.zed.rawValue,
