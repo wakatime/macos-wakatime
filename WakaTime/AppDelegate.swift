@@ -107,7 +107,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate, UNUserNot
     }
 
     @objc func dashboardClicked(_ sender: AnyObject) {
-        if let url = URL(string: "https://wakatime.com/") {
+        guard let urlString = ConfigFile.getSetting(section: "settings", key: "api_url") else {
+            Logging.default.log("No `api_url` was set in the config!")
+            return
+        }
+
+        if let url = URL(string: urlString) {
+            // When you go to the `api_url`, it redirects to the dashboard.
             NSWorkspace.shared.open(url)
         }
     }
