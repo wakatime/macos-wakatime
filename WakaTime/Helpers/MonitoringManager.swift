@@ -263,8 +263,10 @@ class MonitoringManager {
     }
 
     static func category(for app: NSRunningApplication, _ element: AXUIElement) -> Category {
-        guard let monitoredApp = app.monitoredApp else {
-            guard let url = currentBrowserUrl(for: app, element) else { return .coding }
+        guard let monitoredApp = app.monitoredApp else { return .coding }
+
+        if isAppBrowser(app) {
+            guard let url = currentBrowserUrl(for: app, element) else { return .browsing }
             return category(from: url)
         }
 

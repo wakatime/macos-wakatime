@@ -28,7 +28,7 @@ Build with `Xcode` before creating any pull requests, or your PR won’t pass th
 
 To fix linter warning(s), run `swiftlint --fix`.
 
-## Branching Stratgegy
+## Branching Strategy
 
 We require specific branch name prefixes for PRs:
 
