@@ -283,12 +283,20 @@ class MonitoringManager {
                 return .designing
             case .adobepremierepro:
                 return .designing
+            case .arcbrowser:
+                return .browsing
             case .beeper:
                 return .communicating
+            case .brave:
+                return .browsing
             case .canva:
                 return .designing
+            case .chrome, .chromebeta, .chromecanary:
+                return .browsing
             case .figma:
                 return .designing
+            case .firefox:
+                return .browsing
             case .github:
                 return .codereviewing
             case .imessage:
@@ -311,6 +319,10 @@ class MonitoringManager {
                 return .communicating
             case .slack:
                 return .communicating
+            case .safari:
+                return .browsing
+            case .safaripreview:
+                return .browsing
             case .tableplus:
                 return .debugging
             case .terminal:
@@ -326,8 +338,6 @@ class MonitoringManager {
             case .zoom:
                 return .meeting
             case .zed:
-                return .coding
-            default:
                 return .coding
         }
     }
@@ -353,7 +363,7 @@ class MonitoringManager {
             }
         }
 
-        return .browsing
+        return .coding
     }
 
     static func project(for app: NSRunningApplication, _ element: AXUIElement) -> String? {
