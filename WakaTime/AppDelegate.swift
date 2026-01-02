@@ -107,8 +107,27 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate, UNUserNot
     }
 
     @objc func dashboardClicked(_ sender: AnyObject) {
-        if let url = URL(string: "https://wakatime.com/") {
+        let defaultUrl = "https://wakatime.com/"
+
+        var url = ConfigFile.getSetting(section: "settings", key: "api_url") ?? defaultUrl
+        if url.isEmpty {
+            url = defaultUrl
+        }
+
+        url = url
+            .replacingOccurrences(of: "://api.", with: "://")
+            .replacingOccurrences(of: "/api/v1", with: "")
+            .replacingOccurrences(of: "^api\\.", with: "", options: .regularExpression)
+            .replacingOccurrences(of: "/api", with: "")
+
+        if let url = URL(string: url) {
             NSWorkspace.shared.open(url)
+        } else {
+            if url != defaultUrl {
+                if let url = URL(string: defaultUrl) {
+                    NSWorkspace.shared.open(url)
+                }
+            }
         }
     }
 
