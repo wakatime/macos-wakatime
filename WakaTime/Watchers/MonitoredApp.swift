@@ -18,6 +18,7 @@ enum MonitoredApp: String, CaseIterable {
     case firefox = "org.mozilla.firefox"
     case github = "com.github.GitHubClient"
     case imessage = "com.apple.MobileSMS"
+    case inkscape = "org.inkscape.Inkscape"
     case iterm2 = "com.googlecode.iterm2"
     case linear = "com.linear"
     case miro = "com.electron.realtimeboard"
