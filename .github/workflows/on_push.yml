@@ -23,7 +23,7 @@ jobs:
         run: xcodegen
       -
         name: Build app to run linters
-        run: xcodebuild -scheme WakaTime
+        run: xcodebuild -scheme WakaTime -configuration Debug -destination 'generic/platform=macOS' ONLY_ACTIVE_ARCH=NO ARCHS='arm64 x86_64' build
 
   version:
     name: Version
@@ -101,12 +101,28 @@ jobs:
         name: Build app
         id: build
         run: |
-          xcodebuild -scheme WakaTime -configuration Release
+          xcodebuild -scheme WakaTime -configuration Release -destination 'generic/platform=macOS' ONLY_ACTIVE_ARCH=NO ARCHS='arm64 x86_64' build
           app=`find /Users/runner/Library/Developer/Xcode/DerivedData/ -name WakaTime.app`
           echo "$app"
+          lipo -info "$app/Contents/MacOS/WakaTime"
           directory=`dirname $app`
           echo "$directory"
           echo "directory=$directory" >> $GITHUB_OUTPUT
+      -
+        name: Verify universal platform
+        run: |
+          app=`find /Users/runner/Library/Developer/Xcode/DerivedData/ -name WakaTime.app`
+          echo "$app"
+          lipo -info "$app/Contents/MacOS/WakaTime"
+          BIN="$app/Contents/MacOS/WakaTime"
+          archs="$(lipo -archs "$BIN" 2>/dev/null || true)"
+          echo "Reported architectures: $archs"
+          for required in arm64 x86_64; do
+            echo "$archs" | grep -qw "$required" || {
+              echo "❌ Missing required architecture: $required"
+              exit 1
+            }
+          done
       -
         name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v1
