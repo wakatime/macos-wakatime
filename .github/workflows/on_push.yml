@@ -45,12 +45,13 @@ jobs:
       -
         name: Calculate semver tag
         id: semver-tag
-        uses: wakatime/semver-action@master
+        uses: gandarez/semver-action@master
         with:
           prefix: v
           prerelease_id: alpha
           develop_branch_name: main
           main_branch_name: release
+          major_pattern: "(?i)^(.+:)?(major/.+)"
       -
         name: Format
         id: format
