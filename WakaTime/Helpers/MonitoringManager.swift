@@ -155,7 +155,8 @@ class MonitoringManager {
 
                     // If we don't skip them, Notes app itself costs a lot of CPU time to create AXUIElement for us to traverse.
                     // AXOutline -> Folder Sidebar of Notes
-                    // AXTable   -> List View of items of selected folder. It may contain thousands of rows, and each row may have text and image element.
+                    // AXTable   -> List View of items of selected folder. It may contain thousands of rows, and
+                    // each row may have text and image element.
                     if role == "AXOutline" || role == "AXTable" {
                         return true
                     }
@@ -164,20 +165,16 @@ class MonitoringManager {
                 }
                 // There's apparently two text editor implementations in Apple Notes. One uses a web view,
                 // the other appears to be a native implementation based on the `ICTK2MacTextView` class.
-                let webAreaElement = element.firstDescendantWhere(
-                    { $0.role == "AXWebArea" },
-                    skipDescendantsWhere: skipHighCostElements
-                )
+                let webAreaElement = element.firstDescendantWhere({ $0.role == "AXWebArea" }, skipDescendantsWhere: skipHighCostElements )
                 if let webAreaElement {
                     // WebView-based implementation
                     let titleElement = webAreaElement.firstDescendantWhere { $0.role == kAXStaticTextRole }
                     return (titleElement?.value, .app)
                 } else {
                     // ICTK2MacTextView
-                    let textAreaElement = element.firstDescendantWhere(
-                        { $0.role == kAXTextAreaRole },
-                        skipDescendantsWhere: skipHighCostElements
-                    )
+                    let textAreaElement = element.firstDescendantWhere({
+                        $0.role == kAXTextAreaRole
+                    }, skipDescendantsWhere: skipHighCostElements)
                     if let value = textAreaElement?.value {
                         let title = extractPrefix(value, separator: "\n")
                         return (title, .app)
