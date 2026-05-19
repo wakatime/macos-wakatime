@@ -261,6 +261,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate, UNUserNot
         }
     }
 
+    private func normalizedTodayText(_ text: String) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !trimmed.isEmpty else { return "" }
+        guard !trimmed.hasPrefix("Start") else { return "" }
+
+        return trimmed
+    }
+
     internal func fetchToday() {
         guard PropertiesManager.shouldDisplayTodayInStatusBar else {
             setText("")
@@ -304,7 +313,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate, UNUserNot
 
         let handle = pipe.fileHandleForReading
         let data = handle.readDataToEndOfFile()
-        let text = (String(data: data, encoding: String.Encoding.utf8) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let text = normalizedTodayText(String(data: data, encoding: String.Encoding.utf8) ?? "")
         lastTodayText = text
         setText(text)
 
