@@ -18,6 +18,7 @@ class PropertiesManager {
         case shouldAutomaticallyDownloadUpdates = "should_automatically_download_updates"
         case hasLaunchedBefore = "has_launched_before"
         case shouldDisplayTodayInStatusBar = "status_bar_text"
+        case shouldShowEmptyText = "show_empty_text"
         case domainPreference = "domain_preference"
         case filterType = "filter_type"
         case denylist = "denylist"
@@ -100,6 +101,21 @@ class PropertiesManager {
         }
         set {
             UserDefaults.standard.set(newValue, forKey: Keys.shouldDisplayTodayInStatusBar.rawValue)
+            UserDefaults.standard.synchronize()
+        }
+    }
+
+    static var shouldShowEmptyText: Bool {
+        get {
+            guard UserDefaults.standard.string(forKey: Keys.shouldShowEmptyText.rawValue) != nil else {
+                UserDefaults.standard.set(false, forKey: Keys.shouldShowEmptyText.rawValue)
+                return false
+            }
+
+            return UserDefaults.standard.bool(forKey: Keys.shouldShowEmptyText.rawValue)
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Keys.shouldShowEmptyText.rawValue)
             UserDefaults.standard.synchronize()
         }
     }

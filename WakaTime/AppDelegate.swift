@@ -265,7 +265,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate, UNUserNot
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !trimmed.isEmpty else { return "" }
-        guard !trimmed.hasPrefix("Start") else { return "" }
+        
+        if !PropertiesManager.shouldShowEmptyText {
+            guard !trimmed.hasPrefix("Start") else { return "" }
+        }
 
         return trimmed
     }
