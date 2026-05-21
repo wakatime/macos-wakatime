@@ -56,13 +56,13 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         return checkbox
     }()
 
-    lazy var showEmptyTextCheckbox: NSButton = {
+    lazy var hideEmptyTextCheckbox: NSButton = {
         let checkbox = NSButton(
-            checkboxWithTitle: "Show empty text when there's no activity",
+            checkboxWithTitle: "Hide empty text when there's no activity",
             target: self,
-            action: #selector(enableShowEmptyTextCheckboxClicked)
+            action: #selector(enableHideEmptyTextCheckboxClicked)
         )
-        checkbox.state = PropertiesManager.shouldShowEmptyText ? .on : .off
+        checkbox.state = PropertiesManager.shouldShowEmptyText ? .off : .on
         return checkbox
     }()
 
@@ -80,7 +80,7 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         let stack = NSStackView(views: [
             launchAtLoginCheckbox,
             statusBarTextCheckbox,
-            showEmptyTextCheckbox,
+            hideEmptyTextCheckbox,
             requestA11yCheckbox,
             enableLoggingCheckbox
         ])
@@ -278,12 +278,12 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         } else {
             PropertiesManager.shouldDisplayTodayInStatusBar = false
         }
-        delegate?.fetchToday()
+        delegate?.refreshToday()
     }
 
-    @objc func enableShowEmptyTextCheckboxClicked() {
-        PropertiesManager.shouldShowEmptyText = showEmptyTextCheckbox.state == .on
-        delegate?.fetchToday()
+    @objc func enableHideEmptyTextCheckboxClicked() {
+        PropertiesManager.shouldShowEmptyText = hideEmptyTextCheckbox.state == .off
+        delegate?.refreshToday()
     }
 
     @objc func enableA11yCheckboxClicked() {

@@ -273,6 +273,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, StatusBarDelegate, UNUserNot
         return trimmed
     }
 
+    internal func refreshToday() {
+        lastTodayTime = 0
+        fetchToday()
+    }
+
     internal func fetchToday() {
         guard PropertiesManager.shouldDisplayTodayInStatusBar else {
             setText("")
