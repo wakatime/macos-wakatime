@@ -133,11 +133,15 @@ extension AXUIElement {
         }
     }
 
-    func traverseDownDFS(visitor: (AXUIElement) -> Bool) {
+    func traverseDownDFS(
+        visitor: (AXUIElement) -> Bool,
+        skipDescendantsWhere: ((AXUIElement) -> Bool)? = nil
+    ) {
         var stack: [AXUIElement] = [self]
         while !stack.isEmpty {
             let currentElement = stack.removeLast()
             if !visitor(currentElement) { return }
+            if skipDescendantsWhere?(currentElement) == true { continue }
             if let children = currentElement.children {
                 stack.append(contentsOf: children.reversed())
             }
@@ -153,15 +157,18 @@ extension AXUIElement {
         }
     }
 
-    func firstDescendantWhere(_ condition: (AXUIElement) -> Bool) -> AXUIElement? {
+    func firstDescendantWhere(
+        _ condition: (AXUIElement) -> Bool,
+        skipDescendantsWhere: ((AXUIElement) -> Bool)? = nil
+    ) -> AXUIElement? {
         var matchingDescendant: AXUIElement?
-        traverseDownDFS { element in
+        traverseDownDFS(visitor: { element in
             if condition(element) {
                 matchingDescendant = element
                 return false // stop traversal
             }
             return true // continue traversal
-        }
+        }, skipDescendantsWhere: skipDescendantsWhere)
         return matchingDescendant
     }
 
