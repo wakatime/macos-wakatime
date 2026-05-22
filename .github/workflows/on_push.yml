@@ -45,7 +45,7 @@ jobs:
       -
         name: Calculate semver tag
         id: semver-tag
-        uses: gandarez/semver-action@master
+        uses: gandarez/semver-action@2da7ec6a7edac8ada548d4f77a47ab8024b18796 # v2.2.0
         with:
           prefix: v
           prerelease_id: alpha
@@ -83,7 +83,7 @@ jobs:
         uses: actions/checkout@v3
       -
         name: Update project.yml
-        uses: fjogeleit/yaml-update-action@main
+        uses: fjogeleit/yaml-update-action@dffe9a5223d84653c13374032382f6bb5de8e5ef # v0.17.0
         with:
           valueFile: 'project.yml'
           changes:  |
@@ -126,7 +126,7 @@ jobs:
           done
       -
         name: Import Code-Signing Certificates
-        uses: Apple-Actions/import-codesign-certs@v1
+        uses: Apple-Actions/import-codesign-certs@b2e261033a9e248f91a9b57201e8d1e12b15a24e # v7.0.0
         with:
           # The certificates in a PKCS12 file encoded as a base64 string
           p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
@@ -136,6 +136,8 @@ jobs:
         env:
           APP_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_IDENTITY }}
         run: |
+          echo "Code-signing identities available in keychain:"
+          security find-identity -v -p codesigning
           codesign --force --deep --timestamp --options runtime --sign "$APP_SIGNING_IDENTITY" "${{ steps.build.outputs.directory }}/WakaTime.app"
       -
         name: Store Credentials
@@ -250,7 +252,7 @@ jobs:
           mv ./WakaTime.zip release/macos-wakatime.zip
       -
         name: "Create release"
-        uses: softprops/action-gh-release@master
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           name: ${{ needs.version.outputs.semver_tag }}
           tag_name: ${{ needs.version.outputs.semver_tag }}
