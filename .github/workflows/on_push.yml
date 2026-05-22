@@ -133,9 +133,14 @@ jobs:
           # The password used to import the PKCS12 file.
           p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
       - name: Codesign
-        env:
-          APP_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_IDENTITY }}
         run: |
+          APP_SIGNING_IDENTITY=$(security find-identity -v -p codesigning | grep "Developer ID Application" | head -1 | awk -F'"' '{print $2}')
+          if [ -z "$APP_SIGNING_IDENTITY" ]; then
+            echo "❌ No 'Developer ID Application' identity found in the keychain"
+            security find-identity -v -p codesigning
+            exit 1
+          fi
+          echo "Using signing identity: $APP_SIGNING_IDENTITY"
           codesign --force --deep --timestamp --options runtime --sign "$APP_SIGNING_IDENTITY" "${{ steps.build.outputs.directory }}/WakaTime.app"
       -
         name: Store Credentials
