@@ -45,9 +45,10 @@ class MonitoringManager {
 
     static func heartbeatData(_ app: NSRunningApplication) -> HeartbeatData? {
         let pid = app.processIdentifier
+        let axApp = AXUIElementCreateApplication(pid)
 
         guard
-            let activeWindow = AXUIElementCreateApplication(pid).activeWindow,
+            let activeWindow = heartbeatWindow(for: app, axApp),
             let entity = entity(for: app, activeWindow),
             let entityUnwrapped = entity.0
         else { return nil }
@@ -66,6 +67,50 @@ class MonitoringManager {
             category: category(for: app, activeWindow)
         )
         return heartbeat
+    }
+
+    static func heartbeatWindow(for app: NSRunningApplication, _ axApp: AXUIElement) -> AXUIElement? {
+        guard app.monitoredApp == .slack else { return axApp.activeWindow }
+
+        let activeWindow = axApp.activeWindow
+        if let huddleWindow = slackHuddleWindow(for: axApp) {
+            logSlackWindowSnapshot(axApp: axApp, activeWindow: activeWindow, selectedWindow: huddleWindow)
+            logSlackWindowSelection(activeWindow: activeWindow, selectedWindow: huddleWindow)
+            return huddleWindow
+        }
+
+        logSlackWindowSnapshot(axApp: axApp, activeWindow: activeWindow, selectedWindow: activeWindow)
+        logSlackWindowSelection(activeWindow: activeWindow, selectedWindow: activeWindow)
+        return activeWindow
+    }
+
+    static func slackHuddleWindow(for axApp: AXUIElement) -> AXUIElement? {
+        axApp.windows?.first { isSlackHuddle($0.rawTitle) }
+    }
+
+    static func logSlackWindowSelection(activeWindow: AXUIElement?, selectedWindow: AXUIElement?) {
+        let activeTitle = activeWindow?.rawTitle ?? "<nil>"
+        let selectedTitle = selectedWindow?.rawTitle ?? "<nil>"
+
+        guard activeTitle != selectedTitle || isSlackHuddle(selectedTitle) else { return }
+
+        Logging.default.log("Slack AX selected window: \(selectedTitle); active window: \(activeTitle)")
+    }
+
+    static func logSlackWindowSnapshot(axApp: AXUIElement, activeWindow: AXUIElement?, selectedWindow: AXUIElement?) {
+        guard PropertiesManager.shouldLogToFile else { return }
+
+        let activeTitle = activeWindow?.rawTitle ?? "<nil>"
+        let selectedTitle = selectedWindow?.rawTitle ?? "<nil>"
+        let windowTitles = axApp.windows?
+            .compactMap { $0.rawTitle?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .prefix(8)
+            .joined(separator: " | ") ?? "<none>"
+
+        Logging.default.log(
+            "Slack AX snapshot: selected=\(selectedTitle); active=\(activeTitle); windows=\(windowTitles)"
+        )
     }
 
     static var isMonitoringBrowsing: Bool {
@@ -222,6 +267,8 @@ class MonitoringManager {
                     title != "Drafts"
                 else { return nil }
                 return title
+            case .facetime:
+                return extractPrefix(element.rawTitle)
             case .firefox:
                 fatalError("\(monitoredApp.rawValue) should never use window title as entity")
             case .github:
@@ -249,7 +296,7 @@ class MonitoringManager {
             case .rocketchat:
                 return extractPrefix(element.rawTitle)
             case .slack:
-                return extractPrefix(element.rawTitle, separator: " - ")
+                return slackTitle(element.rawTitle)
             case .safari:
                 fatalError("\(monitoredApp.rawValue) should never use window title as entity")
             case .safaripreview:
@@ -310,6 +357,8 @@ class MonitoringManager {
                 return .browsing
             case .figma:
                 return .designing
+            case .facetime:
+                return .meeting
             case .firefox:
                 return .browsing
             case .github:
@@ -333,6 +382,7 @@ class MonitoringManager {
             case .rocketchat:
                 return .communicating
             case .slack:
+                if isSlackHuddle(element.rawTitle) { return .meeting }
                 return .communicating
             case .safari:
                 return .browsing
@@ -359,6 +409,25 @@ class MonitoringManager {
     // swiftlint:enable cyclomatic_complexity
 
     static func category(from url: String) -> Category {
+        let meetingPatterns = [
+            "meet\\.google\\.com/.*$",
+            "zoom\\.us/(j|wc|my)/.*$",
+            "teams\\.microsoft\\.com/.*$",
+        ]
+
+        for pattern in meetingPatterns {
+            do {
+                let regex = try NSRegularExpression(pattern: pattern)
+                let nsrange = NSRange(url.startIndex..<url.endIndex, in: url)
+                if regex.firstMatch(in: url, options: [], range: nsrange) != nil {
+                    return .meeting
+                }
+            } catch {
+                Logging.default.log("Regex error: \(error)")
+                continue
+            }
+        }
+
         let patterns = [
             "github.com/[^/]+/[^/]+/pull/.*$",
             "gitlab.com/[^/]+/[^/]+/[^/]+/merge_requests/.*$",
@@ -390,7 +459,7 @@ class MonitoringManager {
         // TODO: detect repo from GitHub Desktop Client if possible
         switch monitoredApp {
             case .slack:
-                return extractSuffix(element.rawTitle, separator: " - ", offset: 1)
+                return slackProject(element.rawTitle)
             case .zed:
                 return extractSuffix(element.rawTitle, separator: " — ")
             default:
@@ -483,6 +552,33 @@ class MonitoringManager {
         }
     }
 
+    static func slackTitle(_ str: String?) -> String? {
+        guard let str = str?.trimmingCharacters(in: .whitespacesAndNewlines), !str.isEmpty else { return nil }
+
+        if isSlackHuddle(str) {
+            return extractPrefix(str, separator: " - ") ?? str
+        }
+
+        return extractPrefix(str, separator: " - ")
+    }
+
+    static func slackProject(_ str: String?) -> String? {
+        guard let str = str?.trimmingCharacters(in: .whitespacesAndNewlines), !str.isEmpty else { return nil }
+
+        let workspace = extractSuffix(str, separator: " - ", offset: 1)
+        guard workspace != nil || !isSlackHuddle(str) else {
+            return extractSuffix(str, separator: " - ")
+        }
+
+        return workspace
+    }
+
+    static func isSlackHuddle(_ str: String?) -> Bool {
+        guard let str = str else { return false }
+
+        return str.range(of: "huddle", options: [.caseInsensitive, .diacriticInsensitive]) != nil
+    }
+
     static func currentBrowserUrl(for app: NSRunningApplication, _ element: AXUIElement) -> String? {
         guard let monitoredApp = app.monitoredApp else { return nil }
 
@@ -555,7 +651,7 @@ class MonitoringManager {
             guard parts.count > 1 else { return nil }
 
             parts.removeLast()
-            i += 1
+            i -= 1
         }
         guard let item = parts.last else { return nil }
 
