@@ -3,6 +3,8 @@ import Foundation
 import AppKit
 
 class Watcher: NSObject {
+    private static let meetingIdleTimeoutInSeconds: CFTimeInterval = 60 * 60
+
     private let callbackQueue = DispatchQueue(label: "com.WakaTime.Watcher.callbackQueue", qos: .utility)
     private let monitorQueue = DispatchQueue(label: "com.WakaTime.Watcher.monitorQueue", qos: .utility)
 
@@ -117,23 +119,35 @@ class Watcher: NSObject {
                 }
                 observeActivityText(activeWindow: activeWindow)
             } else {
-                eventSourceObserver?.start { [weak self] in
+                eventSourceObserver?.start { [weak self] hasInputActivity, secondsSinceLastMouseActivity in
                     self?.callbackQueue.async {
                         guard
-                            let app = self?.activeApp, !MonitoringManager.isAppXcode(app),
+                            let self,
+                            let app = self.activeApp, !MonitoringManager.isAppXcode(app),
                             let bundleId = app.bundleIdentifier
                         else { return }
+
+                        if !hasInputActivity {
+                            guard secondsSinceLastMouseActivity < Self.meetingIdleTimeoutInSeconds else { return }
+                            guard self.lastValidHeartbeatForApp[bundleId]?.category == .meeting else { return }
+                        }
 
                         var heartbeat = MonitoringManager.heartbeatData(app)
 
                         if let heartbeat {
-                            self?.lastValidHeartbeatForApp[bundleId] = heartbeat
+                            self.lastValidHeartbeatForApp[bundleId] = heartbeat
                         } else {
-                            heartbeat = self?.lastValidHeartbeatForApp[bundleId]
+                            guard hasInputActivity else { return }
+
+                            heartbeat = self.lastValidHeartbeatForApp[bundleId]
+                        }
+
+                        if !hasInputActivity, heartbeat?.category != .meeting {
+                            return
                         }
 
                         if let heartbeat {
-                            self?.heartbeatEventHandler?.handleHeartbeatEvent(
+                            self.heartbeatEventHandler?.handleHeartbeatEvent(
                                 app: app,
                                 entity: heartbeat.entity,
                                 entityType: heartbeat.entityType,

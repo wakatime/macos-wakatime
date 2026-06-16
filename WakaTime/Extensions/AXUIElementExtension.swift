@@ -25,6 +25,11 @@ extension AXUIElement {
         return ref as? [AXUIElement]
     }
 
+    var windows: [AXUIElement]? {
+        guard let ref = getValue(for: kAXWindowsAttribute) else { return nil }
+        return ref as? [AXUIElement]
+    }
+
     var parent: AXUIElement? {
         guard let ref = getValue(for: kAXParentAttribute) else { return nil }
         // swiftlint:disable force_cast

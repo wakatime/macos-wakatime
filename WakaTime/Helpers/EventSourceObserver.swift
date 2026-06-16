@@ -9,14 +9,15 @@ class EventSourceObserver {
         timer.invalidate()
     }
 
-    func start(activityDetected: @escaping () -> Void) {
+    func start(activityDetected: @escaping (_ hasInputActivity: Bool, _ secondsSinceLastMouseActivity: CFTimeInterval) -> Void) {
         stop()
         timer = Timer.scheduledTimer(withTimeInterval: pollIntervalInSeconds, repeats: true) { [self] _ in
             let secondsSinceLastKeyPress = Self.checkForKeyPresses()
-            let secondsSinceLastMouseMoved = Self.checkForMouseActivity()
-            if secondsSinceLastKeyPress < pollIntervalInSeconds || secondsSinceLastMouseMoved < pollIntervalInSeconds {
-                activityDetected()
-            }
+            let secondsSinceLastMouseActivity = Self.checkForMouseActivity()
+            let hasInputActivity = secondsSinceLastKeyPress < pollIntervalInSeconds ||
+                secondsSinceLastMouseActivity < pollIntervalInSeconds
+
+            activityDetected(hasInputActivity, secondsSinceLastMouseActivity)
         }
     }
 
@@ -29,6 +30,19 @@ class EventSourceObserver {
     }
 
     static private func checkForMouseActivity() -> CFTimeInterval {
-        CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: .mouseMoved)
+        let mouseEventTypes: [CGEventType] = [
+            CGEventType.leftMouseDown,
+            CGEventType.rightMouseDown,
+            CGEventType.otherMouseDown,
+            CGEventType.mouseMoved,
+            CGEventType.leftMouseDragged,
+            CGEventType.rightMouseDragged,
+            CGEventType.otherMouseDragged,
+            CGEventType.scrollWheel,
+        ]
+
+        return mouseEventTypes.map {
+            CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: $0)
+        }.min() ?? CFTimeInterval.greatestFiniteMagnitude
     }
 }
