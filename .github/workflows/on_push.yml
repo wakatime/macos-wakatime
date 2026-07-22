@@ -22,6 +22,9 @@ jobs:
         name: Generate project
         run: xcodegen
       -
+        name: Run tests
+        run: xcodebuild -scheme WakaTime -configuration Debug -destination 'platform=macOS' test
+      -
         name: Build app to run linters
         run: xcodebuild -scheme WakaTime -configuration Debug -destination 'generic/platform=macOS' ONLY_ACTIVE_ARCH=NO ARCHS='arm64 x86_64' build
 
