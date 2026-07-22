@@ -46,21 +46,37 @@ class MonitoringManager {
     static func heartbeatData(_ app: NSRunningApplication) -> HeartbeatData? {
         let pid = app.processIdentifier
 
-        guard
-            let activeWindow = AXUIElementCreateApplication(pid).activeWindow,
-            let entity = entity(for: app, activeWindow),
-            let entityUnwrapped = entity.0
-        else { return nil }
+        guard let activeWindow = AXUIElementCreateApplication(pid).activeWindow else { return nil }
 
-        let project = project(for: app, activeWindow)
+        let entity: String
+        let entityType: EntityType
+        let project: String?
+        if app.monitoredApp == .zed {
+            let title = zedTitle(for: app, activeWindow)
+            guard let titleEntity = title.entity else { return nil }
+
+            entity = titleEntity
+            entityType = .app
+            project = title.project
+        } else {
+            guard
+                let heartbeatEntity = Self.entity(for: app, activeWindow),
+                let entityValue = heartbeatEntity.0
+            else { return nil }
+
+            entity = entityValue
+            entityType = heartbeatEntity.1
+            project = Self.project(for: app, activeWindow)
+        }
+
         var language = language(for: app, activeWindow)
         if project != nil && language == nil {
             language = "<<LAST_LANGUAGE>>"
         }
 
         let heartbeat = HeartbeatData(
-            entity: entityUnwrapped,
-            entityType: entity.1,
+            entity: entity,
+            entityType: entityType,
             project: project,
             language: language,
             category: category(for: app, activeWindow)
@@ -273,7 +289,7 @@ class MonitoringManager {
             case .zoom:
                 return extractPrefix(element.rawTitle, separator: " - ")
             case .zed:
-                return extractPrefix(element.rawTitle, separator: " — ")
+                return zedTitle(for: app, element).entity
         }
     }
 
@@ -392,11 +408,16 @@ class MonitoringManager {
             case .slack:
                 return extractSuffix(element.rawTitle, separator: " - ", offset: 1)
             case .zed:
-                return extractSuffix(element.rawTitle, separator: " — ")
+                return zedTitle(for: app, element).project
             default:
                 guard let url = currentBrowserUrl(for: app, element) else { return nil }
                 return project(from: url)
         }
+    }
+
+    private static func zedTitle(for app: NSRunningApplication, _ element: AXUIElement) -> ZedTitleParser.Result {
+        let version = app.bundleURL.flatMap { Bundle(url: $0)?.version }
+        return ZedTitleParser.parse(element.rawTitle, version: version)
     }
 
     struct Pattern {
