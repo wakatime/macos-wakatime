@@ -48,28 +48,36 @@ class MonitoringManager {
 
         guard let activeWindow = AXUIElementCreateApplication(pid).activeWindow else { return nil }
 
-        let heartbeatEntity: (String?, EntityType)?
-        let heartbeatProject: String?
+        let entity: String
+        let entityType: EntityType
+        let project: String?
         if app.monitoredApp == .zed {
             let title = zedTitle(for: app, activeWindow)
-            heartbeatEntity = (title.entity, .app)
-            heartbeatProject = title.project
+            guard let titleEntity = title.entity else { return nil }
+
+            entity = titleEntity
+            entityType = .app
+            project = title.project
         } else {
-            heartbeatEntity = entity(for: app, activeWindow)
-            heartbeatProject = project(for: app, activeWindow)
+            guard
+                let heartbeatEntity = Self.entity(for: app, activeWindow),
+                let entityValue = heartbeatEntity.0
+            else { return nil }
+
+            entity = entityValue
+            entityType = heartbeatEntity.1
+            project = Self.project(for: app, activeWindow)
         }
 
-        guard let heartbeatEntity, let entity = heartbeatEntity.0 else { return nil }
-
         var language = language(for: app, activeWindow)
-        if heartbeatProject != nil && language == nil {
+        if project != nil && language == nil {
             language = "<<LAST_LANGUAGE>>"
         }
 
         let heartbeat = HeartbeatData(
             entity: entity,
-            entityType: heartbeatEntity.1,
-            project: heartbeatProject,
+            entityType: entityType,
+            project: project,
             language: language,
             category: category(for: app, activeWindow)
         )

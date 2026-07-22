@@ -6,15 +6,13 @@ struct ZedTitleParser {
         let project: String?
     }
 
-    private static let currentTitleOrderVersion = [0, 162, 0]
+    private static let projectFirstVersion = [0, 162, 0]
     private static let separator = " — "
 
     static func parse(_ title: String?, version: String?) -> Result {
-        guard let title, !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return Result(entity: nil, project: nil)
-        }
+        guard let title else { return Result(entity: nil, project: nil) }
 
-        let projectFirst = usesCurrentTitleOrder(version)
+        let projectFirst = usesProjectFirstTitleOrder(version)
         let options: String.CompareOptions = projectFirst ? [] : .backwards
         guard let separatorRange = title.range(of: separator, options: options) else {
             return Result(entity: nonEmpty(title), project: nil)
@@ -29,10 +27,10 @@ struct ZedTitleParser {
         return Result(entity: entity, project: entity == project ? nil : project)
     }
 
-    private static func usesCurrentTitleOrder(_ version: String?) -> Bool {
+    private static func usesProjectFirstTitleOrder(_ version: String?) -> Bool {
         guard let components = versionComponents(version) else { return true }
 
-        for (component, minimum) in zip(components, currentTitleOrderVersion) where component != minimum {
+        for (component, minimum) in zip(components, projectFirstVersion) where component != minimum {
             return component > minimum
         }
 
