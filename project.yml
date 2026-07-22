@@ -71,5 +71,7 @@ targets:
     platform: macOS
     deploymentTarget: 10.15
     sources: [WakaTimeTests]
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
     dependencies:
       - target: WakaTime
