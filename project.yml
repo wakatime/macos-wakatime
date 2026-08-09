@@ -66,3 +66,12 @@ targets:
     postCompileScripts:
       - script: ./Scripts/Lint/swiftlint lint --quiet
         name: Swiftlint
+  WakaTimeTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: 10.15
+    sources: [WakaTimeTests]
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: WakaTime
