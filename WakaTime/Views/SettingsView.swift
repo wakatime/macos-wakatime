@@ -9,8 +9,8 @@ class SettingsView: NSView, NSTextFieldDelegate, NSTextViewDelegate {
         NSTextField(labelWithString: "WakaTime API Key:")
     }()
 
-    lazy var apiKeyTextField: WKTextField = {
-        let textField = WKTextField(frame: .zero)
+    lazy var apiKeyTextField: WKSecureTextField = {
+        let textField = WKSecureTextField(frame: .zero)
         textField.stringValue = ConfigFile.getSetting(section: "settings", key: "api_key") ?? ""
         textField.delegate = self
         return textField
